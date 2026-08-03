@@ -23,15 +23,17 @@ YouTube can still show branding, a video title/channel avatar before playback, a
 - **Up / Down:** Device volume
 - **1–4:** Select a channel directly
 - **Page Up / Page Down:** Next or previous playlist/channel
-- **Back / Home / Menu:** Blocked during child use
+- **Back / Home / Menu / Assist / Search / App switch:** Blocked during child use (where the platform delivers those keys to the app)
 
-## Parent escape sequence
+## Parent access
 
-Press:
+Parent settings are protected by a **PIN** (4–8 digits). The first successful parent unlock asks you to create that PIN. Wrong PIN attempts are rate-limited.
 
-`Up, Up, Down, Down, Left, Right, Left, Right, OK`
+Installer-only unlock steps (trigger sequence, recovery) live in [`TESTING.md`](TESTING.md) — they are intentionally **not** listed here for everyday kids-facing use.
 
-This opens a native parent menu where you can open Android Settings or choose another Home app.
+### Kiosk limits
+
+This app blocks many remote keys and can request **screen pinning** (Lock Task) from the parent menu. That is **not** a full device-owner kiosk: OEM remotes, Recents, or system assistants may still escape on some boxes. For hard lockdown, enroll the box as a dedicated device with a device-policy controller.
 
 ## Change the programmes
 
@@ -47,16 +49,23 @@ Open the folder in Android Studio and select **Build > Build APK(s)**, or run:
 
 ```bash
 ./gradlew assembleDebug
+./gradlew test
 ```
 
-The APK is created at:
+Debug APK:
 
 `app/build/outputs/apk/debug/app-debug.apk`
+
+Release (minified):
+
+```bash
+./gradlew assembleRelease
+```
 
 ## Install
 
 ```bash
-adb install -r app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-During early testing, select **Just once** when Android asks which Home app to use.
+During early testing, select **Just once** when Android asks which Home app to use. Keep ADB available until parent PIN unlock is verified.

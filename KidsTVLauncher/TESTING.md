@@ -2,7 +2,7 @@
 
 ## Before installing
 
-Keep a USB keyboard or ADB connection available. On the first Home-app prompt, choose **Just once** until playback and the parent escape sequence work on your box.
+Keep a USB keyboard or ADB connection available. On the first Home-app prompt, choose **Just once** until playback and parent PIN unlock work on your box.
 
 ## Build the APK
 
@@ -17,6 +17,7 @@ Or from a terminal:
 
 ```bash
 ./gradlew assembleDebug
+./gradlew test
 ```
 
 ## Install with ADB
@@ -31,11 +32,21 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 1. Open **Kids TV** from the box's Apps screen.
 2. Confirm a video loads.
 3. Test OK, Left, Right, Up and Down.
-4. Test the parent sequence:
-   `Up, Up, Down, Down, Left, Right, Left, Right, OK`.
-5. Press Home and select **Kids TV > Just once**.
-6. Reboot the box.
-7. Only after everything works, press Home and select **Kids TV > Always**.
+4. Open parent access with the installer trigger (keep this private from kids):
+   `Up, Up, Down, Down, Left, Right, Left, Right, OK`
+5. On first unlock, create a **4–8 digit parent PIN**, then confirm the parent menu opens.
+6. Cancel / resume and confirm playback returns.
+7. Try a wrong PIN five times and confirm temporary lockout.
+8. Press Home and select **Kids TV > Just once**.
+9. Reboot the box.
+10. Only after everything works, press Home and select **Kids TV > Always**.
+11. Optional: from the parent menu, try **Pin Kids TV (screen pinning)** and confirm the system UX on your firmware.
+
+## Kiosk honesty checklist
+
+- Voice / Google Assistant buttons may still work if the OEM never delivers those keys to the app.
+- Recents / app-switch hardware keys may bypass an ordinary HOME app.
+- Screen pinning is optional and user-confirmable; durable kiosk mode needs device owner / MDM.
 
 ## Emergency recovery
 
