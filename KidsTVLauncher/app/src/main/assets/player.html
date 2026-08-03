@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>Kids TV</title>
+  <style>
+    html, body, #player {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    html, body {
+      cursor: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* The player is controlled only through the physical remote and IFrame API. */
+    #player iframe {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
+      border: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="player"></div>
+
+  <script>
+    let player = null;
+    let channels = [];
+    let currentChannel = 0;
+    let ready = false;
+    let autoplayRecoveryAttempted = false;
+
+    async function loadConfiguration() {
+      const response = await fetch('channels.json', { cache: 'no-store' });
+      const config = await response.json();
+      channels = config.channels || [];
+      if (!channels.length) throw new Error('No channels configured');
+    }
+
+    function onYouTubeIframeAPIReady() {
+      loadConfiguration().then(() => {
+        const first = channels[0];
+        player = new YT.Player('player', {
+          width: '100%',
+          height: '100%',
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            iv_load_policy: 3,
+            listType: 'playlist',
+            list: first.playlistId,
+            loop: 1,
+            playsinline: 1,
+            rel: 0,
+            hl: 'ar',
+            origin: window.location.origin
+          },
+          events: {
+            onReady: onPlayerReady,
+            onStateChange: onPlayerStateChange,
+            onError: onPlayerError,
+            onAutoplayBlocked: recoverAutoplay
+          }
+        });
+      }).catch(error => console.error('Configuration error', error));
+    }
+
+    function onPlayerReady(event) {
+      ready = true;
+      event.target.setLoop(true);
+
+      const iframe = document.querySelector('#player iframe');
+      if (iframe) {
+        iframe.tabIndex = -1;
+        iframe.style.pointerEvents = 'none';
+      }
+
+      setTimeout(() => randomizeCurrentPlaylist(true), 600);
+    }
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        autoplayRecoveryAttempted = false;
+        if (player.isMuted()) player.unMute();
+      } else if (event.data === YT.PlayerState.ENDED) {
+        nextVideo();
+      }
+    }
+
+    function onPlayerError(event) {
+      console.warn('Skipping unavailable video', event.data);
+      setTimeout(nextVideo, 500);
+    }
+
+    function recoverAutoplay() {
+      if (!ready || autoplayRecoveryAttempted) return;
+      autoplayRecoveryAttempted = true;
+      player.mute();
+      player.playVideo();
+    }
+
+    function randomizeCurrentPlaylist(playNow) {
+      if (!ready || !player) return;
+      player.setLoop(true);
+      player.setShuffle(true);
+      setTimeout(() => {
+        const list = player.getPlaylist() || [];
+        if (!list.length) return;
+        const index = Math.floor(Math.random() * list.length);
+        if (playNow) player.playVideoAt(index);
+      }, 300);
+    }
+
+    function switchChannel(index) {
+      if (!ready || !channels.length) return;
+      currentChannel = (index + channels.length) % channels.length;
+      const channel = channels[currentChannel];
+      player.loadPlaylist({
+        listType: 'playlist',
+        list: channel.playlistId,
+        index: 0,
+        startSeconds: 0
+      });
+      setTimeout(() => randomizeCurrentPlaylist(true), 600);
+    }
+
+    function nextChannel() { switchChannel(currentChannel + 1); }
+    function previousChannel() { switchChannel(currentChannel - 1); }
+
+    function nextVideo() {
+      if (!ready) return;
+      player.nextVideo();
+      player.playVideo();
+    }
+
+    function previousVideo() {
+      if (!ready) return;
+      player.previousVideo();
+      player.playVideo();
+    }
+
+    // Clean mode intentionally does not pause. Pausing makes YouTube display
+    // title/channel information. OK simply starts playback if it was blocked.
+    function ensurePlaying() {
+      if (!ready) return;
+      const state = player.getPlayerState();
+      if (state !== YT.PlayerState.PLAYING) player.playVideo();
+    }
+
+    function pauseForParentMenu() {
+      if (ready && player.getPlayerState() === YT.PlayerState.PLAYING) {
+        player.pauseVideo();
+      }
+    }
+
+    function changePlayerVolume(delta) {
+      if (!ready) return;
+      const next = Math.max(0, Math.min(100, player.getVolume() + delta));
+      player.setVolume(next);
+    }
+
+    // Desktop preview controls. Android TV remote keys are handled natively.
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ') ensurePlaying();
+      else if (event.key === 'ArrowRight') nextVideo();
+      else if (event.key === 'ArrowLeft') previousVideo();
+      else if (event.key === 'ArrowUp') changePlayerVolume(5);
+      else if (event.key === 'ArrowDown') changePlayerVolume(-5);
+      else if (event.key === 'PageUp') nextChannel();
+      else if (event.key === 'PageDown') previousChannel();
+      else if (/^[1-4]$/.test(event.key)) switchChannel(Number(event.key) - 1);
+      else return;
+      event.preventDefault();
+    });
+
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    const api = document.createElement('script');
+    api.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(api);
+  </script>
+</body>
+</html>

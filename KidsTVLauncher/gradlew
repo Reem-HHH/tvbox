@@ -1,0 +1,17 @@
+#!/bin/sh
+set -eu
+APP_HOME=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+JAR="$APP_HOME/gradle/wrapper/gradle-wrapper.jar"
+if [ ! -f "$JAR" ]; then
+  echo "Downloading the Gradle wrapper bootstrap..."
+  mkdir -p "$(dirname "$JAR")"
+  if command -v curl >/dev/null 2>&1; then
+    curl -fL "https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar" -o "$JAR"
+  elif command -v wget >/dev/null 2>&1; then
+    wget -O "$JAR" "https://raw.githubusercontent.com/gradle/gradle/v8.9.0/gradle/wrapper/gradle-wrapper.jar"
+  else
+    echo "Install curl/wget or open this project in Android Studio." >&2
+    exit 1
+  fi
+fi
+exec java -cp "$JAR" org.gradle.wrapper.GradleWrapperMain "$@"
