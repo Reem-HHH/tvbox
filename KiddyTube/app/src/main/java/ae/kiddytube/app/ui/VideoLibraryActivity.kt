@@ -6,6 +6,7 @@ import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -16,6 +17,7 @@ import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.VideoItem
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
+import ae.kiddytube.app.parent.ParentUnlockCoordinator
 import ae.kiddytube.app.player.PlayerActivity
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
@@ -26,7 +28,10 @@ class VideoLibraryActivity : AppCompatActivity() {
     private lateinit var emptyMessage: TextView
     private lateinit var brandTitle: TextView
     private lateinit var syncStatus: TextView
+    private lateinit var parentSettings: ImageButton
     private lateinit var adapter: VideoGridAdapter
+    private lateinit var pinManager: ParentPinManager
+    private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
     private var channelId: String = ""
 
@@ -40,13 +45,18 @@ class VideoLibraryActivity : AppCompatActivity() {
         emptyMessage = findViewById(R.id.emptyMessage)
         brandTitle = findViewById(R.id.brandTitle)
         syncStatus = findViewById(R.id.syncStatus)
+        parentSettings = findViewById(R.id.parentSettings)
         brandTitle.text = channelTitle.ifBlank { getString(R.string.app_name) }
         syncStatus.visibility = View.GONE
 
+        pinManager = ParentPinManager()
+        parentUnlock = ParentUnlockCoordinator(this, pinManager)
         remote = RemoteKeyHandler(
-            ParentPinManager(),
-            getSystemService(AUDIO_SERVICE) as AudioManager
+            pinManager,
+            getSystemService(AUDIO_SERVICE) as AudioManager,
+            consumeBack = false
         )
+        parentSettings.setOnClickListener { parentUnlock.beginParentAccess() }
 
         adapter = VideoGridAdapter { video -> openPlayer(video) }
         grid.adapter = adapter
@@ -54,7 +64,22 @@ class VideoLibraryActivity : AppCompatActivity() {
         grid.clipChildren = false
         grid.clipToPadding = false
         ImmersiveMode.apply(this)
-        reload()
+        lifecycleScope.launch {
+            val settings = (application as KiddyTubeApp).catalogRepository.current()
+            pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
+            parentUnlock.updatePinManager(pinManager)
+            remote = RemoteKeyHandler(
+                pinManager,
+                getSystemService(AUDIO_SERVICE) as AudioManager,
+                consumeBack = false
+            )
+            reload()
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        grid.layoutManager = GridLayoutManager(this, spanCount())
     }
 
     private fun spanCount(): Int {
@@ -89,13 +114,23 @@ class VideoLibraryActivity : AppCompatActivity() {
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP) {
-            remote.handleKeyUp(event.keyCode)
-        }
-        if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BACK) {
-            val action = remote.handleKeyDown(event.keyCode, event)
-            if (action is RemoteAction.NavigateBack || action is RemoteAction.Consume) {
-                finish()
+            if (remote.handleKeyUp(event.keyCode) is RemoteAction.ParentTriggered) {
+                parentUnlock.beginParentAccess()
                 return true
+            }
+        }
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            val action = remote.handleKeyDown(event.keyCode, event)
+            when (action) {
+                RemoteAction.ParentTriggered -> {
+                    parentUnlock.beginParentAccess()
+                    return true
+                }
+                RemoteAction.NavigateBack -> {
+                    finish()
+                    return true
+                }
+                else -> Unit
             }
         }
         return super.dispatchKeyEvent(event)

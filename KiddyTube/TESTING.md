@@ -1,7 +1,10 @@
 # Testing — Channel Browser
 
-Default PIN: `2580`  
-Parent unlock: `↑ ↑ ↓ ↓ ← → ← → OK` or Back long-press ≥5s
+Default PIN: `2580`
+
+Parent unlock:
+- Tap the **lock** button (top-right) on channels or library, then PIN
+- TV also: `↑ ↑ ↓ ↓ ← → ← → OK` or Back long-press ≥5s on channel home
 
 ## Automated
 
@@ -9,24 +12,20 @@ Parent unlock: `↑ ↑ ↓ ↓ ← → ← → OK` or Back long-press ≥5s
 ./gradlew test lintDebug assembleDebug
 ```
 
-## Android Studio / emulator
+## Phone / tablet / TV
 
-1. Open `KiddyTube`
+1. Open `KiddyTube` on phone, tablet, or Android TV AVD
 2. Optionally add `YOUTUBE_API_KEY=...` to `local.properties`, then rebuild
-3. Run on Android TV AVD or tablet AVD
-4. Expect chunky sky/sun channel grid with **KiddyTube** title
-5. With network + API key, sync chip shows “Updating…” then “Channels updated!”
-6. Offline: chip shows “Offline — showing saved videos”; tiles keep cached content
-7. Open a channel → library shows thumbnails/titles
-8. Unlock parent → Refresh all playlists still works with force sync
-
-## Tablet touch
-
-Confirm tiles open libraries and Back returns to the grid. Focus/press should scale tiles.
+3. Expect soft blue channel grid with **KiddyTube** title and lock button
+4. Columns: phone fewer, tablet medium, TV denser
+5. One-tap a channel → library; one-tap a video → player
+6. Tap lock → PIN → parent dashboard
+7. In player: tap toggles pause/play; system Back exits
+8. Rotate tablet/phone on library — grid reflows
 
 ## TV remote
 
-D-pad moves focus (yellow sticker ring); OK opens; Back leaves player/library.
+D-pad focuses tiles and the lock button (sky focus ring); OK opens; Back leaves player/library.
 
 ## Emergency
 

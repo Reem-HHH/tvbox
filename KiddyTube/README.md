@@ -1,15 +1,15 @@
 # KiddyTube — Channel Browser
 
-A simple Android TV / tablet kids app: browse channel thumbnails, open a video library, play fullscreen without website chrome.
+A simple Android phone / tablet / TV kids app: browse channel thumbnails, open a video library, play fullscreen without website chrome.
 
 **Application ID:** `ae.kiddytube.app`  
 **Version:** `2.1.0-chunky`
 
 ## Screens
 
-1. **Channels** — chunky sticker tiles on a sky/sun background
+1. **Channels** — soft blue grid (column count adapts for phone / tablet / TV)
 2. **Library** — video thumbnails + titles for that channel
-3. **Player** — YouTube clean IFrame *or* Media3 for direct MP4/HLS URLs
+3. **Player** — YouTube clean IFrame *or* Media3 for direct MP4/HLS URLs (tap to pause/play)
 
 Content is **parent-curated**. Fresh installs ship with starter YouTube playlist IDs / starter videos for each channel (official uploads where available). Always review content in the parent dashboard before kids use it daily.
 
@@ -43,7 +43,8 @@ Parent-saved keys override the build-time key.
 
 ## Parent access
 
-Sequence: `↑ ↑ ↓ ↓ ← → ← → OK` or long-press Back (≥5s), then PIN.
+- **Phone / tablet / TV:** tap the **lock** button in the top-right header, then enter the PIN
+- **TV remote (also):** `↑ ↑ ↓ ↓ ← → ← → OK` or long-press Back (≥5s) on the channel home
 
 Default development PIN: `2580` — change it before enabling Release ready.
 
