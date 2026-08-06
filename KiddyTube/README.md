@@ -11,22 +11,24 @@ A simple Android phone / tablet / TV kids app: browse channel thumbnails, open a
 2. **Library** — video thumbnails + titles for that channel
 3. **Player** — YouTube clean IFrame *or* Media3 for direct MP4/HLS URLs (tap to pause/play)
 
-Content is **parent-curated**. Fresh installs ship with starter YouTube playlist IDs / starter videos for each channel (official uploads where available). Always review content in the parent dashboard before kids use it daily.
+Content is **parent-curated**. The home grid is **one channel = one named show** (no generic mixes). Fresh installs ship with starter YouTube playlist IDs and/or curated video IDs. Always review content in the parent dashboard before kids use it daily.
+
+Per-show descriptions, content lists, and child-friendliness / conservative ratings: [`docs/channels/`](docs/channels/README.md).
 
 On launch (when online), KiddyTube auto-refreshes linked playlists using the YouTube Data API. Failed syncs keep previously saved videos.
 
 | Channel | Starter source |
 |---------|----------------|
-| Barney | Scholastic Barney songs channel uploads |
-| Spacetoon Songs | Curated Spacetoon Ramadan / يا طيبة songs (no full-channel dump) |
-| مودا مودي | Toddler Spacetoon cartoon songs |
-| Sara & Duck | Official Sarah & Duck uploads + starter episodes |
-| Peppa Pig | Official Peppa uploads |
-| Arabic Cartoons | Mansour playlist + Adam & Mishmish starters |
-| Learn Arabic | Curated Arabic learning video IDs + One4kids sync |
-| Mini Muslim | MiniMuslims uploads + starter songs |
-| Islamic Kids | Omar & Hana starters + uploads sync |
-| Playtime | Toddler LEGO / Play-Doh / marble-run curated IDs |
+| Barney & Friends | Official uploads playlist |
+| Spacetoon أناشيد | Curated nasheed IDs only |
+| مودا مودي | Curated Ramadan / Eid songs |
+| Sarah & Duck | Official uploads + starter episodes |
+| Peppa Pig | Official uploads playlist |
+| Adam & Mishmish | Curated song / letters videos |
+| Kiki wa Nadoush / Zakaria / Rayan / Sweet Kalima / Abata | Per-show Arabic learning clips |
+| LEGO DUPLO / Play-Doh / Toy Kitchen | Per-show toy play curated IDs |
+| Mini Muslim | MiniMuslims uploads + starters |
+| Omar & Hana | Official uploads + starters |
 
 Parent can change any playlist, add video IDs, or add direct MP4/HLS URLs.
 
