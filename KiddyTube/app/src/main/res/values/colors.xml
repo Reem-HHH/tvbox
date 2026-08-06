@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#000000</color>
+    <color name="ic_launcher_background">#D9F0FF</color>
     <color name="sky_top">#D9F0FF</color>
     <color name="sky_mid">#E8F6FF</color>
     <color name="sky_bottom">#F4FAFF</color>
@@ -18,7 +18,7 @@
     <color name="ink_black">@color/ink_navy</color>
     <color name="focus_yellow">@color/focus_sky</color>
     <color name="chip_bg">@color/chip_frost</color>
-    <color name="title_shadow">#00000000</color>
+    <color name="title_shadow">#D9F0FF00</color>
     <color name="sun_bottom">@color/sky_bottom</color>
     <color name="player_overlay_bg">#99000000</color>
 </resources>
