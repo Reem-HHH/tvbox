@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Tablet / large phone landscape -->
+    <dimen name="grid_padding">24dp</dimen>
+    <dimen name="tile_margin">10dp</dimen>
+    <dimen name="tile_corner">22dp</dimen>
+    <dimen name="image_corner">16dp</dimen>
+    <dimen name="channel_image_height">130dp</dimen>
+    <dimen name="video_image_height">128dp</dimen>
+    <dimen name="brand_title_size">28sp</dimen>
+    <dimen name="channel_title_size">15sp</dimen>
+    <dimen name="video_title_size">14sp</dimen>
+    <dimen name="sync_chip_text">13sp</dimen>
+    <dimen name="header_padding_h">24dp</dimen>
+    <dimen name="header_padding_v">16dp</dimen>
+</resources>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_sky_sun"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="@dimen/header_padding_h"
+        android:paddingTop="@dimen/header_padding_v"
+        android:paddingEnd="@dimen/header_padding_h"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:id="@+id/brandTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.01"
+            android:text="@string/app_name"
+            android:textColor="@color/ink_navy"
+            android:textSize="@dimen/brand_title_size" />
+
+        <TextView
+            android:id="@+id/syncStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/sync_chip_bg"
+            android:fontFamily="sans-serif-medium"
+            android:paddingStart="16dp"
+            android:paddingTop="8dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="8dp"
+            android:text="@string/sync_updating"
+            android:textColor="@color/ink_muted"
+            android:textSize="@dimen/sync_chip_text"
+            android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/parentSettings"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/parent_settings_bg"
+            android:contentDescription="@string/parent_settings"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_parent_lock" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipChildren="false">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/grid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:padding="@dimen/grid_padding" />
+
+        <TextView
+            android:id="@+id/emptyMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="@drawable/sync_chip_bg"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:paddingStart="32dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="32dp"
+            android:paddingBottom="24dp"
+            android:textColor="@color/ink_navy"
+            android:textSize="16sp"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

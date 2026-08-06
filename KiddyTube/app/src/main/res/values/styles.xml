@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.KiddyTube" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="colorAccent">@color/focus_sky</item>
+        <item name="android:navigationBarColor">@color/sky_top</item>
+        <item name="android:statusBarColor">@color/sky_top</item>
+        <item name="android:windowBackground">@drawable/bg_sky_sun</item>
+        <item name="android:textColorPrimary">@color/ink_navy</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

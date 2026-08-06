@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KiddyTube</string>
+    <string name="empty_channels">No channels yet.\nAsk a parent to turn some on.</string>
+    <string name="empty_videos">No videos yet.\nAsk a parent to sync playlists or add links.</string>
+    <string name="empty_no_api_key">Connect to the internet and set a YouTube API key in Parent settings to fill channels.</string>
+    <string name="sync_updating">Updating channels…</string>
+    <string name="sync_updated">Channels updated!</string>
+    <string name="sync_offline">Offline — showing saved videos</string>
+    <string name="sync_no_key">Add YouTube API key in Parent settings</string>
+    <string name="sync_failed">Couldn\'t update — showing saved videos</string>
+    <string name="sync_skipped">Channels are up to date</string>
+    <string name="parent_settings">Parent settings</string>
+    <string name="parent_dashboard">Parent settings</string>
+    <string name="parent_pin_title">Parent PIN</string>
+    <string name="back_to_channels">Back to channels</string>
+    <string name="unlock">Unlock</string>
+    <string name="cancel">Cancel</string>
+    <string name="parent_locked_out">Too many attempts. Try again later.</string>
+    <string name="parent_pin_wrong">Wrong PIN. Try again.</string>
+    <string name="parent_session_expired">Parent session expired. Unlock again.</string>
+    <string name="parent_video_count">%1$d videos in catalog</string>
+    <string name="parent_follow_uploads">Follow playlist uploads on auto-sync</string>
+    <string name="player_blocked">That video is not in your catalog.</string>
+    <string name="parent_section_overview">Overview</string>
+    <string name="parent_section_actions">Catalog</string>
+    <string name="parent_section_channels">Channels</string>
+    <string name="parent_section_security">Security</string>
+</resources>
