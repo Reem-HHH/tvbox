@@ -120,13 +120,19 @@ class CatalogRepository(private val context: Context) {
         if (!playlistId.isNullOrBlank()) {
             val fetched = youtube.fetchPlaylistVideos(apiKey, playlistId, maxResults = 150)
             return fetched.fold(
-                onSuccess = { videos ->
+                    onSuccess = { videos ->
                     updateChannel(channelId) { ch ->
                         val retained = ch.videos.filter { it.manual || it.isDirect() }
                         val retainedIds = retained.map { it.id }.toSet()
+                        val seekById = ch.videos.associate { it.id to it.allowSeek }
                         val remote = videos
                             .filter { it.id !in retainedIds }
-                            .map { it.copy(manual = false) }
+                            .map {
+                                it.copy(
+                                    manual = false,
+                                    allowSeek = seekById[it.id] ?: true
+                                )
+                            }
                         ch.copy(
                             videos = (remote + retained).newestFirst(),
                             sourceType = SourceType.YOUTUBE_PLAYLIST
@@ -270,6 +276,22 @@ class CatalogRepository(private val context: Context) {
     suspend fun removeVideo(channelId: String, videoId: String) {
         updateChannel(channelId) { ch ->
             ch.copy(videos = ch.videos.filterNot { it.id == videoId })
+        }
+    }
+
+    suspend fun setChannelAllowSeek(channelId: String, allowSeek: Boolean) {
+        updateChannel(channelId) { ch ->
+            ch.copy(videos = ch.videos.map { it.copy(allowSeek = allowSeek) })
+        }
+    }
+
+    suspend fun setVideoAllowSeek(channelId: String, videoId: String, allowSeek: Boolean) {
+        updateChannel(channelId) { ch ->
+            ch.copy(
+                videos = ch.videos.map {
+                    if (it.id == videoId) it.copy(allowSeek = allowSeek) else it
+                }
+            )
         }
     }
 

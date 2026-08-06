@@ -18,7 +18,9 @@ data class VideoItem(
     /** Epoch millis when the video was published on YouTube; null if unknown. */
     val publishedAtMs: Long? = null,
     /** True when a parent added this item manually (survives playlist refresh). */
-    val manual: Boolean = false
+    val manual: Boolean = false,
+    /** When true, remote FF/RW and D-pad seek work for this item. */
+    val allowSeek: Boolean = true
 ) {
     fun isYoutube(): Boolean = !youtubeVideoId.isNullOrBlank()
     fun isDirect(): Boolean = !directUrl.isNullOrBlank()

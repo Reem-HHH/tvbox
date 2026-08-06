@@ -309,8 +309,25 @@ class CatalogJsonTest {
         assertTrue(decoded.followUploads)
         assertTrue(decoded.playlistManagedByParent)
         assertTrue(decoded.videos.first().manual)
+        assertTrue(decoded.videos.first().allowSeek)
         assertEquals(DefaultChannels.iconResFor(channel.id), decoded.iconRes)
         assertEquals(decoded.iconRes, decoded.resolvedIconRes())
+    }
+
+    @Test
+    fun roundTripAllowSeekFalse() {
+        val channel = DefaultChannels.seed().first().copy(
+            videos = listOf(
+                VideoItem(
+                    id = "dQw4w9WgXcQ",
+                    title = "No seek",
+                    youtubeVideoId = "dQw4w9WgXcQ",
+                    allowSeek = false
+                )
+            )
+        )
+        val decoded = CatalogJson.decode(CatalogJson.encode(listOf(channel))).first()
+        assertEquals(false, decoded.videos.first().allowSeek)
     }
 
     @Test

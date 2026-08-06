@@ -182,6 +182,18 @@ class ParentActivity : AppCompatActivity() {
         }
         addButton(actions, "Video IDs") { promptVideoIds(channel) }
         addButton(actions, "Direct URL") { promptDirect(channel) }
+        val seekOn = channel.videos.isEmpty() || channel.videos.all { it.allowSeek }
+        addSwitch(
+            actions,
+            getString(R.string.parent_seek_enabled),
+            seekOn
+        ) { checked ->
+            lifecycleScope.launch {
+                (application as KiddyTubeApp).catalogRepository
+                    .setChannelAllowSeek(channel.id, checked)
+                reload()
+            }
+        }
         addButton(actions, "Refresh") {
             lifecycleScope.launch {
                 val r = (application as KiddyTubeApp).catalogRepository

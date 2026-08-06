@@ -7,9 +7,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.TypedValue
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -46,6 +49,7 @@ class PlayerActivity : AppCompatActivity() {
     private var player: ExoPlayer? = null
     private var webView: WebView? = null
     private var playbackReady = false
+    private var allowSeek = true
     private val handler = Handler(Looper.getMainLooper())
     private val seekMs = 10_000L
 
@@ -63,8 +67,8 @@ class PlayerActivity : AppCompatActivity() {
             consumeBack = true
         )
         ImmersiveMode.apply(this, forceImmersive = true)
+        allowSeek = intent.getBooleanExtra(EXTRA_ALLOW_SEEK, true)
 
-        // Defer system Back so long-press unlock can fire; short press finishes in dispatchKeyEvent.
         onBackPressedDispatcher.addCallback(
             this,
             object : OnBackPressedCallback(true) {
@@ -83,6 +87,9 @@ class PlayerActivity : AppCompatActivity() {
             titleOverlay.visibility = View.VISIBLE
             handler.postDelayed({ titleOverlay.visibility = View.GONE }, 3_000)
         }
+
+        // Edge masks cover YouTube watermark / chrome that sits over the iframe edges.
+        addBrandMasks()
 
         // Transparent touch layer: play/pause without opening YouTube chrome
         val tapLayer = View(this).apply {
@@ -139,6 +146,39 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun addBrandMasks() {
+        fun dp(v: Float): Int = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            v,
+            resources.displayMetrics
+        ).toInt()
+
+        // Bottom-right YouTube watermark / logo strip
+        container.addView(
+            View(this).apply { setBackgroundColor(Color.BLACK) },
+            FrameLayout.LayoutParams(dp(168f), dp(72f), Gravity.BOTTOM or Gravity.END)
+        )
+        // Top-right share / watch-later chips that sometimes appear
+        container.addView(
+            View(this).apply { setBackgroundColor(Color.BLACK) },
+            FrameLayout.LayoutParams(dp(140f), dp(56f), Gravity.TOP or Gravity.END)
+        )
+        // Bottom-left title/channel strip after seek / pause
+        container.addView(
+            View(this).apply { setBackgroundColor(Color.BLACK) },
+            FrameLayout.LayoutParams(dp(280f), dp(64f), Gravity.BOTTOM or Gravity.START)
+        )
+        // Thin bottom control bar residual
+        container.addView(
+            View(this).apply { setBackgroundColor(Color.BLACK) },
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                dp(28f),
+                Gravity.BOTTOM
+            )
+        )
+    }
+
     private fun rejectPlayback() {
         Toast.makeText(this, R.string.player_blocked, Toast.LENGTH_SHORT).show()
         finish()
@@ -154,9 +194,18 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun seekBy(deltaMs: Long) {
+        if (!allowSeek) return
+        player?.let {
+            val next = (it.currentPosition + deltaMs).coerceAtLeast(0L)
+            it.seekTo(next)
+        }
+        val deltaSec = deltaMs / 1000.0
+        webView?.evaluateJavascript("seekBy($deltaSec)", null)
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     private fun playYoutube(videoId: String) {
-        // Defense in depth: only validated IDs reach here; still JSON-escape for the template.
         val safeId = videoId.replace("\\", "\\\\").replace("'", "\\'")
         val wv = WebView(this).apply {
             setBackgroundColor(Color.BLACK)
@@ -166,10 +215,18 @@ class PlayerActivity : AppCompatActivity() {
             settings.allowFileAccess = false
             settings.allowContentAccess = false
             settings.cacheMode = WebSettings.LOAD_DEFAULT
-            // Touch handled by overlay; keep WebView from stealing browser gestures
             setOnTouchListener { _, _ -> true }
             webChromeClient = WebChromeClient()
             webViewClient = WebViewClient()
+            addJavascriptInterface(
+                object {
+                    @JavascriptInterface
+                    fun onEnded() {
+                        runOnUiThread { finish() }
+                    }
+                },
+                "KiddyNative"
+            )
         }
         webView = wv
         container.addView(
@@ -183,9 +240,23 @@ class PlayerActivity : AppCompatActivity() {
         val html = """
             <!doctype html><html><head>
             <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-            <style>html,body,#p{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
-            iframe{pointer-events:none}</style></head><body>
-            <div id="p"></div>
+            <style>
+              html,body,#wrap,#p{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
+              #wrap{position:relative}
+              iframe{pointer-events:none;border:0}
+              .mask{position:absolute;background:#000;z-index:9;pointer-events:none}
+              .br{right:0;bottom:0;width:28%;height:18%}
+              .tr{right:0;top:0;width:24%;height:14%}
+              .bl{left:0;bottom:0;width:46%;height:16%}
+              .bb{left:0;right:0;bottom:0;height:8%}
+            </style></head><body>
+            <div id="wrap">
+              <div id="p"></div>
+              <div class="mask br"></div>
+              <div class="mask tr"></div>
+              <div class="mask bl"></div>
+              <div class="mask bb"></div>
+            </div>
             <script src="https://www.youtube.com/iframe_api"></script>
             <script>
               var player;
@@ -193,15 +264,31 @@ class PlayerActivity : AppCompatActivity() {
                 player=new YT.Player('p',{
                   width:'100%',height:'100%',
                   videoId:'$safeId',
-                  playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,
-                    modestbranding:1,rel:0,playsinline:1,origin:location.origin},
-                  events:{onReady:function(e){e.target.playVideo();}}
+                  host:'https://www.youtube-nocookie.com',
+                  playerVars:{
+                    autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,
+                    modestbranding:1,rel:0,playsinline:1,cc_load_policy:0,
+                    showinfo:0,origin:location.origin
+                  },
+                  events:{
+                    onReady:function(e){e.target.playVideo();},
+                    onStateChange:function(e){
+                      if(e.data===0 && window.KiddyNative) KiddyNative.onEnded();
+                    }
+                  }
                 });
               }
               function ensurePlaying(){if(player&&player.playVideo)player.playVideo();}
               function pausePlayback(){if(player&&player.pauseVideo)player.pauseVideo();}
               function toggle(){if(!player)return;var s=player.getPlayerState();
                 if(s===1)player.pauseVideo();else player.playVideo();}
+              function seekBy(deltaSec){
+                if(!player||!player.getCurrentTime||!player.seekTo)return;
+                var t=player.getCurrentTime()+deltaSec;
+                if(t<0)t=0;
+                player.seekTo(t,true);
+                player.playVideo();
+              }
             </script></body></html>
         """.trimIndent()
         wv.loadDataWithBaseURL(
@@ -268,12 +355,13 @@ class PlayerActivity : AppCompatActivity() {
                 togglePlayback()
                 true
             }
-            RemoteAction.SeekForward -> {
-                player?.let { it.seekTo(it.currentPosition + seekMs) }
+            // In the player, D-pad L/R and media next/prev seek instead of changing items.
+            RemoteAction.SeekForward, RemoteAction.NextItem -> {
+                seekBy(seekMs)
                 true
             }
-            RemoteAction.SeekBack -> {
-                player?.let { it.seekTo((it.currentPosition - seekMs).coerceAtLeast(0)) }
+            RemoteAction.SeekBack, RemoteAction.PreviousItem -> {
+                seekBy(-seekMs)
                 true
             }
             RemoteAction.VolumeUp, RemoteAction.VolumeDown -> true
@@ -292,10 +380,6 @@ class PlayerActivity : AppCompatActivity() {
         super.onResume()
         ImmersiveMode.apply(this, forceImmersive = true)
         webView?.onResume()
-        // Do not auto-resume Exo/Web video after background — parent must tap/play again.
-        if (playbackReady) {
-            // Leave paused; EnsurePlaying / tap can restart.
-        }
     }
 
     override fun onDestroy() {
@@ -315,5 +399,6 @@ class PlayerActivity : AppCompatActivity() {
         const val EXTRA_TITLE = "title"
         const val EXTRA_YOUTUBE_ID = "youtube_id"
         const val EXTRA_DIRECT_URL = "direct_url"
+        const val EXTRA_ALLOW_SEEK = "allow_seek"
     }
 }

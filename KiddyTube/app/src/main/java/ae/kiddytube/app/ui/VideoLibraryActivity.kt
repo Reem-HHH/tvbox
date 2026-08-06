@@ -111,6 +111,7 @@ class VideoLibraryActivity : AppCompatActivity() {
                 .putExtra(PlayerActivity.EXTRA_TITLE, video.title)
                 .putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, video.youtubeVideoId)
                 .putExtra(PlayerActivity.EXTRA_DIRECT_URL, video.directUrl)
+                .putExtra(PlayerActivity.EXTRA_ALLOW_SEEK, video.allowSeek)
         )
     }
 

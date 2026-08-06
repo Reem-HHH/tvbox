@@ -69,6 +69,8 @@ object CatalogJson {
             }
             append(',')
             append("\"manual\":").append(v.manual)
+            append(',')
+            append("\"allowSeek\":").append(v.allowSeek)
             append('}')
         }
         append(']')
@@ -166,7 +168,8 @@ object CatalogJson {
                 youtubeVideoId = s("youtubeVideoId")?.ifBlank { null },
                 directUrl = s("directUrl")?.ifBlank { null },
                 publishedAtMs = f["publishedAtMs"]?.toLongOrNull(),
-                manual = f["manual"]?.toBooleanStrictOrNull() ?: false
+                manual = f["manual"]?.toBooleanStrictOrNull() ?: false,
+                allowSeek = f["allowSeek"]?.toBooleanStrictOrNull() ?: true
             )
         }
     }
