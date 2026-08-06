@@ -12,7 +12,7 @@ class CatalogJsonTest {
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
         assertEquals("barney", decoded.first().id)
-        assertEquals("Islamic Kids", decoded.last().title)
+        assertEquals("playtime", decoded.last().id)
     }
 
     @Test
@@ -25,11 +25,24 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionThreeAllChannelsHavePlaylists() {
-        assertEquals(3, DefaultChannels.SEED_VERSION)
-        DefaultChannels.seed().forEach { ch ->
-            assertTrue("${ch.id} needs a playlist for auto-sync", !ch.youtubePlaylistId.isNullOrBlank())
+    fun seedVersionFourOrganizesCuratedVideos() {
+        assertEquals(4, DefaultChannels.SEED_VERSION)
+        val seed = DefaultChannels.seed()
+        assertTrue(seed.any { it.id == "playtime" })
+        assertTrue(seed.first { it.id == "learn_arabic" }.videos.size >= 10)
+        assertTrue(seed.first { it.id == "islamic_kids" }.videos.any { it.id == "T6ggVnk1JZg" })
+        assertTrue(seed.first { it.id == "playtime" }.videos.any { it.id == "F4ICHmkVGtQ" })
+    }
+
+    @Test
+    fun mergeAppendsMissingSeedVideos() {
+        val existing = DefaultChannels.seed().map {
+            if (it.id == "learn_arabic") {
+                it.copy(videos = listOf(it.videos.first()))
+            } else it
         }
+        val merged = DefaultChannels.mergeSeedUpdates(existing)
+        assertTrue(merged.first { it.id == "learn_arabic" }.videos.size > 1)
     }
 
     @Test

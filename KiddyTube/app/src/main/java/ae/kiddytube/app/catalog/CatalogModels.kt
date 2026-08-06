@@ -38,8 +38,8 @@ data class ContentChannel(
  * Uploads playlist id = replace leading "UC" with "UU" on a channel id.
  */
 object DefaultChannels {
-    /** Bump when seed playlist IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 3
+    /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
+    const val SEED_VERSION = 4
 
     fun seed(): List<ContentChannel> = listOf(
         playlistChannel(
@@ -47,7 +47,6 @@ object DefaultChannels {
             title = "Barney & Friends",
             icon = R.drawable.tile_barney,
             order = 0,
-            // Barney Nursery Rhymes & Kids Songs (Scholastic)
             playlistId = uploadsOf("UCelJG1JV-pKYGOG3AM17Wvg")
         ),
         playlistChannel(
@@ -55,7 +54,6 @@ object DefaultChannels {
             title = "Spacetoon",
             icon = R.drawable.tile_spacetoon,
             order = 1,
-            // Official Spacetoon Arabic channel uploads
             playlistId = uploadsOf("UCuQKih3Ac3NABADQKQdeV6A")
         ),
         ContentChannel(
@@ -63,7 +61,6 @@ object DefaultChannels {
             title = "Sara & Duck",
             iconRes = R.drawable.tile_sara_duck,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
-            // Official Sarah & Duck YouTube channel uploads
             youtubePlaylistId = uploadsOf("UC3OUMU3s7Oy6Ta0wnpZFBWw"),
             sortOrder = 2,
             videos = listOf(
@@ -77,29 +74,39 @@ object DefaultChannels {
             title = "Peppa Pig",
             icon = R.drawable.tile_peppa,
             order = 3,
-            // Peppa Pig - Official Channel uploads
             playlistId = uploadsOf("UCAOtE1V7Ots4DjM8JLlrYgg")
         ),
-        playlistChannel(
+        ContentChannel(
             id = "arabic_cartoons",
             title = "Arabic Cartoons",
-            icon = R.drawable.tile_arabic,
-            order = 4,
-            // Mansour's Adventures curated playlist
-            playlistId = "PLrEO7bVLqAMv5bDvRaHYxXZyLatDuFRKF"
+            iconRes = R.drawable.tile_arabic,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = "PLrEO7bVLqAMv5bDvRaHYxXZyLatDuFRKF",
+            sortOrder = 4,
+            videos = listOf(
+                yt("FurzMF0L6QI", "Animal Sounds Songs (68 min) — Adam & Mishmish"),
+                yt("docDippkI-Q", "Farm Animal Songs — Adam & Mishmish"),
+                yt("etAPDF2i9s0", "Arabic Letters with Animals — Adam & Mishmish")
+            )
         ),
         ContentChannel(
             id = "learn_arabic",
             title = "Learn Arabic",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
-            // One4kids (Zaky) official uploads
             youtubePlaylistId = uploadsOf("UC5vfWTTPnKdFp-8s0KbqJhw"),
             sortOrder = 5,
             videos = listOf(
-                yt("6e145BWP7ng", "Arabic Alphabet Song with Zaky"),
-                yt("idTmXdvByF8", "Arabic Alphabet with Zaky (slower)"),
-                yt("ufIppXESntI", "Learn the Arabic Alphabet — Kalam Kids")
+                yt("EI3yLs6A-Qk", "Learn Arabic Colors — Kiki wa Nadoush"),
+                yt("LocumA_zI0c", "Learn Colors with Cars — Zakaria"),
+                yt("yPhFBBMWbPU", "Shapes & Directions in Arabic — Rayan"),
+                yt("En3OJwCqHx8", "Shapes, Colors & Numbers — Sweet Kalima"),
+                yt("sVtaIloYxvw", "Arabic Alphabet with Chalk — Abata"),
+                yt("sGw7Fs7oRvw", "Vehicle Names in Arabic — Zakaria"),
+                yt("XCp_1eTPnrM", "Arabic Numbers 1–10 — Zakaria"),
+                yt("0MGqhiLQbxI", "Write Arabic Alphabet أ–ص — Zakaria"),
+                yt("5v7A2AXzCY0", "Write Arabic Alphabet ض–ي — Zakaria"),
+                yt("fwg0UIw0Efs", "LEGO DUPLO Numbers & Colors in Arabic")
             )
         ),
         ContentChannel(
@@ -109,26 +116,51 @@ object DefaultChannels {
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UCIDYe6rgdROl77DDevNIcPA"),
             sortOrder = 6,
-            // Instant starters until playlist sync (official MiniMuslims)
             videos = listOf(
                 yt("4VpiuY_C5Ok", "Ramadan Around The World — MiniMuslims"),
                 yt("vB3ffnqdNVs", "Islamic Songs for Kids (45 min) — MiniMuslims"),
                 yt("WyxekrpqcEQ", "Islamic Songs for Kids (30 min) — MiniMuslims")
             )
         ),
-        playlistChannel(
+        ContentChannel(
             id = "islamic_kids",
             title = "Islamic Kids",
-            icon = R.drawable.tile_islamic,
-            order = 7,
-            // Omar & Hana - Islamic Cartoons for Kids uploads
-            playlistId = uploadsOf("UC178EmfQAV3OT-UpuO6WUMg")
+            iconRes = R.drawable.tile_islamic,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UC178EmfQAV3OT-UpuO6WUMg"),
+            sortOrder = 7,
+            videos = listOf(
+                yt("T6ggVnk1JZg", "Omar & Hana 15 Minutes Song"),
+                yt("iJtM9bzScJY", "Omar & Hana — Dua & Salah (Acapella)"),
+                yt("HvzYeFB0lB4", "Breakfasting — Omar & Hana"),
+                yt("AkSrzSwK2wE", "Omar & Hana Arabic — Please Come Home Dad")
+            )
+        ),
+        ContentChannel(
+            id = "playtime",
+            title = "Playtime",
+            iconRes = R.drawable.tile_playtime,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 8,
+            videos = listOf(
+                yt("w7aZLVaLTlM", "LEGO DUPLO Vehicles & Colors"),
+                yt("01JxHFDBdzE", "LEGO DUPLO Creative Animals Unbox"),
+                yt("a0uPqr_iASU", "LEGO DUPLO Animal Build"),
+                yt("jvCdmPsAn40", "LEGO DUPLO Balancing Tree"),
+                yt("xvxQeQfdifk", "LEGO DUPLO Marble Run"),
+                yt("mSUJM2naI7I", "Travel Kitchen Playset Unboxing"),
+                yt("TL3e2UZQxPE", "Kitchen Set & Toy Fruits"),
+                yt("2FyKZKNls4c", "Play-Doh Cookie Man & Shapes"),
+                yt("8581xy-tGqw", "Play-Doh Rainbow Ice Cream"),
+                yt("kS9fxiOdiGs", "Marble Run Plasticine Race"),
+                yt("F4ICHmkVGtQ", "Magic Marble Run Compilation")
+            )
         )
     )
 
     /**
      * Apply newer seed playlist/video defaults onto an existing catalog without
-     * wiping parent overrides that already set a playlist or videos.
+     * wiping parent overrides. Appends missing seed videos; adds new seed channels.
      */
     fun mergeSeedUpdates(existing: List<ContentChannel>): List<ContentChannel> {
         val byId = existing.associateBy { it.id }.toMutableMap()
@@ -140,14 +172,19 @@ object DefaultChannels {
             }
             val needsPlaylist = current.youtubePlaylistId.isNullOrBlank() &&
                 !seed.youtubePlaylistId.isNullOrBlank()
-            val needsVideos = current.videos.isEmpty() && seed.videos.isNotEmpty()
-            if (needsPlaylist || needsVideos) {
+            val existingIds = current.videos.map { it.id }.toSet()
+            val missingVideos = seed.videos.filter { it.id !in existingIds }
+            if (needsPlaylist || missingVideos.isNotEmpty()) {
+                val videos = when {
+                    current.videos.isEmpty() && seed.videos.isNotEmpty() -> seed.videos
+                    missingVideos.isNotEmpty() -> current.videos + missingVideos
+                    else -> current.videos
+                }
                 byId[seed.id] = current.copy(
                     youtubePlaylistId = if (needsPlaylist) seed.youtubePlaylistId else current.youtubePlaylistId,
-                    videos = if (needsVideos) seed.videos else current.videos,
+                    videos = videos,
                     sourceType = when {
                         needsPlaylist -> SourceType.YOUTUBE_PLAYLIST
-                        needsVideos -> seed.sourceType
                         else -> current.sourceType
                     },
                     iconRes = if (current.iconRes == 0) seed.iconRes else current.iconRes
