@@ -21,10 +21,11 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | Spacetoon | Official Spacetoon Arabic uploads |
 | Sara & Duck | Official Sarah & Duck uploads + starter episodes |
 | Peppa Pig | Official Peppa uploads |
-| Arabic Cartoons | Mansour Adventures playlist |
-| Learn Arabic | One4kids (Zaky) uploads + starter videos |
+| Arabic Cartoons | Mansour playlist + Adam & Mishmish starters |
+| Learn Arabic | Curated Arabic learning video IDs + One4kids sync |
 | Mini Muslim | MiniMuslims uploads + starter songs |
-| Islamic Kids | Omar & Hana uploads |
+| Islamic Kids | Omar & Hana starters + uploads sync |
+| Playtime | Toddler LEGO / Play-Doh / marble-run curated IDs |
 
 Parent can change any playlist, add video IDs, or add direct MP4/HLS URLs.
 
