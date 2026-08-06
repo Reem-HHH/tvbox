@@ -16,6 +16,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
@@ -51,11 +52,20 @@ class PlayerActivity : AppCompatActivity() {
         )
         ImmersiveMode.apply(this)
 
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    finish()
+                }
+            }
+        )
+
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
         val youtubeId = intent.getStringExtra(EXTRA_YOUTUBE_ID)
         val directUrl = intent.getStringExtra(EXTRA_DIRECT_URL)
 
-        if (!title.isNullOrBlank()) {
+        if (title.isNotBlank()) {
             titleOverlay.text = title
             titleOverlay.visibility = View.VISIBLE
             handler.postDelayed({ titleOverlay.visibility = View.GONE }, 3_000)
@@ -65,6 +75,30 @@ class PlayerActivity : AppCompatActivity() {
             !youtubeId.isNullOrBlank() -> playYoutube(youtubeId)
             MediaUrlValidator.isDirectMediaUrl(directUrl) -> playDirect(directUrl!!)
             else -> finish()
+        }
+
+        // Transparent touch layer: play/pause without opening YouTube chrome
+        val tapLayer = View(this).apply {
+            isClickable = true
+            isFocusable = false
+            setOnClickListener { togglePlayback() }
+        }
+        container.addView(
+            tapLayer,
+            FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+            )
+        )
+    }
+
+    private fun togglePlayback() {
+        player?.let { it.playWhenReady = !it.isPlaying }
+        webView?.evaluateJavascript("toggle()", null)
+        if (titleOverlay.text.isNotBlank()) {
+            titleOverlay.visibility = View.VISIBLE
+            handler.removeCallbacksAndMessages(null)
+            handler.postDelayed({ titleOverlay.visibility = View.GONE }, 2_000)
         }
     }
 
@@ -78,6 +112,7 @@ class PlayerActivity : AppCompatActivity() {
             settings.allowFileAccess = false
             settings.allowContentAccess = false
             settings.cacheMode = WebSettings.LOAD_DEFAULT
+            // Touch handled by overlay; keep WebView from stealing browser gestures
             setOnTouchListener { _, _ -> true }
             webChromeClient = WebChromeClient()
             webViewClient = WebViewClient()
@@ -85,6 +120,7 @@ class PlayerActivity : AppCompatActivity() {
         webView = wv
         container.addView(
             wv,
+            0,
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -133,6 +169,7 @@ class PlayerActivity : AppCompatActivity() {
         view.player = exo
         container.addView(
             view,
+            0,
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT
@@ -167,8 +204,7 @@ class PlayerActivity : AppCompatActivity() {
                 true
             }
             RemoteAction.TogglePlayPause -> {
-                player?.let { it.playWhenReady = !it.isPlaying }
-                webView?.evaluateJavascript("toggle()", null)
+                togglePlayback()
                 true
             }
             RemoteAction.SeekForward -> {

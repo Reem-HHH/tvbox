@@ -4,12 +4,10 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Bundle
-import android.text.InputType
 import android.view.KeyEvent
 import android.view.View
-import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -20,8 +18,8 @@ import ae.kiddytube.app.catalog.ApiKeyResolver
 import ae.kiddytube.app.catalog.CatalogSettings
 import ae.kiddytube.app.catalog.SyncStatus
 import ae.kiddytube.app.launcher.ImmersiveMode
-import ae.kiddytube.app.parent.ParentActivity
 import ae.kiddytube.app.parent.ParentPinManager
+import ae.kiddytube.app.parent.ParentUnlockCoordinator
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import kotlinx.coroutines.delay
@@ -33,8 +31,10 @@ class ChannelGridActivity : AppCompatActivity() {
     private lateinit var emptyMessage: TextView
     private lateinit var brandTitle: TextView
     private lateinit var syncStatus: TextView
+    private lateinit var parentSettings: ImageButton
     private lateinit var adapter: ChannelGridAdapter
     private lateinit var pinManager: ParentPinManager
+    private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
     private var settings: CatalogSettings = CatalogSettings()
 
@@ -45,14 +45,17 @@ class ChannelGridActivity : AppCompatActivity() {
         emptyMessage = findViewById(R.id.emptyMessage)
         brandTitle = findViewById(R.id.brandTitle)
         syncStatus = findViewById(R.id.syncStatus)
+        parentSettings = findViewById(R.id.parentSettings)
         brandTitle.text = getString(R.string.app_name)
 
         pinManager = ParentPinManager()
+        parentUnlock = ParentUnlockCoordinator(this, pinManager)
         remote = RemoteKeyHandler(
             pinManager,
             getSystemService(AUDIO_SERVICE) as AudioManager,
             consumeBack = true
         )
+        parentSettings.setOnClickListener { parentUnlock.beginParentAccess() }
 
         adapter = ChannelGridAdapter { channel ->
             startActivity(
@@ -70,6 +73,7 @@ class ChannelGridActivity : AppCompatActivity() {
         lifecycleScope.launch {
             settings = (application as KiddyTubeApp).catalogRepository.settingsFlow.first()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
+            parentUnlock.updatePinManager(pinManager)
             remote = RemoteKeyHandler(
                 pinManager,
                 getSystemService(AUDIO_SERVICE) as AudioManager,
@@ -81,7 +85,7 @@ class ChannelGridActivity : AppCompatActivity() {
     }
 
     private suspend fun runLaunchSync() {
-        showSyncChip(getString(R.string.sync_updating), sticky = true)
+        showSyncChip(getString(R.string.sync_updating))
         val repo = (application as KiddyTubeApp).catalogRepository
         val result = repo.refreshAllPlaylists()
         settings = repo.current()
@@ -96,7 +100,7 @@ class ChannelGridActivity : AppCompatActivity() {
         }
         val stickyNoKey = result.status == SyncStatus.SKIPPED_NO_KEY &&
             settings.channels.any { it.enabled && it.videos.isEmpty() }
-        showSyncChip(message, sticky = stickyNoKey)
+        showSyncChip(message)
         if (!stickyNoKey) {
             delay(2800)
             if (syncStatus.text == message) {
@@ -105,10 +109,9 @@ class ChannelGridActivity : AppCompatActivity() {
         }
     }
 
-    private fun showSyncChip(text: String, sticky: Boolean) {
+    private fun showSyncChip(text: String) {
         syncStatus.text = text
         syncStatus.visibility = View.VISIBLE
-        syncStatus.alpha = if (sticky) 1f else 1f
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -148,7 +151,7 @@ class ChannelGridActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP) {
             if (remote.handleKeyUp(event.keyCode) is RemoteAction.ParentTriggered) {
-                beginParentAccess()
+                parentUnlock.beginParentAccess()
                 return true
             }
         }
@@ -158,48 +161,12 @@ class ChannelGridActivity : AppCompatActivity() {
         val action = remote.handleKeyDown(event.keyCode, event) ?: return super.dispatchKeyEvent(event)
         return when (action) {
             RemoteAction.ParentTriggered -> {
-                beginParentAccess()
+                parentUnlock.beginParentAccess()
                 true
             }
             RemoteAction.Consume -> true
             else -> super.dispatchKeyEvent(event)
         }
-    }
-
-    private fun beginParentAccess() {
-        val now = System.currentTimeMillis()
-        pinManager.refreshLockout(now)
-        if (pinManager.isLockedOut(now)) return
-        val input = EditText(this).apply {
-            inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
-        }
-        AlertDialog.Builder(this)
-            .setTitle(R.string.parent_pin_title)
-            .setView(input)
-            .setPositiveButton(R.string.unlock) { dialog, _ ->
-                val pin = input.text.toString()
-                lifecycleScope.launch {
-                    val repo = (application as KiddyTubeApp).catalogRepository
-                    val latest = repo.current()
-                    if (pinManager.verifyPin(pin, latest.pinSalt, latest.pinHash)) {
-                        pinManager.registerSuccess()
-                        repo.update { it.copy(failCount = 0, lockedUntilMs = 0L) }
-                        dialog.dismiss()
-                        startActivity(Intent(this@ChannelGridActivity, ParentActivity::class.java))
-                    } else {
-                        val locked = pinManager.registerFailure(System.currentTimeMillis())
-                        repo.update {
-                            it.copy(
-                                failCount = pinManager.failureCount,
-                                lockedUntilMs = pinManager.lockedUntilMs
-                            )
-                        }
-                        if (locked) dialog.dismiss()
-                    }
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
     }
 
     override fun onResume() {

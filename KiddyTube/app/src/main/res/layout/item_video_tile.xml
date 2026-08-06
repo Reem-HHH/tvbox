@@ -7,9 +7,10 @@
     android:clipChildren="false"
     android:clipToPadding="false"
     android:focusable="true"
-    android:focusableInTouchMode="true"
+    android:focusableInTouchMode="false"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="12dp"
+    android:clickable="true">
 
     <ImageView
         android:id="@+id/videoThumb"

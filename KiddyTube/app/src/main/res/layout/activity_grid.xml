@@ -30,6 +30,7 @@
             android:id="@+id/syncStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
             android:background="@drawable/sync_chip_bg"
             android:fontFamily="sans-serif-medium"
             android:paddingStart="16dp"
@@ -40,6 +41,18 @@
             android:textColor="@color/ink_muted"
             android:textSize="@dimen/sync_chip_text"
             android:visibility="gone" />
+
+        <ImageButton
+            android:id="@+id/parentSettings"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="@drawable/parent_settings_bg"
+            android:contentDescription="@string/parent_settings"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:padding="12dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_parent_lock" />
     </LinearLayout>
 
     <FrameLayout
