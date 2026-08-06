@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="sky_top">#4EC3FF</color>
-    <color name="sky_mid">#7DD3FC</color>
-    <color name="sun_bottom">#FFE566</color>
-    <color name="ink_black">#1A1A1A</color>
+    <color name="sky_top">#D9F0FF</color>
+    <color name="sky_mid">#E8F6FF</color>
+    <color name="sky_bottom">#F4FAFF</color>
+    <color name="ink_navy">#1E3A5F</color>
+    <color name="ink_muted">#5A7394</color>
     <color name="card_white">#FFFFFF</color>
-    <color name="focus_yellow">#FFE566</color>
-    <color name="chip_bg">#FFF8E7</color>
-    <color name="title_shadow">#33000000</color>
-    <color name="empty_text">#1A1A1A</color>
-    <color name="player_overlay_bg">#E61A1A1A</color>
+    <color name="card_border">#E5EEF6</color>
+    <color name="focus_sky">#5EB6FF</color>
+    <color name="chip_frost">#F2FFFFFF</color>
+    <color name="chip_border">#D6E8F7</color>
+    <color name="empty_text">#1E3A5F</color>
+    <color name="player_chip_bg">#CCFFFFFF</color>
+    <color name="player_chip_text">#1E3A5F</color>
+    <!-- Kept for any lingering refs -->
+    <color name="ink_black">@color/ink_navy</color>
+    <color name="focus_yellow">@color/focus_sky</color>
+    <color name="chip_bg">@color/chip_frost</color>
+    <color name="title_shadow">#00000000</color>
+    <color name="sun_bottom">@color/sky_bottom</color>
+    <color name="player_overlay_bg">#99000000</color>
 </resources>

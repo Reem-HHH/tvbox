@@ -4,6 +4,6 @@
         android:angle="270"
         android:startColor="@color/sky_top"
         android:centerColor="@color/sky_mid"
-        android:endColor="@color/sun_bottom"
+        android:endColor="@color/sky_bottom"
         android:type="linear" />
 </shape>

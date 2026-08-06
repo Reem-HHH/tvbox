@@ -9,19 +9,14 @@
     android:focusable="true"
     android:focusableInTouchMode="true"
     android:orientation="vertical"
-    android:padding="10dp">
+    android:padding="12dp">
 
-    <FrameLayout
+    <ImageView
+        android:id="@+id/channelIcon"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/channel_image_height">
-
-        <ImageView
-            android:id="@+id/channelIcon"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:contentDescription="@null"
-            android:scaleType="centerCrop" />
-    </FrameLayout>
+        android:layout_height="@dimen/channel_image_height"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop" />
 
     <TextView
         android:id="@+id/channelTitle"
@@ -29,9 +24,9 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:ellipsize="end"
-        android:fontFamily="sans-serif-black"
+        android:fontFamily="sans-serif-medium"
         android:gravity="center"
         android:maxLines="2"
-        android:textColor="@color/ink_black"
+        android:textColor="@color/ink_navy"
         android:textSize="@dimen/channel_title_size" />
 </LinearLayout>
