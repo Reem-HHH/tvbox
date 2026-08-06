@@ -39,7 +39,10 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 4
+    const val SEED_VERSION = 5
+
+    /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
+    private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
 
     fun seed(): List<ContentChannel> = listOf(
         playlistChannel(
@@ -49,12 +52,34 @@ object DefaultChannels {
             order = 0,
             playlistId = uploadsOf("UCelJG1JV-pKYGOG3AM17Wvg")
         ),
-        playlistChannel(
+        ContentChannel(
             id = "spacetoon",
-            title = "Spacetoon",
-            icon = R.drawable.tile_spacetoon,
-            order = 1,
-            playlistId = uploadsOf("UCuQKih3Ac3NABADQKQdeV6A")
+            title = "Spacetoon Songs",
+            iconRes = R.drawable.tile_spacetoon,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            youtubePlaylistId = null,
+            sortOrder = 1,
+            videos = listOf(
+                yt("-_Kz-hseLkc", "كتاب الله"),
+                yt("YoAU-tciuVs", "يا طيبة — المدينة المنورة"),
+                yt("g7LjhyO7CEw", "رمضان أقبل طيباً"),
+                yt("INZMVhnVlRM", "أهلاً رمضان يا شهر الإحسان"),
+                yt("BojfVe5G6GM", "هلال رمضان — يوسف إسلام"),
+                yt("Jh4gl0obMK0", "رمضان 2020 — أطل الفجر بالبشر")
+            )
+        ),
+        ContentChannel(
+            id = "moda_modi",
+            title = "مودا مودي",
+            iconRes = R.drawable.tile_moda_modi,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 2,
+            videos = listOf(
+                yt("V2upg7iZvT0", "مودا مودي — وأتى رمضان"),
+                yt("_SdwG5nE0Ik", "مودا مودي — رمضان عاد"),
+                yt("7DUiKe_UneA", "عائلة مودا مودي — رمضان تجلّى"),
+                yt("8cRwwgOzHF4", "أغنية عيد الفطر من مودا مودي")
+            )
         ),
         ContentChannel(
             id = "sara_duck",
@@ -62,7 +87,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_sara_duck,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UC3OUMU3s7Oy6Ta0wnpZFBWw"),
-            sortOrder = 2,
+            sortOrder = 3,
             videos = listOf(
                 yt("EOj_7ZYmCOI", "Cheer Up Donkey — Sarah & Duck"),
                 yt("e69BdjwjDxk", "Bouncy Ball — Sarah & Duck"),
@@ -73,7 +98,7 @@ object DefaultChannels {
             id = "peppa",
             title = "Peppa Pig",
             icon = R.drawable.tile_peppa,
-            order = 3,
+            order = 4,
             playlistId = uploadsOf("UCAOtE1V7Ots4DjM8JLlrYgg")
         ),
         ContentChannel(
@@ -82,7 +107,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_arabic,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = "PLrEO7bVLqAMv5bDvRaHYxXZyLatDuFRKF",
-            sortOrder = 4,
+            sortOrder = 5,
             videos = listOf(
                 yt("FurzMF0L6QI", "Animal Sounds Songs (68 min) — Adam & Mishmish"),
                 yt("docDippkI-Q", "Farm Animal Songs — Adam & Mishmish"),
@@ -95,7 +120,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UC5vfWTTPnKdFp-8s0KbqJhw"),
-            sortOrder = 5,
+            sortOrder = 6,
             videos = listOf(
                 yt("EI3yLs6A-Qk", "Learn Arabic Colors — Kiki wa Nadoush"),
                 yt("LocumA_zI0c", "Learn Colors with Cars — Zakaria"),
@@ -115,7 +140,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_mini_muslim,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UCIDYe6rgdROl77DDevNIcPA"),
-            sortOrder = 6,
+            sortOrder = 7,
             videos = listOf(
                 yt("4VpiuY_C5Ok", "Ramadan Around The World — MiniMuslims"),
                 yt("vB3ffnqdNVs", "Islamic Songs for Kids (45 min) — MiniMuslims"),
@@ -128,7 +153,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_islamic,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UC178EmfQAV3OT-UpuO6WUMg"),
-            sortOrder = 7,
+            sortOrder = 8,
             videos = listOf(
                 yt("T6ggVnk1JZg", "Omar & Hana 15 Minutes Song"),
                 yt("iJtM9bzScJY", "Omar & Hana — Dua & Salah (Acapella)"),
@@ -141,7 +166,7 @@ object DefaultChannels {
             title = "Playtime",
             iconRes = R.drawable.tile_playtime,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 8,
+            sortOrder = 9,
             videos = listOf(
                 yt("w7aZLVaLTlM", "LEGO DUPLO Vehicles & Colors"),
                 yt("01JxHFDBdzE", "LEGO DUPLO Creative Animals Unbox"),
@@ -170,20 +195,34 @@ object DefaultChannels {
                 byId[seed.id] = seed
                 continue
             }
+
+            // Drop the broad Spacetoon uploads feed when upgrading to curated songs.
+            val clearSpacetoonUploads = seed.id == "spacetoon" &&
+                seed.youtubePlaylistId.isNullOrBlank() &&
+                current.youtubePlaylistId == SPACETOON_UPLOADS_PLAYLIST
+
             val needsPlaylist = current.youtubePlaylistId.isNullOrBlank() &&
                 !seed.youtubePlaylistId.isNullOrBlank()
             val existingIds = current.videos.map { it.id }.toSet()
             val missingVideos = seed.videos.filter { it.id !in existingIds }
-            if (needsPlaylist || missingVideos.isNotEmpty()) {
+
+            if (clearSpacetoonUploads || needsPlaylist || missingVideos.isNotEmpty()) {
                 val videos = when {
+                    clearSpacetoonUploads -> seed.videos
                     current.videos.isEmpty() && seed.videos.isNotEmpty() -> seed.videos
                     missingVideos.isNotEmpty() -> current.videos + missingVideos
                     else -> current.videos
                 }
                 byId[seed.id] = current.copy(
-                    youtubePlaylistId = if (needsPlaylist) seed.youtubePlaylistId else current.youtubePlaylistId,
+                    title = if (clearSpacetoonUploads) seed.title else current.title,
+                    youtubePlaylistId = when {
+                        clearSpacetoonUploads -> null
+                        needsPlaylist -> seed.youtubePlaylistId
+                        else -> current.youtubePlaylistId
+                    },
                     videos = videos,
                     sourceType = when {
+                        clearSpacetoonUploads -> seed.sourceType
                         needsPlaylist -> SourceType.YOUTUBE_PLAYLIST
                         else -> current.sourceType
                     },

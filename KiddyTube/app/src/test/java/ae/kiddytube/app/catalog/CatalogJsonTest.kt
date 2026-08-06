@@ -1,5 +1,6 @@
 package ae.kiddytube.app.catalog
 
+import ae.kiddytube.app.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -25,13 +26,43 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionFourOrganizesCuratedVideos() {
-        assertEquals(4, DefaultChannels.SEED_VERSION)
+    fun seedVersionFiveSpacetoonSongsAndModaModi() {
+        assertEquals(5, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
+        val songs = seed.first { it.id == "spacetoon" }
+        assertEquals("Spacetoon Songs", songs.title)
+        assertTrue(songs.youtubePlaylistId.isNullOrBlank())
+        assertTrue(songs.videos.any { it.id == "-_Kz-hseLkc" })
+        assertTrue(songs.videos.any { it.id == "YoAU-tciuVs" })
+        assertTrue(songs.videos.none { it.id == "V2upg7iZvT0" })
+
+        val moda = seed.first { it.id == "moda_modi" }
+        assertEquals("مودا مودي", moda.title)
+        assertTrue(moda.videos.any { it.id == "V2upg7iZvT0" })
+        assertTrue(moda.videos.any { it.id == "8cRwwgOzHF4" })
         assertTrue(seed.any { it.id == "playtime" })
-        assertTrue(seed.first { it.id == "learn_arabic" }.videos.size >= 10)
-        assertTrue(seed.first { it.id == "islamic_kids" }.videos.any { it.id == "T6ggVnk1JZg" })
-        assertTrue(seed.first { it.id == "playtime" }.videos.any { it.id == "F4ICHmkVGtQ" })
+    }
+
+    @Test
+    fun mergeClearsOldSpacetoonUploadsPlaylist() {
+        val existing = listOf(
+            ContentChannel(
+                id = "spacetoon",
+                title = "Spacetoon",
+                iconRes = R.drawable.tile_spacetoon,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "UUuQKih3Ac3NABADQKQdeV6A",
+                videos = listOf(VideoItem("old", "Old dump", youtubeVideoId = "old")),
+                sortOrder = 1
+            )
+        )
+        val merged = DefaultChannels.mergeSeedUpdates(existing)
+        val songs = merged.first { it.id == "spacetoon" }
+        assertEquals("Spacetoon Songs", songs.title)
+        assertTrue(songs.youtubePlaylistId.isNullOrBlank())
+        assertTrue(songs.videos.any { it.id == "-_Kz-hseLkc" })
+        assertTrue(songs.videos.none { it.id == "old" })
+        assertTrue(merged.any { it.id == "moda_modi" })
     }
 
     @Test

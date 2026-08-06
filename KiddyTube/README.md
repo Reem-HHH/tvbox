@@ -18,7 +18,8 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | Channel | Starter source |
 |---------|----------------|
 | Barney | Scholastic Barney songs channel uploads |
-| Spacetoon | Official Spacetoon Arabic uploads |
+| Spacetoon Songs | Curated Spacetoon Ramadan / يا طيبة songs (no full-channel dump) |
+| مودا مودي | Toddler Spacetoon cartoon songs |
 | Sara & Duck | Official Sarah & Duck uploads + starter episodes |
 | Peppa Pig | Official Peppa uploads |
 | Arabic Cartoons | Mansour playlist + Adam & Mishmish starters |
