@@ -14,6 +14,12 @@ class MediaUrlValidatorTest {
     }
 
     @Test
+    fun rejectsHttpCleartext() {
+        assertFalse(MediaUrlValidator.isDirectMediaUrl("http://cdn.example.com/a.mp4"))
+        assertFalse(MediaUrlValidator.isDirectMediaUrl("http://192.168.1.10/kids.m3u8"))
+    }
+
+    @Test
     fun rejectsDriveViewAndYoutubeWatch() {
         assertFalse(
             MediaUrlValidator.isDirectMediaUrl(
@@ -35,6 +41,15 @@ class YoutubeUrlParserTest {
         )
         assertEquals("dQw4w9WgXcQ", YoutubeUrlParser.extractVideoId("https://youtu.be/dQw4w9WgXcQ"))
         assertNull(YoutubeUrlParser.extractVideoId("nope"))
+    }
+
+    @Test
+    fun validatesElevenCharIdsOnly() {
+        assertTrue(YoutubeUrlParser.isValidVideoId("dQw4w9WgXcQ"))
+        assertFalse(YoutubeUrlParser.isValidVideoId("short"))
+        assertFalse(YoutubeUrlParser.isValidVideoId("too_long_id!!"))
+        assertFalse(YoutubeUrlParser.isValidVideoId("bad id!!!!"))
+        assertFalse(YoutubeUrlParser.isValidVideoId(null))
     }
 
     @Test

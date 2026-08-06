@@ -57,8 +57,8 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionNineIncludesDancingFruit() {
-        assertEquals(9, DefaultChannels.SEED_VERSION)
+    fun seedVersionTenIncludesDancingFruit() {
+        assertEquals(10, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -78,6 +78,7 @@ class CatalogJsonTest {
         val dora = seed.first { it.id == "dora" }
         assertEquals("Dora the Explorer", dora.title)
         assertEquals("UUkvPyGW-gsYucCK37UR0q2g", dora.youtubePlaylistId)
+        assertFalse(dora.followUploads)
 
         val fulla = seed.first { it.id == "fulla" }
         assertEquals("Fulla / فلة", fulla.title)
@@ -188,24 +189,49 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun mergeSeedUpdatesFillsEmptyPlaylists() {
-        val empty = DefaultChannels.seed().map {
-            it.copy(youtubePlaylistId = null, videos = emptyList())
-        }
-        val merged = DefaultChannels.mergeSeedUpdates(empty)
-        assertTrue(merged.any { !it.youtubePlaylistId.isNullOrBlank() })
-        assertTrue(merged.first { it.id == "sara_duck" }.videos.isNotEmpty() ||
-            !merged.first { it.id == "sara_duck" }.youtubePlaylistId.isNullOrBlank())
-        assertTrue(!merged.first { it.id == "omar_hana" }.youtubePlaylistId.isNullOrBlank())
-    }
-
-    @Test
     fun mergePreservesParentPlaylistOverride() {
         val existing = DefaultChannels.seed().map {
             if (it.id == "peppa") it.copy(youtubePlaylistId = "PLcustomParent") else it
         }
         val merged = DefaultChannels.mergeSeedUpdates(existing)
         assertEquals("PLcustomParent", merged.first { it.id == "peppa" }.youtubePlaylistId)
+    }
+
+    @Test
+    fun mergeDoesNotReattachClearedParentPlaylist() {
+        val existing = DefaultChannels.seed().map {
+            if (it.id == "peppa") {
+                it.copy(
+                    youtubePlaylistId = null,
+                    videos = it.videos.ifEmpty {
+                        listOf(VideoItem("manual1", "Kept", youtubeVideoId = "manual1", manual = true))
+                    },
+                    playlistManagedByParent = true
+                )
+            } else it
+        }
+        val merged = DefaultChannels.mergeSeedUpdates(existing)
+        val peppa = merged.first { it.id == "peppa" }
+        assertTrue(peppa.youtubePlaylistId.isNullOrBlank())
+        assertTrue(peppa.playlistManagedByParent)
+    }
+
+    @Test
+    fun mergeSeedUpdatesFillsEmptyUnmanagedPlaylists() {
+        val empty = DefaultChannels.seed().map {
+            it.copy(
+                youtubePlaylistId = null,
+                videos = emptyList(),
+                playlistManagedByParent = false
+            )
+        }
+        val merged = DefaultChannels.mergeSeedUpdates(empty)
+        assertTrue(merged.any { !it.youtubePlaylistId.isNullOrBlank() })
+        assertTrue(
+            merged.first { it.id == "sara_duck" }.videos.isNotEmpty() ||
+                !merged.first { it.id == "sara_duck" }.youtubePlaylistId.isNullOrBlank()
+        )
+        assertTrue(!merged.first { it.id == "omar_hana" }.youtubePlaylistId.isNullOrBlank())
     }
 
     @Test
@@ -256,5 +282,45 @@ class CatalogJsonTest {
         val decoded = CatalogJson.decode("not-json")
         assertTrue(decoded.isNotEmpty())
         assertEquals(DefaultChannels.seed().size, decoded.size)
+    }
+
+    @Test
+    fun corruptJsonDecodeOrNullReturnsNull() {
+        assertEquals(null, CatalogJson.decodeOrNull("not-json"))
+        assertEquals(null, CatalogJson.decodeOrNull("{broken"))
+        assertEquals(null, CatalogJson.decodeOrNull(""))
+    }
+
+    @Test
+    fun roundTripFollowUploadsAndManualFlags() {
+        val channel = DefaultChannels.seed().first().copy(
+            followUploads = true,
+            playlistManagedByParent = true,
+            videos = listOf(
+                VideoItem(
+                    id = "dQw4w9WgXcQ",
+                    title = "Manual",
+                    youtubeVideoId = "dQw4w9WgXcQ",
+                    manual = true
+                )
+            )
+        )
+        val decoded = CatalogJson.decode(CatalogJson.encode(listOf(channel))).first()
+        assertTrue(decoded.followUploads)
+        assertTrue(decoded.playlistManagedByParent)
+        assertTrue(decoded.videos.first().manual)
+        assertEquals(DefaultChannels.iconResFor(channel.id), decoded.iconRes)
+        assertEquals(decoded.iconRes, decoded.resolvedIconRes())
+    }
+
+    @Test
+    fun resolvedIconResFallsBackById() {
+        val channel = ContentChannel(
+            id = "barney",
+            title = "Barney",
+            iconRes = 0,
+            sourceType = SourceType.YOUTUBE_PLAYLIST
+        )
+        assertEquals(DefaultChannels.iconResFor("barney"), channel.resolvedIconRes())
     }
 }

@@ -65,4 +65,24 @@ class ParentPinManagerTest {
         assertFalse(gate.recordKeyAndCheckTrigger(22, 2, alt))
         assertTrue(gate.recordKeyAndCheckTrigger(23, 3, alt))
     }
+
+    @Test
+    fun konamiBufferKeepsLongerAlternateSequence() {
+        val gate = ParentPinManager()
+        // Alternate longer than Konami (9) — buffer must not drop early keys.
+        val alt = IntArray(12) { 100 + it }
+        alt.forEachIndexed { index, code ->
+            val matched = gate.recordKeyAndCheckTrigger(code, 1000L + index, alt)
+            if (index < alt.lastIndex) assertFalse(matched)
+            else assertTrue(matched)
+        }
+    }
+
+    @Test
+    fun defaultPinRejectedFormatEdgeCases() {
+        assertTrue(ParentPinManager.isValidPinFormat(ParentPinManager.DEFAULT_DEV_PIN))
+        assertFalse(ParentPinManager.isValidPinFormat("12"))
+        assertFalse(ParentPinManager.isValidPinFormat("abcd"))
+        assertFalse(ParentPinManager.isValidPinFormat(null))
+    }
 }
