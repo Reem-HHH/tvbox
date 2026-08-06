@@ -2,27 +2,36 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="8dp"
+    android:layout_margin="@dimen/tile_margin"
+    android:background="@drawable/tile_focus_bg"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:focusable="true"
     android:focusableInTouchMode="true"
-    android:background="@drawable/tile_focus_bg">
+    android:orientation="vertical"
+    android:padding="10dp">
 
-    <ImageView
-        android:id="@+id/channelIcon"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:scaleType="centerCrop"
-        android:contentDescription="@null" />
+        android:layout_height="@dimen/channel_image_height">
+
+        <ImageView
+            android:id="@+id/channelIcon"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@null"
+            android:scaleType="centerCrop" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/channelTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:ellipsize="end"
+        android:fontFamily="sans-serif-black"
         android:gravity="center"
         android:maxLines="2"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp" />
+        android:textColor="@color/ink_black"
+        android:textSize="@dimen/channel_title_size" />
 </LinearLayout>

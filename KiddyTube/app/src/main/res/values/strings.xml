@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KiddyTube</string>
+    <string name="empty_channels">No channels yet.\nAsk a parent to turn some on.</string>
+    <string name="empty_videos">No videos yet.\nAsk a parent to sync playlists or add links.</string>
+    <string name="empty_no_api_key">Connect to the internet and set a YouTube API key in Parent settings to fill channels.</string>
+    <string name="sync_updating">Updating channels…</string>
+    <string name="sync_updated">Channels updated!</string>
+    <string name="sync_offline">Offline — showing saved videos</string>
+    <string name="sync_no_key">Add YouTube API key in Parent settings</string>
+    <string name="sync_failed">Couldn\'t update — showing saved videos</string>
+    <string name="sync_skipped">Channels are up to date</string>
+    <string name="parent_pin_title">Parent PIN</string>
+    <string name="unlock">Unlock</string>
+    <string name="cancel">Cancel</string>
+</resources>

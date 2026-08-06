@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.R
 import coil.load
+import coil.transform.RoundedCornersTransformation
 
 class VideoGridAdapter(
     private val onClick: (VideoItem) -> Unit
@@ -38,6 +39,7 @@ class VideoGridAdapter(
     inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val thumb: ImageView = itemView.findViewById(R.id.videoThumb)
         private val title: TextView = itemView.findViewById(R.id.videoTitle)
+        private val cornerPx = itemView.resources.displayMetrics.density * 14f
 
         fun bind(video: VideoItem) {
             title.text = video.title
@@ -45,12 +47,18 @@ class VideoGridAdapter(
             if (url != null) {
                 thumb.load(url) {
                     crossfade(true)
-                    placeholder(R.drawable.tile_focus_bg)
+                    placeholder(R.drawable.tile_placeholder)
+                    error(R.drawable.tile_placeholder)
+                    transformations(RoundedCornersTransformation(cornerPx))
                 }
             } else {
-                thumb.setImageResource(R.drawable.tile_focus_bg)
+                thumb.setImageResource(R.drawable.tile_placeholder)
             }
             itemView.setOnClickListener { onClick(video) }
+            itemView.setOnFocusChangeListener { v, hasFocus ->
+                val scale = if (hasFocus) 1.08f else 1f
+                v.animate().scaleX(scale).scaleY(scale).setDuration(120).start()
+            }
         }
     }
 }

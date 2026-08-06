@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import ae.kiddytube.app.sources.NetworkStatus
 import ae.kiddytube.app.sources.YoutubeCatalogSource
 import ae.kiddytube.app.sources.YoutubeUrlParser
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +42,9 @@ class CatalogRepository(private val context: Context) {
 
     fun enabledChannels(settings: CatalogSettings): List<ContentChannel> =
         settings.channels.filter { it.enabled }.sortedBy { it.sortOrder }
+
+    fun effectiveApiKey(settings: CatalogSettings): String? =
+        ApiKeyResolver.effective(settings.youtubeApiKey)
 
     suspend fun update(transform: (CatalogSettings) -> CatalogSettings) {
         val next = transform(current())
@@ -88,33 +92,74 @@ class CatalogRepository(private val context: Context) {
         val settings = current()
         val channel = settings.channels.firstOrNull { it.id == channelId }
             ?: return Result.failure(IllegalArgumentException("Unknown channel"))
-        val apiKey = settings.youtubeApiKey
+        val apiKey = ApiKeyResolver.effective(settings.youtubeApiKey)
         val playlistId = channel.youtubePlaylistId
 
-        val videos = when {
-            !apiKey.isNullOrBlank() && !playlistId.isNullOrBlank() -> {
-                youtube.fetchPlaylistVideos(apiKey, playlistId)
+        if (apiKey.isNullOrBlank() || playlistId.isNullOrBlank()) {
+            return if (channel.videos.isNotEmpty()) {
+                Result.success(channel.videos.size)
+            } else {
+                Result.failure(IllegalStateException("Missing API key or playlist"))
             }
-            channel.videos.isNotEmpty() -> channel.videos
-            else -> emptyList()
         }
 
-        updateChannel(channelId) { it.copy(videos = videos) }
-        update { it.copy(lastSyncMs = System.currentTimeMillis()) }
-        return Result.success(videos.size)
+        val fetched = youtube.fetchPlaylistVideos(apiKey, playlistId)
+        return fetched.fold(
+            onSuccess = { videos ->
+                updateChannel(channelId) { it.copy(videos = videos, sourceType = SourceType.YOUTUBE_PLAYLIST) }
+                Result.success(videos.size)
+            },
+            onFailure = { Result.failure(it) }
+        )
     }
 
-    suspend fun refreshAllPlaylists(force: Boolean = false): Int {
+    suspend fun refreshAllPlaylists(force: Boolean = false): SyncResult {
         val settings = current()
+        val apiKey = ApiKeyResolver.effective(settings.youtubeApiKey)
+        if (apiKey.isNullOrBlank()) {
+            return SyncResult(SyncStatus.SKIPPED_NO_KEY, message = "No YouTube API key")
+        }
+        if (!NetworkStatus.isOnline(context)) {
+            return SyncResult(SyncStatus.SKIPPED_OFFLINE, message = "Offline")
+        }
+
+        val needsForce = force || settings.channels.any {
+            it.enabled && !it.youtubePlaylistId.isNullOrBlank() && it.videos.isEmpty()
+        }
         val now = System.currentTimeMillis()
-        if (!force && now - settings.lastSyncMs < syncTtlMs) return 0
-        if (settings.youtubeApiKey.isNullOrBlank()) return 0
-        var total = 0
+        if (!needsForce && now - settings.lastSyncMs < syncTtlMs) {
+            return SyncResult(SyncStatus.SKIPPED_TTL, message = "Within sync TTL")
+        }
+
+        var updatedChannels = 0
+        var totalVideos = 0
+        var failures = 0
         for (ch in settings.channels) {
             if (!ch.enabled || ch.youtubePlaylistId.isNullOrBlank()) continue
-            refreshChannelFromYoutube(ch.id).getOrNull()?.let { total += it }
+            val result = refreshChannelFromYoutube(ch.id)
+            if (result.isSuccess) {
+                updatedChannels++
+                totalVideos += result.getOrDefault(0)
+            } else {
+                failures++
+            }
         }
-        return total
+
+        if (updatedChannels > 0) {
+            update { it.copy(lastSyncMs = System.currentTimeMillis()) }
+            return SyncResult(
+                status = SyncStatus.UPDATED,
+                updatedChannels = updatedChannels,
+                videoCount = totalVideos
+            )
+        }
+        if (failures > 0) {
+            return SyncResult(
+                status = SyncStatus.FAILED,
+                message = "Sync failed for $failures channel(s)"
+            )
+        }
+        return SyncResult(SyncStatus.SKIPPED_TTL, message = "Nothing to sync")
     }
 
     suspend fun setPlaylistId(channelId: String, raw: String?) {

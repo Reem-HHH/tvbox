@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
 class VideoLibraryActivity : AppCompatActivity() {
     private lateinit var grid: RecyclerView
     private lateinit var emptyMessage: TextView
+    private lateinit var brandTitle: TextView
+    private lateinit var syncStatus: TextView
     private lateinit var adapter: VideoGridAdapter
     private lateinit var remote: RemoteKeyHandler
     private var channelId: String = ""
@@ -32,10 +34,15 @@ class VideoLibraryActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_grid)
         channelId = intent.getStringExtra(EXTRA_CHANNEL_ID).orEmpty()
-        title = intent.getStringExtra(EXTRA_CHANNEL_TITLE)
+        val channelTitle = intent.getStringExtra(EXTRA_CHANNEL_TITLE).orEmpty()
 
         grid = findViewById(R.id.grid)
         emptyMessage = findViewById(R.id.emptyMessage)
+        brandTitle = findViewById(R.id.brandTitle)
+        syncStatus = findViewById(R.id.syncStatus)
+        brandTitle.text = channelTitle.ifBlank { getString(R.string.app_name) }
+        syncStatus.visibility = View.GONE
+
         remote = RemoteKeyHandler(
             ParentPinManager(),
             getSystemService(AUDIO_SERVICE) as AudioManager
@@ -44,6 +51,8 @@ class VideoLibraryActivity : AppCompatActivity() {
         adapter = VideoGridAdapter { video -> openPlayer(video) }
         grid.adapter = adapter
         grid.layoutManager = GridLayoutManager(this, spanCount())
+        grid.clipChildren = false
+        grid.clipToPadding = false
         ImmersiveMode.apply(this)
         reload()
     }
@@ -65,8 +74,7 @@ class VideoLibraryActivity : AppCompatActivity() {
             val videos = channel?.videos.orEmpty()
             adapter.submit(videos)
             emptyMessage.visibility = if (videos.isEmpty()) View.VISIBLE else View.GONE
-            emptyMessage.text =
-                "No videos yet.\nAsk a parent to add a YouTube playlist or video links."
+            emptyMessage.text = getString(R.string.empty_videos)
         }
     }
 

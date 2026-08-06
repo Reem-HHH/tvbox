@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="sky_top">#4EC3FF</color>
+    <color name="sky_mid">#7DD3FC</color>
+    <color name="sun_bottom">#FFE566</color>
+    <color name="ink_black">#1A1A1A</color>
+    <color name="card_white">#FFFFFF</color>
+    <color name="focus_yellow">#FFE566</color>
+    <color name="chip_bg">#FFF8E7</color>
+    <color name="title_shadow">#33000000</color>
+    <color name="empty_text">#1A1A1A</color>
+    <color name="player_overlay_bg">#E61A1A1A</color>
+</resources>

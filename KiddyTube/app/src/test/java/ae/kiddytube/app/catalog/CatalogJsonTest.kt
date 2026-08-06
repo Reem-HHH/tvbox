@@ -25,13 +25,32 @@ class CatalogJsonTest {
     }
 
     @Test
+    fun seedVersionThreeAllChannelsHavePlaylists() {
+        assertEquals(3, DefaultChannels.SEED_VERSION)
+        DefaultChannels.seed().forEach { ch ->
+            assertTrue("${ch.id} needs a playlist for auto-sync", !ch.youtubePlaylistId.isNullOrBlank())
+        }
+    }
+
+    @Test
     fun mergeSeedUpdatesFillsEmptyPlaylists() {
         val empty = DefaultChannels.seed().map {
             it.copy(youtubePlaylistId = null, videos = emptyList())
         }
         val merged = DefaultChannels.mergeSeedUpdates(empty)
         assertTrue(merged.any { !it.youtubePlaylistId.isNullOrBlank() })
-        assertTrue(merged.first { it.id == "sara_duck" }.videos.isNotEmpty())
+        assertTrue(merged.first { it.id == "sara_duck" }.videos.isNotEmpty() ||
+            !merged.first { it.id == "sara_duck" }.youtubePlaylistId.isNullOrBlank())
+        assertTrue(!merged.first { it.id == "learn_arabic" }.youtubePlaylistId.isNullOrBlank())
+    }
+
+    @Test
+    fun mergePreservesParentPlaylistOverride() {
+        val existing = DefaultChannels.seed().map {
+            if (it.id == "peppa") it.copy(youtubePlaylistId = "PLcustomParent") else it
+        }
+        val merged = DefaultChannels.mergeSeedUpdates(existing)
+        assertEquals("PLcustomParent", merged.first { it.id == "peppa" }.youtubePlaylistId)
     }
 
     @Test

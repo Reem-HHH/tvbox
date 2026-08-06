@@ -18,6 +18,7 @@ import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.CatalogSettings
 import ae.kiddytube.app.catalog.ContentChannel
+import ae.kiddytube.app.catalog.SyncStatus
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.sources.MediaUrlValidator
 import ae.kiddytube.app.ui.ChannelGridActivity
@@ -52,13 +53,35 @@ class ParentActivity : AppCompatActivity() {
         if (!settings.pinChangedFromDefault) {
             addInfo("Change default PIN (2580) before release-ready.")
         }
-        addInfo("YouTube API key: ${if (settings.youtubeApiKey.isNullOrBlank()) "not set" else "set"}")
+        addInfo(
+            "YouTube API key: ${
+                when {
+                    !settings.youtubeApiKey.isNullOrBlank() -> "set (parent)"
+                    !BuildConfig.YOUTUBE_API_KEY.isNullOrBlank() -> "set (build)"
+                    else -> "not set"
+                }
+            }"
+        )
 
         addButton("Set YouTube API key") { promptApiKey() }
         addButton("Refresh all playlists") {
             lifecycleScope.launch {
-                val n = (application as KiddyTubeApp).catalogRepository.refreshAllPlaylists(force = true)
-                toast("Synced $n videos")
+                val result =
+                    (application as KiddyTubeApp).catalogRepository.refreshAllPlaylists(force = true)
+                toast(
+                    when (result.status) {
+                        SyncStatus.UPDATED ->
+                            "Synced ${result.videoCount} videos in ${result.updatedChannels} channels"
+                        SyncStatus.SKIPPED_NO_KEY ->
+                            "Set a YouTube API key first"
+                        SyncStatus.SKIPPED_OFFLINE ->
+                            "Offline — try again when connected"
+                        SyncStatus.FAILED ->
+                            result.message ?: "Sync failed"
+                        SyncStatus.SKIPPED_TTL ->
+                            "Already up to date"
+                    }
+                )
                 reload()
             }
         }

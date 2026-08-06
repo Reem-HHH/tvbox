@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="grid_padding">20dp</dimen>
+    <dimen name="tile_margin">8dp</dimen>
+    <dimen name="tile_corner">20dp</dimen>
+    <dimen name="tile_stroke">4dp</dimen>
+    <dimen name="tile_stroke_focused">6dp</dimen>
+    <dimen name="channel_image_height">110dp</dimen>
+    <dimen name="video_image_height">128dp</dimen>
+    <dimen name="brand_title_size">36sp</dimen>
+    <dimen name="channel_title_size">18sp</dimen>
+    <dimen name="video_title_size">15sp</dimen>
+    <dimen name="sync_chip_text">14sp</dimen>
+</resources>

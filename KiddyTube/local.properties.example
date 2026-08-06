@@ -1,0 +1,5 @@
+# Copy to local.properties (gitignored) or merge these keys into the existing file.
+# Never commit real API keys.
+
+# sdk.dir=/path/to/Android/sdk
+YOUTUBE_API_KEY=

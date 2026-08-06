@@ -16,18 +16,23 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
+import ae.kiddytube.app.catalog.ApiKeyResolver
 import ae.kiddytube.app.catalog.CatalogSettings
+import ae.kiddytube.app.catalog.SyncStatus
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentActivity
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ChannelGridActivity : AppCompatActivity() {
     private lateinit var grid: RecyclerView
     private lateinit var emptyMessage: TextView
+    private lateinit var brandTitle: TextView
+    private lateinit var syncStatus: TextView
     private lateinit var adapter: ChannelGridAdapter
     private lateinit var pinManager: ParentPinManager
     private lateinit var remote: RemoteKeyHandler
@@ -38,6 +43,9 @@ class ChannelGridActivity : AppCompatActivity() {
         setContentView(R.layout.activity_grid)
         grid = findViewById(R.id.grid)
         emptyMessage = findViewById(R.id.emptyMessage)
+        brandTitle = findViewById(R.id.brandTitle)
+        syncStatus = findViewById(R.id.syncStatus)
+        brandTitle.text = getString(R.string.app_name)
 
         pinManager = ParentPinManager()
         remote = RemoteKeyHandler(
@@ -55,6 +63,8 @@ class ChannelGridActivity : AppCompatActivity() {
         }
         grid.adapter = adapter
         grid.layoutManager = GridLayoutManager(this, spanCount())
+        grid.clipToPadding = false
+        grid.clipChildren = false
 
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
@@ -66,10 +76,39 @@ class ChannelGridActivity : AppCompatActivity() {
                 consumeBack = true
             )
             render()
-            (application as KiddyTubeApp).catalogRepository.refreshAllPlaylists()
-            settings = (application as KiddyTubeApp).catalogRepository.current()
-            render()
+            runLaunchSync()
         }
+    }
+
+    private suspend fun runLaunchSync() {
+        showSyncChip(getString(R.string.sync_updating), sticky = true)
+        val repo = (application as KiddyTubeApp).catalogRepository
+        val result = repo.refreshAllPlaylists()
+        settings = repo.current()
+        render()
+
+        val message = when (result.status) {
+            SyncStatus.UPDATED -> getString(R.string.sync_updated)
+            SyncStatus.SKIPPED_OFFLINE -> getString(R.string.sync_offline)
+            SyncStatus.SKIPPED_NO_KEY -> getString(R.string.sync_no_key)
+            SyncStatus.FAILED -> getString(R.string.sync_failed)
+            SyncStatus.SKIPPED_TTL -> getString(R.string.sync_skipped)
+        }
+        val stickyNoKey = result.status == SyncStatus.SKIPPED_NO_KEY &&
+            settings.channels.any { it.enabled && it.videos.isEmpty() }
+        showSyncChip(message, sticky = stickyNoKey)
+        if (!stickyNoKey) {
+            delay(2800)
+            if (syncStatus.text == message) {
+                syncStatus.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun showSyncChip(text: String, sticky: Boolean) {
+        syncStatus.text = text
+        syncStatus.visibility = View.VISIBLE
+        syncStatus.alpha = if (sticky) 1f else 1f
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -92,8 +131,18 @@ class ChannelGridActivity : AppCompatActivity() {
         val repo = (application as KiddyTubeApp).catalogRepository
         val channels = repo.enabledChannels(settings)
         adapter.submit(channels)
-        emptyMessage.visibility = if (channels.isEmpty()) View.VISIBLE else View.GONE
-        emptyMessage.text = "No channels enabled.\nUse parent settings to add content."
+        if (channels.isEmpty()) {
+            emptyMessage.visibility = View.VISIBLE
+            emptyMessage.text = getString(R.string.empty_channels)
+        } else {
+            emptyMessage.visibility = View.GONE
+            val noKey = ApiKeyResolver.effective(settings.youtubeApiKey).isNullOrBlank()
+            val emptyLibs = channels.all { it.videos.isEmpty() }
+            if (noKey && emptyLibs) {
+                emptyMessage.visibility = View.VISIBLE
+                emptyMessage.text = getString(R.string.empty_no_api_key)
+            }
+        }
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
@@ -125,9 +174,9 @@ class ChannelGridActivity : AppCompatActivity() {
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
         }
         AlertDialog.Builder(this)
-            .setTitle("Parent PIN")
+            .setTitle(R.string.parent_pin_title)
             .setView(input)
-            .setPositiveButton("Unlock") { dialog, _ ->
+            .setPositiveButton(R.string.unlock) { dialog, _ ->
                 val pin = input.text.toString()
                 lifecycleScope.launch {
                     val repo = (application as KiddyTubeApp).catalogRepository
@@ -149,7 +198,7 @@ class ChannelGridActivity : AppCompatActivity() {
                     }
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 

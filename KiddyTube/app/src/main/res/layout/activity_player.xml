@@ -11,12 +11,17 @@
 
     <TextView
         android:id="@+id/titleOverlay"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="#66000000"
-        android:padding="16dp"
-        android:textColor="#FFFFFF"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="20dp"
+        android:background="@drawable/player_title_chip"
+        android:fontFamily="sans-serif-black"
+        android:paddingStart="18dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="12dp"
+        android:textColor="@color/ink_black"
         android:textSize="18sp"
         android:visibility="gone" />
 </FrameLayout>

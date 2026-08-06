@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.R
 import coil.load
+import coil.transform.RoundedCornersTransformation
 
 class ChannelGridAdapter(
     private val onClick: (ContentChannel) -> Unit
@@ -38,6 +39,7 @@ class ChannelGridAdapter(
     inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val icon: ImageView = itemView.findViewById(R.id.channelIcon)
         private val title: TextView = itemView.findViewById(R.id.channelTitle)
+        private val cornerPx = itemView.resources.displayMetrics.density * 14f
 
         fun bind(channel: ContentChannel) {
             title.text = channel.title
@@ -47,11 +49,18 @@ class ChannelGridAdapter(
                     crossfade(true)
                     placeholder(channel.iconRes)
                     error(channel.iconRes)
+                    transformations(RoundedCornersTransformation(cornerPx))
                 }
             } else {
-                icon.setImageResource(channel.iconRes)
+                icon.load(channel.iconRes) {
+                    transformations(RoundedCornersTransformation(cornerPx))
+                }
             }
             itemView.setOnClickListener { onClick(channel) }
+            itemView.setOnFocusChangeListener { v, hasFocus ->
+                val scale = if (hasFocus) 1.08f else 1f
+                v.animate().scaleX(scale).scaleY(scale).setDuration(120).start()
+            }
         }
     }
 }

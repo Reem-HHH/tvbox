@@ -3,6 +3,13 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { localProperties.load(it) }
+}
+def youtubeApiKey = (localProperties.getProperty('YOUTUBE_API_KEY') ?: '').replace('"', '\\"')
+
 android {
     namespace 'ae.kiddytube.app'
     compileSdk 35
@@ -11,9 +18,10 @@ android {
         applicationId 'ae.kiddytube.app'
         minSdk 23
         targetSdk 35
-        versionCode 5
-        versionName '2.0.0-browser'
+        versionCode 6
+        versionName '2.1.0-chunky'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+        buildConfigField 'String', 'YOUTUBE_API_KEY', "\"${youtubeApiKey}\""
     }
 
     buildTypes {

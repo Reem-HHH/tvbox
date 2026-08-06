@@ -39,7 +39,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 2
+    const val SEED_VERSION = 3
 
     fun seed(): List<ContentChannel> = listOf(
         playlistChannel(
@@ -62,9 +62,10 @@ object DefaultChannels {
             id = "sara_duck",
             title = "Sara & Duck",
             iconRes = R.drawable.tile_sara_duck,
-            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            // Official Sarah & Duck YouTube channel uploads
+            youtubePlaylistId = uploadsOf("UC3OUMU3s7Oy6Ta0wnpZFBWw"),
             sortOrder = 2,
-            // Starter episodes from official CBeebies (replace/extend in parent UI)
             videos = listOf(
                 yt("EOj_7ZYmCOI", "Cheer Up Donkey — Sarah & Duck"),
                 yt("e69BdjwjDxk", "Bouncy Ball — Sarah & Duck"),
@@ -91,7 +92,9 @@ object DefaultChannels {
             id = "learn_arabic",
             title = "Learn Arabic",
             iconRes = R.drawable.tile_learn_arabic,
-            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            // One4kids (Zaky) official uploads
+            youtubePlaylistId = uploadsOf("UC5vfWTTPnKdFp-8s0KbqJhw"),
             sortOrder = 5,
             videos = listOf(
                 yt("6e145BWP7ng", "Arabic Alphabet Song with Zaky"),
