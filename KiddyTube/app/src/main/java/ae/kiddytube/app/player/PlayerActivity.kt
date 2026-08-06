@@ -50,7 +50,7 @@ class PlayerActivity : AppCompatActivity() {
             ParentPinManager(),
             getSystemService(AUDIO_SERVICE) as AudioManager
         )
-        ImmersiveMode.apply(this)
+        ImmersiveMode.apply(this, forceImmersive = true)
 
         onBackPressedDispatcher.addCallback(
             this,

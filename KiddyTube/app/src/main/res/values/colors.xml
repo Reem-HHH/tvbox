@@ -10,10 +10,10 @@
     <color name="focus_sky">#5EB6FF</color>
     <color name="chip_frost">#F2FFFFFF</color>
     <color name="chip_border">#D6E8F7</color>
+    <color name="chip_pressed">#E8F4FF</color>
     <color name="empty_text">#1E3A5F</color>
     <color name="player_chip_bg">#CCFFFFFF</color>
     <color name="player_chip_text">#1E3A5F</color>
-    <!-- Kept for any lingering refs -->
     <color name="ink_black">@color/ink_navy</color>
     <color name="focus_yellow">@color/focus_sky</color>
     <color name="chip_bg">@color/chip_frost</color>
