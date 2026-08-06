@@ -18,6 +18,8 @@ class CatalogJsonTest {
         "barney",
         "spacetoon",
         "moda_modi",
+        "dora",
+        "fulla",
         "sara_duck",
         "peppa",
         "adam_mishmish",
@@ -53,8 +55,8 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionSixIsPerShow() {
-        assertEquals(6, DefaultChannels.SEED_VERSION)
+    fun seedVersionSevenIncludesDoraAndFulla() {
+        assertEquals(7, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -70,6 +72,14 @@ class CatalogJsonTest {
         val moda = seed.first { it.id == "moda_modi" }
         assertEquals("مودا مودي", moda.title)
         assertTrue(moda.videos.any { it.id == "V2upg7iZvT0" })
+
+        val dora = seed.first { it.id == "dora" }
+        assertEquals("Dora the Explorer", dora.title)
+        assertEquals("UUkvPyGW-gsYucCK37UR0q2g", dora.youtubePlaylistId)
+
+        val fulla = seed.first { it.id == "fulla" }
+        assertEquals("Fulla / فلة", fulla.title)
+        assertEquals("UUif2El0DYcJY9uP4DrST0Bw", fulla.youtubePlaylistId)
 
         assertTrue(seed.first { it.id == "adam_mishmish" }.videos.any { it.id == "FurzMF0L6QI" })
         assertTrue(seed.first { it.id == "zakaria" }.videos.size == 5)
@@ -98,6 +108,8 @@ class CatalogJsonTest {
         assertTrue(songs.videos.any { it.id == "-_Kz-hseLkc" })
         assertTrue(songs.videos.none { it.id == "old" })
         assertTrue(merged.any { it.id == "moda_modi" })
+        assertTrue(merged.any { it.id == "dora" })
+        assertTrue(merged.any { it.id == "fulla" })
         assertTrue(merged.any { it.id == "omar_hana" })
     }
 

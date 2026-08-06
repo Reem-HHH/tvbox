@@ -22,6 +22,8 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | Barney & Friends | Official uploads playlist |
 | Spacetoon أناشيد | Curated nasheed IDs only |
 | مودا مودي | Curated Ramadan / Eid songs |
+| Dora the Explorer | Official Dora & Friends uploads |
+| Fulla / فلة | Official قناة فلة uploads |
 | Sarah & Duck | Official uploads + starter episodes |
 | Peppa Pig | Official uploads playlist |
 | Adam & Mishmish | Curated song / letters videos |

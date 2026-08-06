@@ -9,6 +9,8 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [barney](barney.md) | Barney & Friends | High | Medium–High | Uploads playlist can include extras |
 | [spacetoon](spacetoon.md) | Spacetoon أناشيد | High | High | Curated nasheeds only |
 | [moda_modi](moda_modi.md) | مودا مودي | High | High | Ramadan / Eid songs |
+| [dora](dora.md) | Dora the Explorer | High | Medium–High | Girl + backpack; official EN uploads |
+| [fulla](fulla.md) | Fulla / فلة | High | High | Official قناة فلة; toy ads possible |
 | [sara_duck](sara_duck.md) | Sarah & Duck | High | High | Gentle preschool |
 | [peppa](peppa.md) | Peppa Pig | High | Medium–High | Mild sibling squabbles |
 | [adam_mishmish](adam_mishmish.md) | Adam & Mishmish | High | High | Arabic songs / letters |
