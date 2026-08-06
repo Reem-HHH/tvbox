@@ -18,7 +18,10 @@ class KidsTvApp : Application() {
         super.onCreate()
         catalogRepository = CatalogRepository(this)
         DiagnosticsLogger.get(this).logStartup()
-        appScope.launch { ensureDefaultPin() }
+        appScope.launch {
+            ensureDefaultPin()
+            catalogRepository.applySeedUpgradeIfNeeded()
+        }
     }
 
     private suspend fun ensureDefaultPin() {

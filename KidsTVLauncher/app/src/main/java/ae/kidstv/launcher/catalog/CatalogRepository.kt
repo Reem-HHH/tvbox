@@ -26,7 +26,8 @@ data class CatalogSettings(
     val failCount: Int = 0,
     val lockedUntilMs: Long = 0L,
     val releaseReady: Boolean = false,
-    val lastSyncMs: Long = 0L
+    val lastSyncMs: Long = 0L,
+    val seedVersion: Int = 0
 )
 
 class CatalogRepository(private val context: Context) {
@@ -53,6 +54,20 @@ class CatalogRepository(private val context: Context) {
             prefs[Keys.LOCKED_UNTIL] = next.lockedUntilMs
             prefs[Keys.RELEASE_READY] = next.releaseReady
             prefs[Keys.LAST_SYNC] = next.lastSyncMs
+            prefs[Keys.SEED_VERSION] = next.seedVersion
+        }
+    }
+
+    /** One-time merge of newer hardcoded playlist seeds into existing catalogs. */
+    suspend fun applySeedUpgradeIfNeeded() {
+        val settings = current()
+        if (settings.seedVersion >= DefaultChannels.SEED_VERSION) return
+        val merged = DefaultChannels.mergeSeedUpdates(settings.channels)
+        update {
+            it.copy(
+                channels = merged,
+                seedVersion = DefaultChannels.SEED_VERSION
+            )
         }
     }
 
@@ -148,7 +163,8 @@ class CatalogRepository(private val context: Context) {
             failCount = this[Keys.FAIL_COUNT] ?: 0,
             lockedUntilMs = this[Keys.LOCKED_UNTIL] ?: 0L,
             releaseReady = this[Keys.RELEASE_READY] ?: false,
-            lastSyncMs = this[Keys.LAST_SYNC] ?: 0L
+            lastSyncMs = this[Keys.LAST_SYNC] ?: 0L,
+            seedVersion = this[Keys.SEED_VERSION] ?: 0
         )
     }
 
@@ -162,5 +178,6 @@ class CatalogRepository(private val context: Context) {
         val LOCKED_UNTIL = longPreferencesKey("locked_until")
         val RELEASE_READY = booleanPreferencesKey("release_ready")
         val LAST_SYNC = longPreferencesKey("last_sync")
+        val SEED_VERSION = intPreferencesKey("seed_version")
     }
 }

@@ -11,7 +11,20 @@ A simple Android TV / tablet kids app: browse channel thumbnails, open a video l
 2. **Library** — video thumbnails + titles for that channel
 3. **Player** — YouTube clean IFrame *or* Media3 for direct MP4/HLS URLs
 
-Content is **parent-curated only** (playlist IDs, video IDs, or direct URLs). No automated content filter — you choose what is allowed.
+Content is **parent-curated**. Fresh installs ship with starter YouTube playlist IDs / starter videos for each channel (official uploads where available). Always review content in the parent dashboard before kids use it daily.
+
+| Channel | Starter source |
+|---------|----------------|
+| Barney | Scholastic Barney songs channel uploads |
+| Spacetoon | Official Spacetoon Arabic uploads |
+| Sara & Duck | Starter CBeebies episode IDs |
+| Peppa Pig | Official Peppa uploads |
+| Arabic Cartoons | Mansour Adventures playlist |
+| Learn Arabic | Zaky / Kalam starter videos |
+| Mini Muslim | MiniMuslims uploads + starter songs |
+| Islamic Kids | Omar & Hana uploads |
+
+Parent can change any playlist, add video IDs, or add direct MP4/HLS URLs.
 
 ## Parent access
 
