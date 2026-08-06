@@ -2,10 +2,37 @@ package ae.kiddytube.app.catalog
 
 import ae.kiddytube.app.R
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CatalogJsonTest {
+    private val retiredIds = setOf(
+        "arabic_cartoons",
+        "learn_arabic",
+        "islamic_kids",
+        "playtime"
+    )
+
+    private val showIds = listOf(
+        "barney",
+        "spacetoon",
+        "moda_modi",
+        "sara_duck",
+        "peppa",
+        "adam_mishmish",
+        "kiki_nadoush",
+        "zakaria",
+        "rayan",
+        "sweet_kalima",
+        "abata",
+        "lego_duplo",
+        "play_doh",
+        "toy_kitchen",
+        "mini_muslim",
+        "omar_hana"
+    )
+
     @Test
     fun roundTripSeedChannels() {
         val seed = DefaultChannels.seed()
@@ -13,7 +40,7 @@ class CatalogJsonTest {
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
         assertEquals("barney", decoded.first().id)
-        assertEquals("playtime", decoded.last().id)
+        assertEquals("omar_hana", decoded.last().id)
     }
 
     @Test
@@ -26,21 +53,29 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionFiveSpacetoonSongsAndModaModi() {
-        assertEquals(5, DefaultChannels.SEED_VERSION)
+    fun seedVersionSixIsPerShow() {
+        assertEquals(6, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
+        assertEquals(showIds, seed.map { it.id })
+        retiredIds.forEach { id ->
+            assertFalse(seed.any { it.id == id })
+        }
+
         val songs = seed.first { it.id == "spacetoon" }
-        assertEquals("Spacetoon Songs", songs.title)
+        assertEquals("Spacetoon أناشيد", songs.title)
         assertTrue(songs.youtubePlaylistId.isNullOrBlank())
         assertTrue(songs.videos.any { it.id == "-_Kz-hseLkc" })
-        assertTrue(songs.videos.any { it.id == "YoAU-tciuVs" })
         assertTrue(songs.videos.none { it.id == "V2upg7iZvT0" })
 
         val moda = seed.first { it.id == "moda_modi" }
         assertEquals("مودا مودي", moda.title)
         assertTrue(moda.videos.any { it.id == "V2upg7iZvT0" })
-        assertTrue(moda.videos.any { it.id == "8cRwwgOzHF4" })
-        assertTrue(seed.any { it.id == "playtime" })
+
+        assertTrue(seed.first { it.id == "adam_mishmish" }.videos.any { it.id == "FurzMF0L6QI" })
+        assertTrue(seed.first { it.id == "zakaria" }.videos.size == 5)
+        assertTrue(seed.first { it.id == "lego_duplo" }.videos.any { it.id == "fwg0UIw0Efs" })
+        assertTrue(seed.first { it.id == "omar_hana" }.videos.any { it.id == "T6ggVnk1JZg" })
+        assertFalse(seed.first { it.id == "omar_hana" }.youtubePlaylistId.isNullOrBlank())
     }
 
     @Test
@@ -58,22 +93,66 @@ class CatalogJsonTest {
         )
         val merged = DefaultChannels.mergeSeedUpdates(existing)
         val songs = merged.first { it.id == "spacetoon" }
-        assertEquals("Spacetoon Songs", songs.title)
+        assertEquals("Spacetoon أناشيد", songs.title)
         assertTrue(songs.youtubePlaylistId.isNullOrBlank())
         assertTrue(songs.videos.any { it.id == "-_Kz-hseLkc" })
         assertTrue(songs.videos.none { it.id == "old" })
         assertTrue(merged.any { it.id == "moda_modi" })
+        assertTrue(merged.any { it.id == "omar_hana" })
+    }
+
+    @Test
+    fun mergeDropsRetiredGenericChannels() {
+        val legacy = listOf(
+            ContentChannel(
+                id = "arabic_cartoons",
+                title = "Arabic Cartoons",
+                iconRes = R.drawable.tile_arabic,
+                sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+                videos = listOf(VideoItem("x", "x", youtubeVideoId = "x")),
+                sortOrder = 5
+            ),
+            ContentChannel(
+                id = "learn_arabic",
+                title = "Learn Arabic",
+                iconRes = R.drawable.tile_learn_arabic,
+                sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+                sortOrder = 6
+            ),
+            ContentChannel(
+                id = "islamic_kids",
+                title = "Islamic Kids",
+                iconRes = R.drawable.tile_islamic,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "UUlegacy",
+                sortOrder = 8
+            ),
+            ContentChannel(
+                id = "playtime",
+                title = "Playtime",
+                iconRes = R.drawable.tile_playtime,
+                sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+                sortOrder = 9
+            )
+        )
+        val merged = DefaultChannels.mergeSeedUpdates(legacy)
+        retiredIds.forEach { id ->
+            assertFalse(merged.any { it.id == id })
+        }
+        assertTrue(merged.any { it.id == "adam_mishmish" })
+        assertTrue(merged.any { it.id == "omar_hana" })
+        assertTrue(merged.any { it.id == "lego_duplo" })
     }
 
     @Test
     fun mergeAppendsMissingSeedVideos() {
         val existing = DefaultChannels.seed().map {
-            if (it.id == "learn_arabic") {
+            if (it.id == "zakaria") {
                 it.copy(videos = listOf(it.videos.first()))
             } else it
         }
         val merged = DefaultChannels.mergeSeedUpdates(existing)
-        assertTrue(merged.first { it.id == "learn_arabic" }.videos.size > 1)
+        assertTrue(merged.first { it.id == "zakaria" }.videos.size > 1)
     }
 
     @Test
@@ -85,7 +164,7 @@ class CatalogJsonTest {
         assertTrue(merged.any { !it.youtubePlaylistId.isNullOrBlank() })
         assertTrue(merged.first { it.id == "sara_duck" }.videos.isNotEmpty() ||
             !merged.first { it.id == "sara_duck" }.youtubePlaylistId.isNullOrBlank())
-        assertTrue(!merged.first { it.id == "learn_arabic" }.youtubePlaylistId.isNullOrBlank())
+        assertTrue(!merged.first { it.id == "omar_hana" }.youtubePlaylistId.isNullOrBlank())
     }
 
     @Test
