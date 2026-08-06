@@ -9,6 +9,7 @@
         <item name="android:statusBarColor">@color/sky_top</item>
         <item name="android:windowBackground">@drawable/bg_sky_sun</item>
         <item name="android:textColorPrimary">@color/ink_navy</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
     </style>
 </resources>

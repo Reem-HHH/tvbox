@@ -126,7 +126,7 @@ class ChannelGridActivity : AppCompatActivity() {
         return when {
             isTv || widthDp >= 900 -> 6
             widthDp >= 600 -> 4
-            else -> 3
+            else -> 2
         }
     }
 
