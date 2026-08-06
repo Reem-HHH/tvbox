@@ -95,7 +95,7 @@ class CatalogRepository(private val context: Context) {
         val apiKey = ApiKeyResolver.effective(settings.youtubeApiKey)
         val playlistId = channel.youtubePlaylistId
 
-        if (apiKey.isNullOrBlank() || playlistId.isNullOrBlank()) {
+        if (apiKey.isNullOrBlank()) {
             return if (channel.videos.isNotEmpty()) {
                 Result.success(channel.videos.size)
             } else {
@@ -103,11 +103,42 @@ class CatalogRepository(private val context: Context) {
             }
         }
 
-        val fetched = youtube.fetchPlaylistVideos(apiKey, playlistId)
-        return fetched.fold(
-            onSuccess = { videos ->
-                updateChannel(channelId) { it.copy(videos = videos, sourceType = SourceType.YOUTUBE_PLAYLIST) }
-                Result.success(videos.size)
+        if (!playlistId.isNullOrBlank()) {
+            val fetched = youtube.fetchPlaylistVideos(apiKey, playlistId)
+            return fetched.fold(
+                onSuccess = { videos ->
+                    updateChannel(channelId) {
+                        it.copy(videos = videos.newestFirst(), sourceType = SourceType.YOUTUBE_PLAYLIST)
+                    }
+                    Result.success(videos.size)
+                },
+                onFailure = { Result.failure(it) }
+            )
+        }
+
+        val youtubeIds = channel.videos.mapNotNull { it.youtubeVideoId }.filter { it.isNotBlank() }
+        if (youtubeIds.isEmpty()) {
+            return if (channel.videos.isNotEmpty()) {
+                Result.success(channel.videos.size)
+            } else {
+                Result.failure(IllegalStateException("Missing API key or playlist"))
+            }
+        }
+
+        return youtube.fetchVideoDetails(apiKey, youtubeIds).fold(
+            onSuccess = { details ->
+                val byId = details.associateBy { it.id }
+                val enriched = channel.videos.map { existing ->
+                    val detail = byId[existing.youtubeVideoId ?: existing.id]
+                    if (detail == null) existing
+                    else existing.copy(
+                        title = detail.title.ifBlank { existing.title },
+                        thumbnailUrl = detail.thumbnailUrl ?: existing.thumbnailUrl,
+                        publishedAtMs = detail.publishedAtMs ?: existing.publishedAtMs
+                    )
+                }.newestFirst()
+                updateChannel(channelId) { it.copy(videos = enriched) }
+                Result.success(enriched.size)
             },
             onFailure = { Result.failure(it) }
         )
@@ -135,7 +166,10 @@ class CatalogRepository(private val context: Context) {
         var totalVideos = 0
         var failures = 0
         for (ch in settings.channels) {
-            if (!ch.enabled || ch.youtubePlaylistId.isNullOrBlank()) continue
+            if (!ch.enabled) continue
+            val hasPlaylist = !ch.youtubePlaylistId.isNullOrBlank()
+            val hasYoutubeVideos = ch.videos.any { !it.youtubeVideoId.isNullOrBlank() }
+            if (!hasPlaylist && !hasYoutubeVideos) continue
             val result = refreshChannelFromYoutube(ch.id)
             if (result.isSuccess) {
                 updatedChannels++
@@ -172,18 +206,28 @@ class CatalogRepository(private val context: Context) {
     suspend fun addManualVideoIds(channelId: String, csv: String) {
         val ids = YoutubeUrlParser.parseVideoIdsCsv(csv)
         if (ids.isEmpty()) return
-        val newVideos = youtube.videosFromIds(ids)
+        val apiKey = ApiKeyResolver.effective(current().youtubeApiKey)
+        val newVideos = if (!apiKey.isNullOrBlank()) {
+            youtube.fetchVideoDetails(apiKey, ids).getOrElse { youtube.videosFromIds(ids) }
+        } else {
+            youtube.videosFromIds(ids)
+        }
         updateChannel(channelId) { ch ->
-            val merged = (ch.videos + newVideos).distinctBy { it.id }
+            val merged = (ch.videos + newVideos).distinctBy { it.id }.newestFirst()
             ch.copy(videos = merged, sourceType = SourceType.YOUTUBE_VIDEO_LIST)
         }
     }
 
     suspend fun addDirectVideo(channelId: String, title: String, url: String) {
         val id = "direct_${System.currentTimeMillis()}"
-        val item = VideoItem(id = id, title = title.ifBlank { "Video" }, directUrl = url)
+        val item = VideoItem(
+            id = id,
+            title = title.ifBlank { "Video" },
+            directUrl = url,
+            publishedAtMs = System.currentTimeMillis()
+        )
         updateChannel(channelId) { ch ->
-            ch.copy(videos = ch.videos + item, sourceType = SourceType.DIRECT_URL)
+            ch.copy(videos = (ch.videos + item).newestFirst(), sourceType = SourceType.DIRECT_URL)
         }
     }
 

@@ -22,11 +22,15 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | Barney & Friends | Official uploads playlist |
 | Spacetoon أناشيد | Curated nasheed IDs only |
 | مودا مودي | Curated Ramadan / Eid songs |
+| Dora the Explorer | Official Dora & Friends uploads |
+| Fulla / فلة | Official قناة فلة uploads |
+| سمارتا وحقيبتها العجيبة | Curated Arabic Spacetoon episodes |
 | Sarah & Duck | Official uploads + starter episodes |
 | Peppa Pig | Official uploads playlist |
 | Adam & Mishmish | Curated song / letters videos |
 | Kiki wa Nadoush / Zakaria / Rayan / Sweet Kalima / Abata | Per-show Arabic learning clips |
 | LEGO DUPLO / Play-Doh / Toy Kitchen | Per-show toy play curated IDs |
+| Dancing Fruit | Curated Hey Bear Sensory dancing-fruit clips |
 | Mini Muslim | MiniMuslims uploads + starters |
 | Omar & Hana | Official uploads + starters |
 

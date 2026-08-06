@@ -14,7 +14,9 @@ data class VideoItem(
     val title: String,
     val thumbnailUrl: String? = null,
     val youtubeVideoId: String? = null,
-    val directUrl: String? = null
+    val directUrl: String? = null,
+    /** Epoch millis when the video was published on YouTube; null if unknown. */
+    val publishedAtMs: Long? = null
 ) {
     fun isYoutube(): Boolean = !youtubeVideoId.isNullOrBlank()
     fun isDirect(): Boolean = !directUrl.isNullOrBlank()
@@ -40,7 +42,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 6
+    const val SEED_VERSION = 9
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -90,13 +92,47 @@ object DefaultChannels {
                 yt("8cRwwgOzHF4", "أغنية عيد الفطر من مودا مودي")
             )
         ),
+        playlistChannel(
+            id = "dora",
+            title = "Dora the Explorer",
+            icon = R.drawable.tile_dora,
+            order = 3,
+            playlistId = uploadsOf("UCkvPyGW-gsYucCK37UR0q2g")
+        ),
+        playlistChannel(
+            id = "fulla",
+            title = "Fulla / فلة",
+            icon = R.drawable.tile_fulla,
+            order = 4,
+            playlistId = uploadsOf("UCif2El0DYcJY9uP4DrST0Bw")
+        ),
+        ContentChannel(
+            id = "smarta",
+            title = "سمارتا وحقيبتها العجيبة",
+            iconRes = R.drawable.tile_smarta,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 5,
+            videos = listOf(
+                yt("USLdtIWQrLU", "سمارتا — الحلقة 1"),
+                yt("efHkhsi675M", "سمارتا — الحلقة 2"),
+                yt("nP-F7A54oVc", "سمارتا — الحلقة 3"),
+                yt("xIFNnxZD5IQ", "ساعة من المغامرات — المجموعة الأولى"),
+                yt("Ui2P60B2WJE", "مجموعة الحلقات الثالثة"),
+                yt("rf8FgLed_E8", "مجموعة الحلقات الرابعة"),
+                yt("YgXdgZ2Wd0I", "مجموعة الحلقات الخامسة"),
+                yt("5xftaiEK_7Y", "مجموعة الحلقات السادسة"),
+                yt("nPBlRc5heBc", "مجموعة الحلقات السابعة"),
+                yt("wcIW_tbTB3M", "مجموعة الحلقات الثامنة"),
+                yt("kJULJaJjD4M", "مجموعة الحلقات العاشرة")
+            )
+        ),
         ContentChannel(
             id = "sara_duck",
             title = "Sarah & Duck",
             iconRes = R.drawable.tile_sara_duck,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UC3OUMU3s7Oy6Ta0wnpZFBWw"),
-            sortOrder = 3,
+            sortOrder = 6,
             videos = listOf(
                 yt("EOj_7ZYmCOI", "Cheer Up Donkey — Sarah & Duck"),
                 yt("e69BdjwjDxk", "Bouncy Ball — Sarah & Duck"),
@@ -107,7 +143,7 @@ object DefaultChannels {
             id = "peppa",
             title = "Peppa Pig",
             icon = R.drawable.tile_peppa,
-            order = 4,
+            order = 7,
             playlistId = uploadsOf("UCAOtE1V7Ots4DjM8JLlrYgg")
         ),
         ContentChannel(
@@ -115,7 +151,7 @@ object DefaultChannels {
             title = "Adam & Mishmish",
             iconRes = R.drawable.tile_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 5,
+            sortOrder = 8,
             videos = listOf(
                 yt("FurzMF0L6QI", "Animal Sounds Songs (68 min) — Adam & Mishmish"),
                 yt("docDippkI-Q", "Farm Animal Songs — Adam & Mishmish"),
@@ -127,7 +163,7 @@ object DefaultChannels {
             title = "Kiki wa Nadoush",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 6,
+            sortOrder = 9,
             videos = listOf(
                 yt("EI3yLs6A-Qk", "Learn Arabic Colors — Kiki wa Nadoush")
             )
@@ -137,7 +173,7 @@ object DefaultChannels {
             title = "Zakaria",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 7,
+            sortOrder = 10,
             videos = listOf(
                 yt("LocumA_zI0c", "Learn Colors with Cars — Zakaria"),
                 yt("sGw7Fs7oRvw", "Vehicle Names in Arabic — Zakaria"),
@@ -151,7 +187,7 @@ object DefaultChannels {
             title = "Rayan",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 8,
+            sortOrder = 11,
             videos = listOf(
                 yt("yPhFBBMWbPU", "Shapes & Directions in Arabic — Rayan")
             )
@@ -161,7 +197,7 @@ object DefaultChannels {
             title = "Sweet Kalima",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 9,
+            sortOrder = 12,
             videos = listOf(
                 yt("En3OJwCqHx8", "Shapes, Colors & Numbers — Sweet Kalima")
             )
@@ -171,7 +207,7 @@ object DefaultChannels {
             title = "Abata",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 10,
+            sortOrder = 13,
             videos = listOf(
                 yt("sVtaIloYxvw", "Arabic Alphabet with Chalk — Abata")
             )
@@ -181,7 +217,7 @@ object DefaultChannels {
             title = "LEGO DUPLO",
             iconRes = R.drawable.tile_playtime,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 11,
+            sortOrder = 14,
             videos = listOf(
                 yt("fwg0UIw0Efs", "LEGO DUPLO Numbers & Colors in Arabic"),
                 yt("w7aZLVaLTlM", "LEGO DUPLO Vehicles & Colors"),
@@ -196,7 +232,7 @@ object DefaultChannels {
             title = "Play-Doh",
             iconRes = R.drawable.tile_playtime,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 12,
+            sortOrder = 15,
             videos = listOf(
                 yt("2FyKZKNls4c", "Play-Doh Cookie Man & Shapes"),
                 yt("8581xy-tGqw", "Play-Doh Rainbow Ice Cream"),
@@ -209,10 +245,25 @@ object DefaultChannels {
             title = "Toy Kitchen",
             iconRes = R.drawable.tile_playtime,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 13,
+            sortOrder = 16,
             videos = listOf(
                 yt("mSUJM2naI7I", "Travel Kitchen Playset Unboxing"),
                 yt("TL3e2UZQxPE", "Kitchen Set & Toy Fruits")
+            )
+        ),
+        ContentChannel(
+            id = "dancing_fruit",
+            title = "Dancing Fruit",
+            iconRes = R.drawable.tile_dancing_fruit,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 17,
+            videos = listOf(
+                yt("7mR81x2Fk7g", "Dancing Fruit! — 1 Hour Mix — Hey Bear Sensory"),
+                yt("ALaQvK7KZOY", "Dance, Colors and Counting — Dancing Fruit & Funky Veggies"),
+                yt("kAxdvigZtw8", "Best of Dancing Fruit and Funky Veggies — Dance Party"),
+                yt("b65MoVwANq4", "Disco Fruit Party — Dancing Fruit with Cumbia"),
+                yt("KPP4Cfupzhs", "Smoothie Mix — Fun Dance Video"),
+                yt("xOUdk2LdXrs", "Let's Dance! — Avocadosaurus and Party Strawberries")
             )
         ),
         ContentChannel(
@@ -221,7 +272,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_mini_muslim,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UCIDYe6rgdROl77DDevNIcPA"),
-            sortOrder = 14,
+            sortOrder = 18,
             videos = listOf(
                 yt("4VpiuY_C5Ok", "Ramadan Around The World — MiniMuslims"),
                 yt("vB3ffnqdNVs", "Islamic Songs for Kids (45 min) — MiniMuslims"),
@@ -234,7 +285,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_islamic,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UC178EmfQAV3OT-UpuO6WUMg"),
-            sortOrder = 15,
+            sortOrder = 19,
             videos = listOf(
                 yt("T6ggVnk1JZg", "Omar & Hana 15 Minutes Song"),
                 yt("iJtM9bzScJY", "Omar & Hana — Dua & Salah (Acapella)"),
@@ -288,7 +339,7 @@ object DefaultChannels {
                         needsPlaylist -> seed.youtubePlaylistId
                         else -> current.youtubePlaylistId
                     },
-                    videos = videos,
+                    videos = videos.newestFirst(),
                     sourceType = when {
                         clearSpacetoonUploads -> seed.sourceType
                         needsPlaylist -> SourceType.YOUTUBE_PLAYLIST
@@ -334,3 +385,12 @@ fun VideoItem.youtubeThumbnail(): String? {
     val id = youtubeVideoId ?: return thumbnailUrl
     return YoutubeUrlParser.defaultThumbnail(id)
 }
+
+/** Newest YouTube uploads first; items without a known date keep relative order at the end. */
+fun List<VideoItem>.newestFirst(): List<VideoItem> =
+    mapIndexed { index, item -> index to item }
+        .sortedWith(
+            compareByDescending<Pair<Int, VideoItem>> { it.second.publishedAtMs ?: Long.MIN_VALUE }
+                .thenBy { it.first }
+        )
+        .map { it.second }

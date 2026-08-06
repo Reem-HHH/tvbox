@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.VideoItem
+import ae.kiddytube.app.catalog.newestFirst
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.parent.ParentUnlockCoordinator
@@ -96,7 +97,7 @@ class VideoLibraryActivity : AppCompatActivity() {
     private fun reload() {
         lifecycleScope.launch {
             val channel = (application as KiddyTubeApp).catalogRepository.channelById(channelId)
-            val videos = channel?.videos.orEmpty()
+            val videos = channel?.videos.orEmpty().newestFirst()
             adapter.submit(videos)
             emptyMessage.visibility = if (videos.isEmpty()) View.VISIBLE else View.GONE
             emptyMessage.text = getString(R.string.empty_videos)

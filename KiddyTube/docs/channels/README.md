@@ -9,6 +9,9 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [barney](barney.md) | Barney & Friends | High | Medium–High | Uploads playlist can include extras |
 | [spacetoon](spacetoon.md) | Spacetoon أناشيد | High | High | Curated nasheeds only |
 | [moda_modi](moda_modi.md) | مودا مودي | High | High | Ramadan / Eid songs |
+| [dora](dora.md) | Dora the Explorer | High | Medium–High | Girl + backpack; official EN uploads |
+| [fulla](fulla.md) | Fulla / فلة | High | High | Official قناة فلة; toy ads possible |
+| [smarta](smarta.md) | سمارتا وحقيبتها العجيبة | High | High | Spacetoon Arabic curated |
 | [sara_duck](sara_duck.md) | Sarah & Duck | High | High | Gentle preschool |
 | [peppa](peppa.md) | Peppa Pig | High | Medium–High | Mild sibling squabbles |
 | [adam_mishmish](adam_mishmish.md) | Adam & Mishmish | High | High | Arabic songs / letters |
@@ -20,6 +23,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [lego_duplo](lego_duplo.md) | LEGO DUPLO | High | Medium–High | Toy play / unboxings |
 | [play_doh](play_doh.md) | Play-Doh | High | Medium–High | Sensory craft play |
 | [toy_kitchen](toy_kitchen.md) | Toy Kitchen | High | Medium–High | Playset unboxings |
+| [dancing_fruit](dancing_fruit.md) | Dancing Fruit | High | Medium–High | Black-screen sensory fruit dance |
 | [mini_muslim](mini_muslim.md) | Mini Muslim | High | High | Islamic kids songs |
 | [omar_hana](omar_hana.md) | Omar & Hana | High | High | Islamic preschool series |
 

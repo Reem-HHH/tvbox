@@ -18,6 +18,9 @@ class CatalogJsonTest {
         "barney",
         "spacetoon",
         "moda_modi",
+        "dora",
+        "fulla",
+        "smarta",
         "sara_duck",
         "peppa",
         "adam_mishmish",
@@ -29,6 +32,7 @@ class CatalogJsonTest {
         "lego_duplo",
         "play_doh",
         "toy_kitchen",
+        "dancing_fruit",
         "mini_muslim",
         "omar_hana"
     )
@@ -53,8 +57,8 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionSixIsPerShow() {
-        assertEquals(6, DefaultChannels.SEED_VERSION)
+    fun seedVersionNineIncludesDancingFruit() {
+        assertEquals(9, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -70,6 +74,28 @@ class CatalogJsonTest {
         val moda = seed.first { it.id == "moda_modi" }
         assertEquals("مودا مودي", moda.title)
         assertTrue(moda.videos.any { it.id == "V2upg7iZvT0" })
+
+        val dora = seed.first { it.id == "dora" }
+        assertEquals("Dora the Explorer", dora.title)
+        assertEquals("UUkvPyGW-gsYucCK37UR0q2g", dora.youtubePlaylistId)
+
+        val fulla = seed.first { it.id == "fulla" }
+        assertEquals("Fulla / فلة", fulla.title)
+        assertEquals("UUif2El0DYcJY9uP4DrST0Bw", fulla.youtubePlaylistId)
+
+        val smarta = seed.first { it.id == "smarta" }
+        assertEquals("سمارتا وحقيبتها العجيبة", smarta.title)
+        assertTrue(smarta.youtubePlaylistId.isNullOrBlank())
+        assertTrue(smarta.videos.any { it.id == "USLdtIWQrLU" })
+        assertTrue(smarta.videos.any { it.id == "xIFNnxZD5IQ" })
+        assertEquals(11, smarta.videos.size)
+
+        val fruit = seed.first { it.id == "dancing_fruit" }
+        assertEquals("Dancing Fruit", fruit.title)
+        assertTrue(fruit.youtubePlaylistId.isNullOrBlank())
+        assertTrue(fruit.videos.any { it.id == "7mR81x2Fk7g" })
+        assertTrue(fruit.videos.any { it.id == "kAxdvigZtw8" })
+        assertEquals(6, fruit.videos.size)
 
         assertTrue(seed.first { it.id == "adam_mishmish" }.videos.any { it.id == "FurzMF0L6QI" })
         assertTrue(seed.first { it.id == "zakaria" }.videos.size == 5)
@@ -98,6 +124,9 @@ class CatalogJsonTest {
         assertTrue(songs.videos.any { it.id == "-_Kz-hseLkc" })
         assertTrue(songs.videos.none { it.id == "old" })
         assertTrue(merged.any { it.id == "moda_modi" })
+        assertTrue(merged.any { it.id == "dora" })
+        assertTrue(merged.any { it.id == "fulla" })
+        assertTrue(merged.any { it.id == "smarta" })
         assertTrue(merged.any { it.id == "omar_hana" })
     }
 
@@ -139,6 +168,9 @@ class CatalogJsonTest {
         retiredIds.forEach { id ->
             assertFalse(merged.any { it.id == id })
         }
+        assertTrue(merged.any { it.id == "dora" })
+        assertTrue(merged.any { it.id == "fulla" })
+        assertTrue(merged.any { it.id == "smarta" })
         assertTrue(merged.any { it.id == "adam_mishmish" })
         assertTrue(merged.any { it.id == "omar_hana" })
         assertTrue(merged.any { it.id == "lego_duplo" })
@@ -192,6 +224,31 @@ class CatalogJsonTest {
         assertEquals("PLtest123", decoded.youtubePlaylistId)
         assertEquals(1, decoded.videos.size)
         assertEquals("Sample", decoded.videos.first().title)
+    }
+
+    @Test
+    fun newestFirstOrdersByPublishedAt() {
+        val a = VideoItem("a", "Old", youtubeVideoId = "a", publishedAtMs = 1_000L)
+        val b = VideoItem("b", "New", youtubeVideoId = "b", publishedAtMs = 9_000L)
+        val c = VideoItem("c", "Unknown", youtubeVideoId = "c", publishedAtMs = null)
+        val sorted = listOf(a, c, b).newestFirst()
+        assertEquals(listOf("b", "a", "c"), sorted.map { it.id })
+    }
+
+    @Test
+    fun roundTripPublishedAtMs() {
+        val channel = DefaultChannels.seed().first().copy(
+            videos = listOf(
+                VideoItem(
+                    id = "vid1",
+                    title = "Dated",
+                    youtubeVideoId = "vid1",
+                    publishedAtMs = 1_700_000_000_000L
+                )
+            )
+        )
+        val decoded = CatalogJson.decode(CatalogJson.encode(listOf(channel))).first()
+        assertEquals(1_700_000_000_000L, decoded.videos.first().publishedAtMs)
     }
 
     @Test

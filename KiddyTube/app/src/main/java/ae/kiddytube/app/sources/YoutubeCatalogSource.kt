@@ -1,6 +1,7 @@
 package ae.kiddytube.app.sources
 
 import ae.kiddytube.app.catalog.VideoItem
+import ae.kiddytube.app.catalog.newestFirst
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -8,6 +9,9 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 class YoutubeCatalogSource {
     suspend fun fetchPlaylistVideos(
@@ -48,12 +52,15 @@ class YoutubeCatalogSource {
                     val thumbs = snippet.optJSONObject("thumbnails")
                     val thumb = thumbs?.optJSONObject("medium")?.optString("url")
                         ?: thumbs?.optJSONObject("default")?.optString("url")
+                    val published = content?.optString("videoPublishedAt")?.takeIf { it.isNotBlank() }
+                        ?: snippet.optString("publishedAt").takeIf { it.isNotBlank() }
                     items.add(
                         VideoItem(
                             id = videoId,
                             title = title,
                             thumbnailUrl = thumb,
-                            youtubeVideoId = videoId
+                            youtubeVideoId = videoId,
+                            publishedAtMs = parseIso8601ToMillis(published)
                         )
                     )
                 }
@@ -63,8 +70,59 @@ class YoutubeCatalogSource {
             if (pagesFetched == 0) {
                 Result.failure(IOException("No playlist response"))
             } else {
-                Result.success(items)
+                Result.success(items.newestFirst())
             }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Fetch snippet metadata (title, publish date, thumbnail) for video IDs.
+     * YouTube allows up to 50 ids per request.
+     */
+    suspend fun fetchVideoDetails(
+        apiKey: String,
+        videoIds: List<String>
+    ): Result<List<VideoItem>> = withContext(Dispatchers.IO) {
+        try {
+            if (videoIds.isEmpty()) return@withContext Result.success(emptyList())
+            val out = mutableListOf<VideoItem>()
+            for (chunk in videoIds.distinct().chunked(50)) {
+                val url = buildString {
+                    append("https://www.googleapis.com/youtube/v3/videos?part=snippet")
+                    append("&id=").append(URLEncoder.encode(chunk.joinToString(","), "UTF-8"))
+                    append("&key=").append(URLEncoder.encode(apiKey, "UTF-8"))
+                }
+                val json = getJson(url).getOrElse { return@withContext Result.failure(it) }
+                val root = JSONObject(json)
+                if (root.has("error")) {
+                    val message = root.optJSONObject("error")?.optString("message") ?: "YouTube API error"
+                    return@withContext Result.failure(IOException(message))
+                }
+                val arr = root.optJSONArray("items") ?: continue
+                for (i in 0 until arr.length()) {
+                    val item = arr.getJSONObject(i)
+                    val id = item.optString("id")
+                    if (id.isBlank()) continue
+                    val snippet = item.optJSONObject("snippet") ?: continue
+                    val title = snippet.optString("title", "Video")
+                    val thumbs = snippet.optJSONObject("thumbnails")
+                    val thumb = thumbs?.optJSONObject("medium")?.optString("url")
+                        ?: thumbs?.optJSONObject("default")?.optString("url")
+                    val published = snippet.optString("publishedAt").takeIf { it.isNotBlank() }
+                    out.add(
+                        VideoItem(
+                            id = id,
+                            title = title,
+                            thumbnailUrl = thumb ?: YoutubeUrlParser.defaultThumbnail(id),
+                            youtubeVideoId = id,
+                            publishedAtMs = parseIso8601ToMillis(published)
+                        )
+                    )
+                }
+            }
+            Result.success(out.newestFirst())
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -97,6 +155,26 @@ class YoutubeCatalogSource {
             Result.failure(e)
         } finally {
             conn.disconnect()
+        }
+    }
+
+    companion object {
+        fun parseIso8601ToMillis(iso: String?): Long? {
+            if (iso.isNullOrBlank()) return null
+            val patterns = arrayOf(
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'"
+            )
+            for (pattern in patterns) {
+                try {
+                    val sdf = SimpleDateFormat(pattern, Locale.US)
+                    sdf.timeZone = TimeZone.getTimeZone("UTC")
+                    return sdf.parse(iso)?.time
+                } catch (_: Exception) {
+                    // try next pattern
+                }
+            }
+            return null
         }
     }
 }

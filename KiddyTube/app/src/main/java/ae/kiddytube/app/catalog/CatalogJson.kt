@@ -52,6 +52,12 @@ object CatalogJson {
             appendJsonString("youtubeVideoId", v.youtubeVideoId)
             append(',')
             appendJsonString("directUrl", v.directUrl)
+            append(',')
+            if (v.publishedAtMs == null) {
+                append("\"publishedAtMs\":null")
+            } else {
+                append("\"publishedAtMs\":").append(v.publishedAtMs)
+            }
             append('}')
         }
         append(']')
@@ -149,7 +155,8 @@ object CatalogJson {
                 title = s("title").orEmpty(),
                 thumbnailUrl = s("thumbnailUrl")?.ifBlank { null },
                 youtubeVideoId = s("youtubeVideoId")?.ifBlank { null },
-                directUrl = s("directUrl")?.ifBlank { null }
+                directUrl = s("directUrl")?.ifBlank { null },
+                publishedAtMs = f["publishedAtMs"]?.toLongOrNull()
             )
         }
     }

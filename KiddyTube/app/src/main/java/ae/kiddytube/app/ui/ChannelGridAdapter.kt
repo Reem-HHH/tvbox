@@ -1,6 +1,7 @@
 package ae.kiddytube.app.ui
 
 import ae.kiddytube.app.catalog.ContentChannel
+import ae.kiddytube.app.catalog.newestFirst
 import ae.kiddytube.app.catalog.youtubeThumbnail
 import android.view.LayoutInflater
 import android.view.View
@@ -44,7 +45,7 @@ class ChannelGridAdapter(
 
         fun bind(channel: ContentChannel) {
             title.text = channel.title
-            val preview = channel.videos.firstOrNull()?.youtubeThumbnail()
+            val preview = channel.videos.newestFirst().firstOrNull()?.youtubeThumbnail()
             if (preview != null) {
                 icon.load(preview) {
                     crossfade(true)
