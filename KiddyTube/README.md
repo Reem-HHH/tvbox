@@ -52,15 +52,16 @@ Parent-saved keys override the build-time key.
 ## Parent access
 
 - **Phone / tablet / TV:** tap the **lock** button in the top-right header, then enter the PIN
-- **TV remote (also):** `↑ ↑ ↓ ↓ ← → ← → OK` or long-press Back (≥5s) on the channel home
+- **TV remote (also):** `↑ ↑ ↓ ↓ ← → ← → OK` or long-press Back (≥5s) on channels, library, or player
 
-Default development PIN: `2580` — change it before enabling Release ready.
+Default development PIN: `2580` — change it before enabling Release ready. Unlock grants a short in-memory parent session (~5 minutes).
 
 Parent can:
 - Set YouTube Data API key
-- Paste playlist URL/ID per channel and refresh
+- Paste playlist URL/ID per channel and refresh (clearing a playlist is remembered — seed upgrades will not re-attach it)
+- Opt in per channel to **follow playlist uploads** on auto-sync (curated lists stay put by default)
 - Add manual YouTube video IDs
-- Add direct media URLs (Archive/NAS `.mp4` / `.m3u8` — **not** Google Drive `/view` pages)
+- Add direct media URLs over **HTTPS only** (`.mp4` / `.m3u8` — not `http://`, not Google Drive `/view` pages; cleartext is disabled in the manifest)
 - Enable/disable channels
 - Export catalog JSON (for a future iOS app)
 
@@ -90,4 +91,6 @@ Android exports the same catalog JSON schema. A future iPad app can reuse that f
 
 - YouTube may briefly show branding before play
 - Without a YouTube API key (parent or `local.properties`), starter video IDs still play; full playlist refresh will not run
-- Drive `/view` links are rejected; download to NAS or use a direct file URL
+- Drive `/view` links are rejected; download to NAS or use a direct HTTPS file URL
+- Cleartext `http://` media URLs are rejected (validator + `usesCleartextTraffic=false`)
+- The player only starts YouTube IDs / direct URLs that already exist in the parent catalog

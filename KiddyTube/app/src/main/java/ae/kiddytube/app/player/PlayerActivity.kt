@@ -16,27 +16,36 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
+import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
+import ae.kiddytube.app.parent.ParentUnlockCoordinator
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import ae.kiddytube.app.sources.MediaUrlValidator
+import ae.kiddytube.app.sources.YoutubeUrlParser
+import kotlinx.coroutines.launch
 
 @UnstableApi
 class PlayerActivity : AppCompatActivity() {
     private lateinit var container: FrameLayout
     private lateinit var titleOverlay: TextView
+    private lateinit var pinManager: ParentPinManager
+    private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
     private var player: ExoPlayer? = null
     private var webView: WebView? = null
+    private var playbackReady = false
     private val handler = Handler(Looper.getMainLooper())
     private val seekMs = 10_000L
 
@@ -46,17 +55,21 @@ class PlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_player)
         container = findViewById(R.id.playerContainer)
         titleOverlay = findViewById(R.id.titleOverlay)
+        pinManager = ParentPinManager()
+        parentUnlock = ParentUnlockCoordinator(this, pinManager)
         remote = RemoteKeyHandler(
-            ParentPinManager(),
-            getSystemService(AUDIO_SERVICE) as AudioManager
+            pinManager,
+            getSystemService(AUDIO_SERVICE) as AudioManager,
+            consumeBack = true
         )
         ImmersiveMode.apply(this, forceImmersive = true)
 
+        // Defer system Back so long-press unlock can fire; short press finishes in dispatchKeyEvent.
         onBackPressedDispatcher.addCallback(
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    finish()
+                    // Consumed; finish is handled after short Back-up.
                 }
             }
         )
@@ -69,12 +82,6 @@ class PlayerActivity : AppCompatActivity() {
             titleOverlay.text = title
             titleOverlay.visibility = View.VISIBLE
             handler.postDelayed({ titleOverlay.visibility = View.GONE }, 3_000)
-        }
-
-        when {
-            !youtubeId.isNullOrBlank() -> playYoutube(youtubeId)
-            MediaUrlValidator.isDirectMediaUrl(directUrl) -> playDirect(directUrl!!)
-            else -> finish()
         }
 
         // Transparent touch layer: play/pause without opening YouTube chrome
@@ -90,6 +97,51 @@ class PlayerActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
+
+        lifecycleScope.launch {
+            val settings = (application as KiddyTubeApp).catalogRepository.current()
+            pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
+            parentUnlock.updatePinManager(pinManager)
+            remote = RemoteKeyHandler(
+                pinManager,
+                getSystemService(AUDIO_SERVICE) as AudioManager,
+                consumeBack = true
+            )
+
+            when {
+                !youtubeId.isNullOrBlank() -> {
+                    if (!YoutubeUrlParser.isValidVideoId(youtubeId)) {
+                        rejectPlayback()
+                        return@launch
+                    }
+                    val allowed = (application as KiddyTubeApp).catalogRepository
+                        .containsYoutubeVideoId(youtubeId)
+                    if (!allowed) {
+                        rejectPlayback()
+                        return@launch
+                    }
+                    playYoutube(youtubeId.trim())
+                    playbackReady = true
+                }
+                MediaUrlValidator.isDirectMediaUrl(directUrl) -> {
+                    val url = directUrl!!.trim()
+                    val allowed = (application as KiddyTubeApp).catalogRepository
+                        .containsDirectUrl(url)
+                    if (!allowed) {
+                        rejectPlayback()
+                        return@launch
+                    }
+                    playDirect(url)
+                    playbackReady = true
+                }
+                else -> rejectPlayback()
+            }
+        }
+    }
+
+    private fun rejectPlayback() {
+        Toast.makeText(this, R.string.player_blocked, Toast.LENGTH_SHORT).show()
+        finish()
     }
 
     private fun togglePlayback() {
@@ -104,6 +156,8 @@ class PlayerActivity : AppCompatActivity() {
 
     @SuppressLint("SetJavaScriptEnabled")
     private fun playYoutube(videoId: String) {
+        // Defense in depth: only validated IDs reach here; still JSON-escape for the template.
+        val safeId = videoId.replace("\\", "\\\\").replace("'", "\\'")
         val wv = WebView(this).apply {
             setBackgroundColor(Color.BLACK)
             settings.javaScriptEnabled = true
@@ -138,13 +192,14 @@ class PlayerActivity : AppCompatActivity() {
               function onYouTubeIframeAPIReady(){
                 player=new YT.Player('p',{
                   width:'100%',height:'100%',
-                  videoId:'$videoId',
+                  videoId:'$safeId',
                   playerVars:{autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,
                     modestbranding:1,rel:0,playsinline:1,origin:location.origin},
                   events:{onReady:function(e){e.target.playVideo();}}
                 });
               }
               function ensurePlaying(){if(player&&player.playVideo)player.playVideo();}
+              function pausePlayback(){if(player&&player.pauseVideo)player.pauseVideo();}
               function toggle(){if(!player)return;var s=player.getPlayerState();
                 if(s===1)player.pauseVideo();else player.playVideo();}
             </script></body></html>
@@ -186,18 +241,24 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_UP && event.keyCode == KeyEvent.KEYCODE_BACK) {
-            finish()
-            return true
+        if (event.action == KeyEvent.ACTION_UP) {
+            if (remote.handleKeyUp(event.keyCode) is RemoteAction.ParentTriggered) {
+                parentUnlock.beginParentAccess()
+                return true
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                finish()
+                return true
+            }
         }
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
         val action = remote.handleKeyDown(event.keyCode, event) ?: return super.dispatchKeyEvent(event)
         return when (action) {
-            RemoteAction.NavigateBack, RemoteAction.Consume -> {
-                if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-                    finish(); true
-                } else true
+            RemoteAction.ParentTriggered -> {
+                parentUnlock.beginParentAccess()
+                true
             }
+            RemoteAction.NavigateBack, RemoteAction.Consume -> true
             RemoteAction.EnsurePlaying -> {
                 player?.playWhenReady = true
                 webView?.evaluateJavascript("ensurePlaying()", null)
@@ -217,6 +278,23 @@ class PlayerActivity : AppCompatActivity() {
             }
             RemoteAction.VolumeUp, RemoteAction.VolumeDown -> true
             else -> true
+        }
+    }
+
+    override fun onPause() {
+        player?.playWhenReady = false
+        webView?.evaluateJavascript("pausePlayback()", null)
+        webView?.onPause()
+        super.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ImmersiveMode.apply(this, forceImmersive = true)
+        webView?.onResume()
+        // Do not auto-resume Exo/Web video after background — parent must tap/play again.
+        if (playbackReady) {
+            // Leave paused; EnsurePlaying / tap can restart.
         }
     }
 

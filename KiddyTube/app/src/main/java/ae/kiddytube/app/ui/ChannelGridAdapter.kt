@@ -45,16 +45,17 @@ class ChannelGridAdapter(
 
         fun bind(channel: ContentChannel) {
             title.text = channel.title
+            val iconRes = channel.resolvedIconRes()
             val preview = channel.videos.newestFirst().firstOrNull()?.youtubeThumbnail()
             if (preview != null) {
                 icon.load(preview) {
                     crossfade(true)
-                    placeholder(channel.iconRes)
-                    error(channel.iconRes)
+                    placeholder(iconRes)
+                    error(iconRes)
                     transformations(RoundedCornersTransformation(cornerPx))
                 }
             } else {
-                icon.load(channel.iconRes) {
+                icon.load(iconRes) {
                     transformations(RoundedCornersTransformation(cornerPx))
                 }
             }

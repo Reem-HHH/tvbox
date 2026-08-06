@@ -11,12 +11,21 @@ object YoutubeUrlParser {
         "[?&]list=([\\w-]+)|youtube\\.com/playlist\\?list=([\\w-]+)"
     )
 
+    private val VALID_ID = Regex("^[A-Za-z0-9_-]{11}$")
+
+    /** Strict allowlist for IDs that may be embedded in the player WebView. */
+    fun isValidVideoId(id: String?): Boolean =
+        !id.isNullOrBlank() && VALID_ID.matches(id.trim())
+
     fun extractVideoId(input: String?): String? {
         if (input.isNullOrBlank()) return null
         val trimmed = input.trim()
         for (pattern in VIDEO_PATTERNS) {
             val m = pattern.matcher(trimmed)
-            if (m.find()) return m.group(1)
+            if (m.find()) {
+                val id = m.group(1) ?: return null
+                return id.takeIf { isValidVideoId(it) }
+            }
         }
         return null
     }

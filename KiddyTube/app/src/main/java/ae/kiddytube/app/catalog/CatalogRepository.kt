@@ -2,6 +2,7 @@ package ae.kiddytube.app.catalog
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -15,6 +16,8 @@ import ae.kiddytube.app.sources.YoutubeUrlParser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private val Context.catalogStore: DataStore<Preferences> by preferencesDataStore(name = "kids_catalog")
 
@@ -35,6 +38,7 @@ class CatalogRepository(private val context: Context) {
     private val store = context.catalogStore
     private val youtube = YoutubeCatalogSource()
     private val syncTtlMs = 24 * 60 * 60 * 1000L
+    private val writeMutex = Mutex()
 
     val settingsFlow: Flow<CatalogSettings> = store.data.map { it.toSettings() }
 
@@ -46,19 +50,27 @@ class CatalogRepository(private val context: Context) {
     fun effectiveApiKey(settings: CatalogSettings): String? =
         ApiKeyResolver.effective(settings.youtubeApiKey)
 
+    suspend fun containsYoutubeVideoId(videoId: String): Boolean {
+        val id = videoId.trim()
+        return current().channels.any { ch ->
+            ch.videos.any { it.youtubeVideoId == id || it.id == id }
+        }
+    }
+
+    suspend fun containsDirectUrl(url: String): Boolean {
+        val target = url.trim()
+        if (target.isEmpty()) return false
+        return current().channels.any { ch ->
+            ch.videos.any { it.directUrl == target }
+        }
+    }
+
     suspend fun update(transform: (CatalogSettings) -> CatalogSettings) {
-        val next = transform(current())
-        store.edit { prefs ->
-            prefs[Keys.CHANNELS_JSON] = CatalogJson.encode(next.channels)
-            prefs[Keys.YOUTUBE_API_KEY] = next.youtubeApiKey.orEmpty()
-            prefs[Keys.PIN_SALT] = next.pinSalt.orEmpty()
-            prefs[Keys.PIN_HASH] = next.pinHash.orEmpty()
-            prefs[Keys.PIN_CHANGED] = next.pinChangedFromDefault
-            prefs[Keys.FAIL_COUNT] = next.failCount
-            prefs[Keys.LOCKED_UNTIL] = next.lockedUntilMs
-            prefs[Keys.RELEASE_READY] = next.releaseReady
-            prefs[Keys.LAST_SYNC] = next.lastSyncMs
-            prefs[Keys.SEED_VERSION] = next.seedVersion
+        writeMutex.withLock {
+            store.edit { prefs ->
+                val next = transform(prefs.toSettings())
+                writeSettings(prefs, next)
+            }
         }
     }
 
@@ -76,7 +88,9 @@ class CatalogRepository(private val context: Context) {
     }
 
     suspend fun resetAll() {
-        store.edit { it.clear() }
+        writeMutex.withLock {
+            store.edit { it.clear() }
+        }
     }
 
     suspend fun channelById(id: String): ContentChannel? =
@@ -104,11 +118,19 @@ class CatalogRepository(private val context: Context) {
         }
 
         if (!playlistId.isNullOrBlank()) {
-            val fetched = youtube.fetchPlaylistVideos(apiKey, playlistId)
+            val fetched = youtube.fetchPlaylistVideos(apiKey, playlistId, maxResults = 150)
             return fetched.fold(
                 onSuccess = { videos ->
-                    updateChannel(channelId) {
-                        it.copy(videos = videos.newestFirst(), sourceType = SourceType.YOUTUBE_PLAYLIST)
+                    updateChannel(channelId) { ch ->
+                        val retained = ch.videos.filter { it.manual || it.isDirect() }
+                        val retainedIds = retained.map { it.id }.toSet()
+                        val remote = videos
+                            .filter { it.id !in retainedIds }
+                            .map { it.copy(manual = false) }
+                        ch.copy(
+                            videos = (remote + retained).newestFirst(),
+                            sourceType = SourceType.YOUTUBE_PLAYLIST
+                        )
                     }
                     Result.success(videos.size)
                 },
@@ -154,9 +176,10 @@ class CatalogRepository(private val context: Context) {
             return SyncResult(SyncStatus.SKIPPED_OFFLINE, message = "Offline")
         }
 
-        val needsForce = force || settings.channels.any {
+        val emptyPlaylistLibraries = settings.channels.any {
             it.enabled && !it.youtubePlaylistId.isNullOrBlank() && it.videos.isEmpty()
         }
+        val needsForce = force || emptyPlaylistLibraries
         val now = System.currentTimeMillis()
         if (!needsForce && now - settings.lastSyncMs < syncTtlMs) {
             return SyncResult(SyncStatus.SKIPPED_TTL, message = "Within sync TTL")
@@ -170,6 +193,9 @@ class CatalogRepository(private val context: Context) {
             val hasPlaylist = !ch.youtubePlaylistId.isNullOrBlank()
             val hasYoutubeVideos = ch.videos.any { !it.youtubeVideoId.isNullOrBlank() }
             if (!hasPlaylist && !hasYoutubeVideos) continue
+            // Auto (TTL) sync only follows playlists when parent opted into followUploads,
+            // or when the library is still empty / parent forced refresh.
+            if (!force && hasPlaylist && !ch.followUploads && ch.videos.isNotEmpty()) continue
             val result = refreshChannelFromYoutube(ch.id)
             if (result.isSuccess) {
                 updatedChannels++
@@ -199,8 +225,16 @@ class CatalogRepository(private val context: Context) {
     suspend fun setPlaylistId(channelId: String, raw: String?) {
         val playlistId = YoutubeUrlParser.extractPlaylistId(raw)
         updateChannel(channelId) {
-            it.copy(youtubePlaylistId = playlistId, sourceType = SourceType.YOUTUBE_PLAYLIST)
+            it.copy(
+                youtubePlaylistId = playlistId,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                playlistManagedByParent = true
+            )
         }
+    }
+
+    suspend fun setFollowUploads(channelId: String, follow: Boolean) {
+        updateChannel(channelId) { it.copy(followUploads = follow, playlistManagedByParent = true) }
     }
 
     suspend fun addManualVideoIds(channelId: String, csv: String) {
@@ -209,8 +243,9 @@ class CatalogRepository(private val context: Context) {
         val apiKey = ApiKeyResolver.effective(current().youtubeApiKey)
         val newVideos = if (!apiKey.isNullOrBlank()) {
             youtube.fetchVideoDetails(apiKey, ids).getOrElse { youtube.videosFromIds(ids) }
+                .map { it.copy(manual = true) }
         } else {
-            youtube.videosFromIds(ids)
+            youtube.videosFromIds(ids).map { it.copy(manual = true) }
         }
         updateChannel(channelId) { ch ->
             val merged = (ch.videos + newVideos).distinctBy { it.id }.newestFirst()
@@ -224,7 +259,8 @@ class CatalogRepository(private val context: Context) {
             id = id,
             title = title.ifBlank { "Video" },
             directUrl = url,
-            publishedAtMs = System.currentTimeMillis()
+            publishedAtMs = System.currentTimeMillis(),
+            manual = true
         )
         updateChannel(channelId) { ch ->
             ch.copy(videos = (ch.videos + item).newestFirst(), sourceType = SourceType.DIRECT_URL)
@@ -239,10 +275,30 @@ class CatalogRepository(private val context: Context) {
 
     suspend fun exportJson(): String = CatalogJson.encode(current().channels)
 
+    private fun writeSettings(prefs: MutablePreferences, next: CatalogSettings) {
+        val encoded = CatalogJson.encode(next.channels)
+        prefs[Keys.CHANNELS_JSON] = encoded
+        prefs[Keys.CHANNELS_JSON_LAST_GOOD] = encoded
+        prefs[Keys.YOUTUBE_API_KEY] = next.youtubeApiKey.orEmpty()
+        prefs[Keys.PIN_SALT] = next.pinSalt.orEmpty()
+        prefs[Keys.PIN_HASH] = next.pinHash.orEmpty()
+        prefs[Keys.PIN_CHANGED] = next.pinChangedFromDefault
+        prefs[Keys.FAIL_COUNT] = next.failCount
+        prefs[Keys.LOCKED_UNTIL] = next.lockedUntilMs
+        prefs[Keys.RELEASE_READY] = next.releaseReady
+        prefs[Keys.LAST_SYNC] = next.lastSyncMs
+        prefs[Keys.SEED_VERSION] = next.seedVersion
+    }
+
     private fun Preferences.toSettings(): CatalogSettings {
         val channelsJson = this[Keys.CHANNELS_JSON]
-        val channels = if (channelsJson.isNullOrBlank()) DefaultChannels.seed()
-        else CatalogJson.decode(channelsJson)
+        val lastGood = this[Keys.CHANNELS_JSON_LAST_GOOD]
+        val channels = when {
+            channelsJson.isNullOrBlank() -> DefaultChannels.seed()
+            else -> CatalogJson.decodeOrNull(channelsJson)
+                ?: CatalogJson.decodeOrNull(lastGood.orEmpty())
+                ?: DefaultChannels.seed()
+        }
         return CatalogSettings(
             channels = channels,
             youtubeApiKey = this[Keys.YOUTUBE_API_KEY]?.ifBlank { null },
@@ -259,6 +315,7 @@ class CatalogRepository(private val context: Context) {
 
     private object Keys {
         val CHANNELS_JSON = stringPreferencesKey("channels_json")
+        val CHANNELS_JSON_LAST_GOOD = stringPreferencesKey("channels_json_last_good")
         val YOUTUBE_API_KEY = stringPreferencesKey("youtube_api_key")
         val PIN_SALT = stringPreferencesKey("pin_salt")
         val PIN_HASH = stringPreferencesKey("pin_hash")

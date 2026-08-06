@@ -12,8 +12,9 @@ object CatalogJson {
             appendJsonString("id", c.id)
             append(',')
             appendJsonString("title", c.title)
+            // Persist stable channel id for icons; iconRes is rematerialized on decode.
             append(',')
-            appendJsonString("iconRes", c.iconRes.toString())
+            appendJsonString("iconKey", c.id)
             append(',')
             appendJsonString("sourceType", c.sourceType.name)
             append(',')
@@ -23,6 +24,10 @@ object CatalogJson {
             append(',')
             append("\"sortOrder\":").append(c.sortOrder)
             append(',')
+            append("\"followUploads\":").append(c.followUploads)
+            append(',')
+            append("\"playlistManagedByParent\":").append(c.playlistManagedByParent)
+            append(',')
             append("\"videos\":")
             encodeVideos(c.videos)
             append('}')
@@ -30,13 +35,17 @@ object CatalogJson {
         append(']')
     }
 
-    fun decode(json: String): List<ContentChannel> {
+    /** Null means parse failure — callers must not treat as a successful empty catalog. */
+    fun decodeOrNull(json: String): List<ContentChannel>? {
         return try {
             parseChannelArray(json)
         } catch (_: Exception) {
-            DefaultChannels.seed()
+            null
         }
     }
+
+    fun decode(json: String): List<ContentChannel> =
+        decodeOrNull(json) ?: DefaultChannels.seed()
 
     private fun StringBuilder.encodeVideos(videos: List<VideoItem>) {
         append('[')
@@ -58,6 +67,8 @@ object CatalogJson {
             } else {
                 append("\"publishedAtMs\":").append(v.publishedAtMs)
             }
+            append(',')
+            append("\"manual\":").append(v.manual)
             append('}')
         }
         append(']')
@@ -122,23 +133,21 @@ object CatalogJson {
     private fun parseChannelObject(raw: String): ContentChannel {
         val fields = parseObjectFields(raw)
         fun str(key: String): String? = fields[key]
-        val iconRes = str("iconRes")?.toIntOrNull() ?: 0
+        val id = str("id") ?: error("id required")
         val videosRaw = fields["videos"] ?: "[]"
         return ContentChannel(
-            id = str("id") ?: error("id required"),
+            id = id,
             title = str("title").orEmpty(),
-            iconRes = iconRes,
+            iconRes = DefaultChannels.iconResFor(id),
             sourceType = SourceType.valueOf(str("sourceType") ?: SourceType.YOUTUBE_PLAYLIST.name),
             enabled = fields["enabled"]?.toBooleanStrictOrNull() ?: true,
             youtubePlaylistId = str("youtubePlaylistId")?.ifBlank { null },
             videos = parseVideoArray(videosRaw),
-            sortOrder = fields["sortOrder"]?.toIntOrNull() ?: 0
-        ).let { decoded ->
-            if (decoded.iconRes != 0) decoded
-            else DefaultChannels.seed().firstOrNull { it.id == decoded.id }?.let {
-                decoded.copy(iconRes = it.iconRes)
-            } ?: decoded
-        }
+            sortOrder = fields["sortOrder"]?.toIntOrNull() ?: 0,
+            followUploads = fields["followUploads"]?.toBooleanStrictOrNull() ?: false,
+            playlistManagedByParent = fields["playlistManagedByParent"]?.toBooleanStrictOrNull()
+                ?: false
+        )
     }
 
     private fun parseVideoArray(raw: String): List<VideoItem> {
@@ -156,7 +165,8 @@ object CatalogJson {
                 thumbnailUrl = s("thumbnailUrl")?.ifBlank { null },
                 youtubeVideoId = s("youtubeVideoId")?.ifBlank { null },
                 directUrl = s("directUrl")?.ifBlank { null },
-                publishedAtMs = f["publishedAtMs"]?.toLongOrNull()
+                publishedAtMs = f["publishedAtMs"]?.toLongOrNull(),
+                manual = f["manual"]?.toBooleanStrictOrNull() ?: false
             )
         }
     }

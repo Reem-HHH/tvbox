@@ -33,6 +33,7 @@ class ParentActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (!requireActiveSession()) return
         setContentView(R.layout.activity_parent)
         container = findViewById(R.id.parentContent)
         findViewById<TextView>(R.id.parentBack).setOnClickListener { goBackToChannels() }
@@ -41,15 +42,21 @@ class ParentActivity : AppCompatActivity() {
     }
 
     private suspend fun reload() {
+        if (!ParentSession.isActive()) {
+            expireSession()
+            return
+        }
         settings = (application as KiddyTubeApp).catalogRepository.current()
         container.removeAllViews()
         render()
     }
 
     private fun render() {
+        val totalVideos = settings.channels.sumOf { it.videos.size }
         addSectionCard {
             addSectionTitle(it, getString(R.string.parent_section_overview))
             addInfo(it, "KiddyTube ${BuildConfig.VERSION_NAME}")
+            addInfo(it, getString(R.string.parent_video_count, totalVideos))
             if (!settings.pinChangedFromDefault) {
                 addInfo(it, "Change default PIN (2580) before release-ready.")
             }
@@ -160,6 +167,19 @@ class ParentActivity : AppCompatActivity() {
             }
         }
         addButton(actions, "Playlist") { promptPlaylist(channel) }
+        if (!channel.youtubePlaylistId.isNullOrBlank()) {
+            addSwitch(
+                actions,
+                getString(R.string.parent_follow_uploads),
+                channel.followUploads
+            ) { checked ->
+                lifecycleScope.launch {
+                    (application as KiddyTubeApp).catalogRepository
+                        .setFollowUploads(channel.id, checked)
+                    reload()
+                }
+            }
+        }
         addButton(actions, "Video IDs") { promptVideoIds(channel) }
         addButton(actions, "Direct URL") { promptDirect(channel) }
         addButton(actions, "Refresh") {
@@ -195,7 +215,7 @@ class ParentActivity : AppCompatActivity() {
     private fun promptPlaylist(channel: ContentChannel) {
         val input = EditText(this).apply {
             setText(channel.youtubePlaylistId.orEmpty())
-            hint = "Playlist ID or YouTube playlist URL"
+            hint = "Playlist ID or YouTube playlist URL (blank to clear)"
             setTextColor(inkNavy())
             setHintTextColor(inkMuted())
         }
@@ -248,7 +268,7 @@ class ParentActivity : AppCompatActivity() {
             setHintTextColor(inkMuted())
         }
         val url = EditText(this).apply {
-            hint = "https://...mp4 or .m3u8 (not Drive /view)"
+            hint = "https://...mp4 or .m3u8 (HTTPS only)"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             setTextColor(inkNavy())
             setHintTextColor(inkMuted())
@@ -261,7 +281,7 @@ class ParentActivity : AppCompatActivity() {
             .setPositiveButton("Add") { _, _ ->
                 val u = url.text.toString().trim()
                 if (!MediaUrlValidator.isDirectMediaUrl(u)) {
-                    toast("Invalid or blocked URL (use direct media links)")
+                    toast("Invalid or blocked URL (HTTPS direct media only)")
                     return@setPositiveButton
                 }
                 lifecycleScope.launch {
@@ -392,7 +412,7 @@ class ParentActivity : AppCompatActivity() {
         }
 
     private fun addSwitch(
-        parent: LinearLayout,
+        parent: ViewGroup,
         label: String,
         checked: Boolean,
         onChange: (Boolean) -> Unit
@@ -403,6 +423,10 @@ class ParentActivity : AppCompatActivity() {
             isFocusable = true
             setTextColor(inkNavy())
             setPadding(0, dp(10), 0, dp(4))
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.topMargin = dp(4) }
             setOnCheckedChangeListener { _, isChecked -> onChange(isChecked) }
         })
     }
@@ -426,6 +450,18 @@ class ParentActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun requireActiveSession(): Boolean {
+        if (ParentSession.isActive()) return true
+        expireSession()
+        return false
+    }
+
+    private fun expireSession() {
+        ParentSession.clear()
+        Toast.makeText(this, R.string.parent_session_expired, Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
     private fun toast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
@@ -441,6 +477,8 @@ class ParentActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        if (!::container.isInitialized) return
+        if (!requireActiveSession()) return
         ImmersiveMode.apply(this)
     }
 }

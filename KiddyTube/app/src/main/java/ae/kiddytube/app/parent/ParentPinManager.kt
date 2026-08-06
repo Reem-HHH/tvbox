@@ -48,7 +48,8 @@ class ParentPinManager(
         }
         lastKeyAtMs = nowMs
         recentKeys.addLast(keyCode)
-        while (recentKeys.size > TRIGGER_SEQUENCE.size) {
+        val maxKeep = maxOf(TRIGGER_SEQUENCE.size, alternateSequence?.size ?: 0)
+        while (recentKeys.size > maxKeep) {
             recentKeys.removeFirst()
         }
         if (matches(TRIGGER_SEQUENCE)) return true

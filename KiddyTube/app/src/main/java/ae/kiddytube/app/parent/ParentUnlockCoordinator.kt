@@ -33,17 +33,26 @@ class ParentUnlockCoordinator(
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
             hint = activity.getString(R.string.parent_pin_title)
         }
-        AlertDialog.Builder(activity)
+        val dialog = AlertDialog.Builder(activity)
             .setTitle(R.string.parent_pin_title)
             .setView(input)
-            .setPositiveButton(R.string.unlock) { dialog, _ ->
+            .setPositiveButton(R.string.unlock, null)
+            .setNegativeButton(R.string.cancel, null)
+            .create()
+        dialog.setOnShowListener {
+            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
                 val pin = input.text.toString()
                 activity.lifecycleScope.launch {
                     val repo = (activity.application as KiddyTubeApp).catalogRepository
                     val latest = repo.current()
+                    if (latest.releaseReady && pin == ParentPinManager.DEFAULT_DEV_PIN) {
+                        Toast.makeText(activity, R.string.parent_pin_wrong, Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
                     if (pinManager.verifyPin(pin, latest.pinSalt, latest.pinHash)) {
                         pinManager.registerSuccess()
                         repo.update { it.copy(failCount = 0, lockedUntilMs = 0L) }
+                        ParentSession.grant()
                         dialog.dismiss()
                         activity.startActivity(Intent(activity, ParentActivity::class.java))
                     } else {
@@ -58,11 +67,15 @@ class ParentUnlockCoordinator(
                             dialog.dismiss()
                             Toast.makeText(activity, R.string.parent_locked_out, Toast.LENGTH_SHORT)
                                 .show()
+                        } else {
+                            Toast.makeText(activity, R.string.parent_pin_wrong, Toast.LENGTH_SHORT)
+                                .show()
+                            input.text?.clear()
                         }
                     }
                 }
             }
-            .setNegativeButton(R.string.cancel, null)
-            .show()
+        }
+        dialog.show()
     }
 }

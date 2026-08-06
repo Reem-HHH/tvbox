@@ -3,7 +3,7 @@ package ae.kiddytube.app.sources
 import java.net.URI
 
 object MediaUrlValidator {
-    private val allowedSchemes = setOf("http", "https")
+    private val allowedSchemes = setOf("https")
 
     fun isDirectMediaUrl(url: String?): Boolean {
         if (url.isNullOrBlank()) return false

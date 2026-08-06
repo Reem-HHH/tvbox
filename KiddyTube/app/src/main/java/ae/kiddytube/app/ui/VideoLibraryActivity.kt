@@ -52,10 +52,11 @@ class VideoLibraryActivity : AppCompatActivity() {
 
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)
+        // consumeBack=true so short Back is deferred to ACTION_UP (long-press unlock can fire).
         remote = RemoteKeyHandler(
             pinManager,
             getSystemService(AUDIO_SERVICE) as AudioManager,
-            consumeBack = false
+            consumeBack = true
         )
         parentSettings.setOnClickListener { parentUnlock.beginParentAccess() }
 
@@ -72,7 +73,7 @@ class VideoLibraryActivity : AppCompatActivity() {
             remote = RemoteKeyHandler(
                 pinManager,
                 getSystemService(AUDIO_SERVICE) as AudioManager,
-                consumeBack = false
+                consumeBack = true
             )
             reload()
         }
@@ -119,6 +120,10 @@ class VideoLibraryActivity : AppCompatActivity() {
                 parentUnlock.beginParentAccess()
                 return true
             }
+            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                finish()
+                return true
+            }
         }
         if (event.action == KeyEvent.ACTION_DOWN) {
             val action = remote.handleKeyDown(event.keyCode, event)
@@ -127,10 +132,7 @@ class VideoLibraryActivity : AppCompatActivity() {
                     parentUnlock.beginParentAccess()
                     return true
                 }
-                RemoteAction.NavigateBack -> {
-                    finish()
-                    return true
-                }
+                RemoteAction.NavigateBack, RemoteAction.Consume -> return true
                 else -> Unit
             }
         }

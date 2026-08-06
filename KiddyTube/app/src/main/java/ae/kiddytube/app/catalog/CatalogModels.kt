@@ -16,7 +16,9 @@ data class VideoItem(
     val youtubeVideoId: String? = null,
     val directUrl: String? = null,
     /** Epoch millis when the video was published on YouTube; null if unknown. */
-    val publishedAtMs: Long? = null
+    val publishedAtMs: Long? = null,
+    /** True when a parent added this item manually (survives playlist refresh). */
+    val manual: Boolean = false
 ) {
     fun isYoutube(): Boolean = !youtubeVideoId.isNullOrBlank()
     fun isDirect(): Boolean = !directUrl.isNullOrBlank()
@@ -30,8 +32,15 @@ data class ContentChannel(
     val enabled: Boolean = true,
     val youtubePlaylistId: String? = null,
     val videos: List<VideoItem> = emptyList(),
-    val sortOrder: Int = 0
-)
+    val sortOrder: Int = 0,
+    /** When true, launch/TTL sync follows the linked playlist/uploads feed. */
+    val followUploads: Boolean = false,
+    /** When true, seed upgrades must not re-attach a cleared playlist id. */
+    val playlistManagedByParent: Boolean = false
+) {
+    fun resolvedIconRes(): Int =
+        if (iconRes != 0) iconRes else DefaultChannels.iconResFor(id)
+}
 
 /**
  * Parent-curated starter catalog. Each channel is one named show (not a generic mix).
@@ -42,7 +51,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 9
+    const val SEED_VERSION = 10
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -318,8 +327,11 @@ object DefaultChannels {
                 seed.youtubePlaylistId.isNullOrBlank() &&
                 current.youtubePlaylistId == SPACETOON_UPLOADS_PLAYLIST
 
-            val needsPlaylist = current.youtubePlaylistId.isNullOrBlank() &&
-                !seed.youtubePlaylistId.isNullOrBlank()
+            // Never re-attach a playlist parents cleared or already manage.
+            val needsPlaylist = !current.playlistManagedByParent &&
+                current.youtubePlaylistId.isNullOrBlank() &&
+                !seed.youtubePlaylistId.isNullOrBlank() &&
+                current.videos.isEmpty()
             val existingIds = current.videos.map { it.id }.toSet()
             val missingVideos = seed.videos.filter { it.id !in existingIds }
             val titleStale = current.title != seed.title &&
@@ -346,14 +358,20 @@ object DefaultChannels {
                         else -> current.sourceType
                     },
                     sortOrder = seed.sortOrder,
-                    iconRes = if (current.iconRes == 0) seed.iconRes else current.iconRes
+                    iconRes = seed.iconRes
                 )
-            } else if (current.sortOrder != seed.sortOrder) {
-                byId[seed.id] = current.copy(sortOrder = seed.sortOrder)
+            } else if (current.sortOrder != seed.sortOrder || current.iconRes != seed.iconRes) {
+                byId[seed.id] = current.copy(
+                    sortOrder = seed.sortOrder,
+                    iconRes = seed.iconRes
+                )
             }
         }
         return byId.values.sortedBy { it.sortOrder }
     }
+
+    fun iconResFor(channelId: String): Int =
+        seed().firstOrNull { it.id == channelId }?.iconRes ?: R.drawable.tile_placeholder
 
     private fun playlistChannel(
         id: String,
@@ -367,7 +385,8 @@ object DefaultChannels {
         iconRes = icon,
         sourceType = SourceType.YOUTUBE_PLAYLIST,
         youtubePlaylistId = playlistId,
-        sortOrder = order
+        sortOrder = order,
+        followUploads = false
     )
 
     private fun uploadsOf(channelId: String): String =
