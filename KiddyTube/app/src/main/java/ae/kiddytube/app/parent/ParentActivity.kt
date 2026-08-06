@@ -3,15 +3,18 @@ package ae.kiddytube.app.parent
 import android.content.Intent
 import android.os.Bundle
 import android.text.InputType
+import android.util.TypedValue
+import android.view.LayoutInflater
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import ae.kiddytube.app.BuildConfig
 import ae.kiddytube.app.KiddyTubeApp
@@ -30,13 +33,9 @@ class ParentActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val scroll = ScrollView(this)
-        container = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(48, 32, 48, 48)
-        }
-        scroll.addView(container)
-        setContentView(scroll)
+        setContentView(R.layout.activity_parent)
+        container = findViewById(R.id.parentContent)
+        findViewById<TextView>(R.id.parentBack).setOnClickListener { goBackToChannels() }
         ImmersiveMode.apply(this)
         lifecycleScope.launch { reload() }
     }
@@ -48,120 +47,130 @@ class ParentActivity : AppCompatActivity() {
     }
 
     private fun render() {
-        addTitle("Parent dashboard")
-        addInfo("KiddyTube ${BuildConfig.VERSION_NAME}")
-        if (!settings.pinChangedFromDefault) {
-            addInfo("Change default PIN (2580) before release-ready.")
-        }
-        addInfo(
-            "YouTube API key: ${
-                when {
-                    !settings.youtubeApiKey.isNullOrBlank() -> "set (parent)"
-                    !BuildConfig.YOUTUBE_API_KEY.isNullOrBlank() -> "set (build)"
-                    else -> "not set"
-                }
-            }"
-        )
-
-        addButton("Set YouTube API key") { promptApiKey() }
-        addButton("Refresh all playlists") {
-            lifecycleScope.launch {
-                val result =
-                    (application as KiddyTubeApp).catalogRepository.refreshAllPlaylists(force = true)
-                toast(
-                    when (result.status) {
-                        SyncStatus.UPDATED ->
-                            "Synced ${result.videoCount} videos in ${result.updatedChannels} channels"
-                        SyncStatus.SKIPPED_NO_KEY ->
-                            "Set a YouTube API key first"
-                        SyncStatus.SKIPPED_OFFLINE ->
-                            "Offline — try again when connected"
-                        SyncStatus.FAILED ->
-                            result.message ?: "Sync failed"
-                        SyncStatus.SKIPPED_TTL ->
-                            "Already up to date"
+        addSectionCard {
+            addSectionTitle(it, getString(R.string.parent_section_overview))
+            addInfo(it, "KiddyTube ${BuildConfig.VERSION_NAME}")
+            if (!settings.pinChangedFromDefault) {
+                addInfo(it, "Change default PIN (2580) before release-ready.")
+            }
+            addInfo(
+                it,
+                "YouTube API key: ${
+                    when {
+                        !settings.youtubeApiKey.isNullOrBlank() -> "set (parent)"
+                        !BuildConfig.YOUTUBE_API_KEY.isNullOrBlank() -> "set (build)"
+                        else -> "not set"
                     }
-                )
-                reload()
-            }
-        }
-        addButton("Export catalog JSON") {
-            lifecycleScope.launch {
-                val json = (application as KiddyTubeApp).catalogRepository.exportJson()
-                val share = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_TEXT, json)
-                    putExtra(Intent.EXTRA_SUBJECT, "kids-catalog.json")
-                }
-                startActivity(Intent.createChooser(share, "Export catalog"))
-            }
+                }"
+            )
         }
 
-        addTitle("Channels")
-        settings.channels.sortedBy { it.sortOrder }.forEach { addChannelRow(it) }
-
-        addTitle("Security")
-        addButton("Change PIN") { promptChangePin() }
-        addSwitch("Release ready", settings.releaseReady && settings.pinChangedFromDefault) { checked ->
-            if (checked && !settings.pinChangedFromDefault) {
-                toast("Change default PIN first")
-                lifecycleScope.launch { reload() }
-                return@addSwitch
-            }
-            update { it.copy(releaseReady = checked) }
-        }
-        addButton("Reset all settings") {
-            AlertDialog.Builder(this)
-                .setTitle("Reset?")
-                .setMessage("Clears channels and PIN (re-seeded to default 2580).")
-                .setPositiveButton("Reset") { _, _ ->
-                    lifecycleScope.launch {
-                        val repo = (application as KiddyTubeApp).catalogRepository
-                        repo.resetAll()
-                        val salt = ParentPinManager.newSaltHex()
-                        val hash = ParentPinManager.hashPin(ParentPinManager.DEFAULT_DEV_PIN, salt)
-                        repo.update {
-                            it.copy(
-                                pinSalt = salt,
-                                pinHash = hash,
-                                pinChangedFromDefault = false,
-                                releaseReady = false
-                            )
+        addSectionCard {
+            addSectionTitle(it, getString(R.string.parent_section_actions))
+            addButton(it, "Set YouTube API key") { promptApiKey() }
+            addButton(it, "Refresh all playlists") {
+                lifecycleScope.launch {
+                    val result =
+                        (application as KiddyTubeApp).catalogRepository.refreshAllPlaylists(force = true)
+                    toast(
+                        when (result.status) {
+                            SyncStatus.UPDATED ->
+                                "Synced ${result.videoCount} videos in ${result.updatedChannels} channels"
+                            SyncStatus.SKIPPED_NO_KEY ->
+                                "Set a YouTube API key first"
+                            SyncStatus.SKIPPED_OFFLINE ->
+                                "Offline — try again when connected"
+                            SyncStatus.FAILED ->
+                                result.message ?: "Sync failed"
+                            SyncStatus.SKIPPED_TTL ->
+                                "Already up to date"
                         }
-                        reload()
-                    }
+                    )
+                    reload()
                 }
-                .setNegativeButton("Cancel", null)
-                .show()
+            }
+            addButton(it, "Export catalog JSON") {
+                lifecycleScope.launch {
+                    val json = (application as KiddyTubeApp).catalogRepository.exportJson()
+                    val share = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_TEXT, json)
+                        putExtra(Intent.EXTRA_SUBJECT, "kids-catalog.json")
+                    }
+                    startActivity(Intent.createChooser(share, "Export catalog"))
+                }
+            }
         }
-        addButton("Back to channels") {
-            startActivity(Intent(this, ChannelGridActivity::class.java))
-            finish()
+
+        addHeading(getString(R.string.parent_section_channels))
+        settings.channels.sortedBy { it.sortOrder }.forEach { addChannelCard(it) }
+
+        addSectionCard {
+            addSectionTitle(it, getString(R.string.parent_section_security))
+            addButton(it, "Change PIN") { promptChangePin() }
+            addSwitch(it, "Release ready", settings.releaseReady && settings.pinChangedFromDefault) { checked ->
+                if (checked && !settings.pinChangedFromDefault) {
+                    toast("Change default PIN first")
+                    lifecycleScope.launch { reload() }
+                    return@addSwitch
+                }
+                update { s -> s.copy(releaseReady = checked) }
+            }
+            addButton(it, "Reset all settings") {
+                AlertDialog.Builder(this)
+                    .setTitle("Reset?")
+                    .setMessage("Clears channels and PIN (re-seeded to default 2580).")
+                    .setPositiveButton("Reset") { _, _ ->
+                        lifecycleScope.launch {
+                            val repo = (application as KiddyTubeApp).catalogRepository
+                            repo.resetAll()
+                            val salt = ParentPinManager.newSaltHex()
+                            val hash = ParentPinManager.hashPin(ParentPinManager.DEFAULT_DEV_PIN, salt)
+                            repo.update { s ->
+                                s.copy(
+                                    pinSalt = salt,
+                                    pinHash = hash,
+                                    pinChangedFromDefault = false,
+                                    releaseReady = false
+                                )
+                            }
+                            reload()
+                        }
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
         }
     }
 
-    private fun addChannelRow(channel: ContentChannel) {
-        addInfo("${channel.title} — ${if (channel.enabled) "ON" else "OFF"} (${channel.videos.size} videos)")
-        addInfo("  playlist=${channel.youtubePlaylistId ?: "(none)"}")
-        val row = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        row.addView(btn(if (channel.enabled) "Disable" else "Enable") {
+    private fun addChannelCard(channel: ContentChannel) {
+        val card = LayoutInflater.from(this)
+            .inflate(R.layout.item_parent_channel, container, false)
+        card.findViewById<TextView>(R.id.channelTitle).text = channel.title
+        card.findViewById<TextView>(R.id.channelMeta).text =
+            "${if (channel.enabled) "ON" else "OFF"} · ${channel.videos.size} videos"
+        card.findViewById<TextView>(R.id.channelPlaylist).text =
+            "playlist: ${channel.youtubePlaylistId ?: "(none)"}"
+        val actions = card.findViewById<LinearLayout>(R.id.channelActions)
+        addButton(actions, if (channel.enabled) "Disable" else "Enable") {
             update { s ->
                 s.copy(channels = s.channels.map {
                     if (it.id == channel.id) it.copy(enabled = !it.enabled) else it
                 })
             }
-        })
-        row.addView(btn("Playlist") { promptPlaylist(channel) })
-        row.addView(btn("Video IDs") { promptVideoIds(channel) })
-        row.addView(btn("Direct URL") { promptDirect(channel) })
-        row.addView(btn("Refresh") {
+        }
+        addButton(actions, "Playlist") { promptPlaylist(channel) }
+        addButton(actions, "Video IDs") { promptVideoIds(channel) }
+        addButton(actions, "Direct URL") { promptDirect(channel) }
+        addButton(actions, "Refresh") {
             lifecycleScope.launch {
-                val r = (application as KiddyTubeApp).catalogRepository.refreshChannelFromYoutube(channel.id)
+                val r = (application as KiddyTubeApp).catalogRepository
+                    .refreshChannelFromYoutube(channel.id)
                 toast(r.fold({ "Loaded $it" }, { it.message ?: "Failed" }))
                 reload()
             }
-        })
-        container.addView(row)
+        }
+        container.addView(card)
     }
 
     private fun promptApiKey() {
@@ -169,15 +178,17 @@ class ParentActivity : AppCompatActivity() {
             setText(settings.youtubeApiKey.orEmpty())
             inputType = InputType.TYPE_CLASS_TEXT
             hint = "AIza..."
+            setTextColor(inkNavy())
+            setHintTextColor(inkMuted())
         }
         AlertDialog.Builder(this)
             .setTitle("YouTube Data API key")
-            .setView(input)
+            .setView(padded(input))
             .setPositiveButton("Save") { _, _ ->
                 val key = input.text.toString().trim().ifBlank { null }
                 update { it.copy(youtubeApiKey = key) }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -185,10 +196,12 @@ class ParentActivity : AppCompatActivity() {
         val input = EditText(this).apply {
             setText(channel.youtubePlaylistId.orEmpty())
             hint = "Playlist ID or YouTube playlist URL"
+            setTextColor(inkNavy())
+            setHintTextColor(inkMuted())
         }
         AlertDialog.Builder(this)
             .setTitle(channel.title)
-            .setView(input)
+            .setView(padded(input))
             .setPositiveButton("Save") { _, _ ->
                 lifecycleScope.launch {
                     (application as KiddyTubeApp).catalogRepository.setPlaylistId(
@@ -198,7 +211,7 @@ class ParentActivity : AppCompatActivity() {
                     reload()
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -206,10 +219,12 @@ class ParentActivity : AppCompatActivity() {
         val input = EditText(this).apply {
             hint = "Comma-separated video IDs or watch URLs"
             minLines = 3
+            setTextColor(inkNavy())
+            setHintTextColor(inkMuted())
         }
         AlertDialog.Builder(this)
             .setTitle("Add YouTube videos")
-            .setView(input)
+            .setView(padded(input))
             .setPositiveButton("Add") { _, _ ->
                 lifecycleScope.launch {
                     (application as KiddyTubeApp).catalogRepository.addManualVideoIds(
@@ -219,25 +234,30 @@ class ParentActivity : AppCompatActivity() {
                     reload()
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun promptDirect(channel: ContentChannel) {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(48, 24, 48, 8)
         }
-        val title = EditText(this).apply { hint = "Title" }
+        val title = EditText(this).apply {
+            hint = "Title"
+            setTextColor(inkNavy())
+            setHintTextColor(inkMuted())
+        }
         val url = EditText(this).apply {
             hint = "https://...mp4 or .m3u8 (not Drive /view)"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setTextColor(inkNavy())
+            setHintTextColor(inkMuted())
         }
         layout.addView(title)
         layout.addView(url)
         AlertDialog.Builder(this)
             .setTitle("Add direct stream")
-            .setView(layout)
+            .setView(padded(layout))
             .setPositiveButton("Add") { _, _ ->
                 val u = url.text.toString().trim()
                 if (!MediaUrlValidator.isDirectMediaUrl(u)) {
@@ -253,28 +273,31 @@ class ParentActivity : AppCompatActivity() {
                     reload()
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
     private fun promptChangePin() {
         val layout = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(48, 24, 48, 8)
         }
         val pin = EditText(this).apply {
             hint = "New PIN"
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            setTextColor(inkNavy())
+            setHintTextColor(inkMuted())
         }
         val confirm = EditText(this).apply {
             hint = "Confirm"
             inputType = InputType.TYPE_CLASS_NUMBER or InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            setTextColor(inkNavy())
+            setHintTextColor(inkMuted())
         }
         layout.addView(pin)
         layout.addView(confirm)
         AlertDialog.Builder(this)
             .setTitle("Change PIN")
-            .setView(layout)
+            .setView(padded(layout))
             .setPositiveButton("Save") { _, _ ->
                 val p1 = pin.text.toString()
                 val p2 = confirm.text.toString()
@@ -292,7 +315,7 @@ class ParentActivity : AppCompatActivity() {
                     it.copy(pinSalt = salt, pinHash = hash, pinChangedFromDefault = true)
                 }
             }
-            .setNegativeButton("Cancel", null)
+            .setNegativeButton(R.string.cancel, null)
             .show()
     }
 
@@ -303,53 +326,118 @@ class ParentActivity : AppCompatActivity() {
         }
     }
 
-    private fun addTitle(text: String) {
-        container.addView(TextView(this).apply {
-            this.text = text
-            textSize = 22f
-            setPadding(0, 28, 0, 12)
-            setTextColor(0xFFFFFFFF.toInt())
-        })
-    }
-
-    private fun addInfo(text: String) {
-        container.addView(TextView(this).apply {
-            this.text = text
-            textSize = 15f
-            setPadding(0, 4, 0, 4)
-            setTextColor(0xFFDDDDDD.toInt())
-        })
-    }
-
-    private fun addButton(label: String, onClick: () -> Unit) {
-        container.addView(btn(label, onClick).apply {
+    private fun addSectionCard(build: (LinearLayout) -> Unit) {
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.tile_idle)
+            val pad = dp(16)
+            setPadding(pad, dp(14), pad, pad)
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
-            ).also { it.topMargin = 8 }
+            ).also { it.bottomMargin = dp(12) }
+        }
+        build(card)
+        container.addView(card)
+    }
+
+    private fun addHeading(text: String) {
+        container.addView(TextView(this).apply {
+            this.text = text
+            setTextColor(inkNavy())
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+            setPadding(dp(4), dp(8), dp(4), dp(10))
+        })
+    }
+
+    private fun addSectionTitle(parent: LinearLayout, text: String) {
+        parent.addView(TextView(this).apply {
+            this.text = text
+            setTextColor(inkNavy())
+            typeface = android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.NORMAL)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 17f)
+            setPadding(0, 0, 0, dp(8))
+        })
+    }
+
+    private fun addInfo(parent: LinearLayout, text: String) {
+        parent.addView(TextView(this).apply {
+            this.text = text
+            setTextColor(inkMuted())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setPadding(0, dp(2), 0, dp(2))
+        })
+    }
+
+    private fun addButton(parent: ViewGroup, label: String, onClick: () -> Unit) {
+        parent.addView(btn(label, onClick).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.topMargin = dp(8) }
         })
     }
 
     private fun btn(label: String, onClick: () -> Unit): Button =
-        Button(this).apply {
+        Button(this, null, android.R.attr.borderlessButtonStyle).apply {
             text = label
+            isAllCaps = false
             isFocusable = true
+            setTextColor(inkNavy())
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
             setBackgroundResource(R.drawable.focusable_button)
+            setPadding(dp(16), dp(12), dp(16), dp(12))
             setOnClickListener { onClick() }
         }
 
-    private fun addSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-        container.addView(Switch(this).apply {
+    private fun addSwitch(
+        parent: LinearLayout,
+        label: String,
+        checked: Boolean,
+        onChange: (Boolean) -> Unit
+    ) {
+        parent.addView(Switch(this).apply {
             text = label
             isChecked = checked
             isFocusable = true
+            setTextColor(inkNavy())
+            setPadding(0, dp(10), 0, dp(4))
             setOnCheckedChangeListener { _, isChecked -> onChange(isChecked) }
         })
+    }
+
+    private fun padded(view: android.view.View): LinearLayout =
+        LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            val pad = dp(20)
+            setPadding(pad, dp(12), pad, dp(4))
+            addView(
+                view,
+                LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+            )
+        }
+
+    private fun goBackToChannels() {
+        startActivity(Intent(this, ChannelGridActivity::class.java))
+        finish()
     }
 
     private fun toast(msg: String) {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
     }
+
+    private fun inkNavy(): Int = ContextCompat.getColor(this, R.color.ink_navy)
+    private fun inkMuted(): Int = ContextCompat.getColor(this, R.color.ink_muted)
+    private fun dp(value: Int): Int =
+        TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            value.toFloat(),
+            resources.displayMetrics
+        ).toInt()
 
     override fun onResume() {
         super.onResume()
