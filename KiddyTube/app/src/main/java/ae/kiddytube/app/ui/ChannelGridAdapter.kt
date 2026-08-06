@@ -39,7 +39,8 @@ class ChannelGridAdapter(
     inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val icon: ImageView = itemView.findViewById(R.id.channelIcon)
         private val title: TextView = itemView.findViewById(R.id.channelTitle)
-        private val cornerPx = itemView.resources.displayMetrics.density * 14f
+        private val cornerPx =
+            itemView.resources.getDimension(R.dimen.image_corner)
 
         fun bind(channel: ContentChannel) {
             title.text = channel.title
@@ -58,8 +59,14 @@ class ChannelGridAdapter(
             }
             itemView.setOnClickListener { onClick(channel) }
             itemView.setOnFocusChangeListener { v, hasFocus ->
-                val scale = if (hasFocus) 1.08f else 1f
-                v.animate().scaleX(scale).scaleY(scale).setDuration(120).start()
+                val scale = if (hasFocus) 1.04f else 1f
+                val ty = if (hasFocus) -6f else 0f
+                v.animate()
+                    .scaleX(scale)
+                    .scaleY(scale)
+                    .translationY(ty)
+                    .setDuration(150)
+                    .start()
             }
         }
     }

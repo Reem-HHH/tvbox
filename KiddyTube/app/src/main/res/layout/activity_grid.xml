@@ -10,23 +10,20 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:paddingStart="24dp"
-        android:paddingTop="16dp"
-        android:paddingEnd="24dp"
-        android:paddingBottom="8dp">
+        android:paddingStart="@dimen/header_padding_h"
+        android:paddingTop="@dimen/header_padding_v"
+        android:paddingEnd="@dimen/header_padding_h"
+        android:paddingBottom="12dp">
 
         <TextView
             android:id="@+id/brandTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:fontFamily="sans-serif-black"
-            android:shadowColor="@color/title_shadow"
-            android:shadowDx="2"
-            android:shadowDy="3"
-            android:shadowRadius="2"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.01"
             android:text="@string/app_name"
-            android:textColor="@color/ink_black"
+            android:textColor="@color/ink_navy"
             android:textSize="@dimen/brand_title_size" />
 
         <TextView
@@ -34,13 +31,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/sync_chip_bg"
-            android:fontFamily="sans-serif-black"
-            android:paddingStart="14dp"
+            android:fontFamily="sans-serif-medium"
+            android:paddingStart="16dp"
             android:paddingTop="8dp"
-            android:paddingEnd="14dp"
+            android:paddingEnd="16dp"
             android:paddingBottom="8dp"
             android:text="@string/sync_updating"
-            android:textColor="@color/ink_black"
+            android:textColor="@color/ink_muted"
             android:textSize="@dimen/sync_chip_text"
             android:visibility="gone" />
     </LinearLayout>
@@ -48,7 +45,8 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:clipChildren="false">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/grid"
@@ -64,11 +62,14 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:background="@drawable/sync_chip_bg"
-            android:fontFamily="sans-serif-black"
+            android:fontFamily="sans-serif-medium"
             android:gravity="center"
-            android:padding="28dp"
-            android:textColor="@color/empty_text"
-            android:textSize="18sp"
+            android:paddingStart="32dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="32dp"
+            android:paddingBottom="24dp"
+            android:textColor="@color/ink_navy"
+            android:textSize="16sp"
             android:visibility="gone" />
     </FrameLayout>
 </LinearLayout>
