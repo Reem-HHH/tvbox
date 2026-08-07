@@ -24,6 +24,7 @@ import ae.kiddytube.app.catalog.ContentChannel
 import ae.kiddytube.app.catalog.SyncPolicy
 import ae.kiddytube.app.catalog.SyncStatus
 import ae.kiddytube.app.launcher.ImmersiveMode
+import ae.kiddytube.app.sources.AndroidAppIdentity
 import ae.kiddytube.app.sources.MediaUrlValidator
 import ae.kiddytube.app.ui.ChannelGridActivity
 import kotlinx.coroutines.launch
@@ -59,7 +60,7 @@ class ParentActivity : AppCompatActivity() {
             addInfo(it, "KiddyTube ${BuildConfig.VERSION_NAME}")
             addInfo(it, getString(R.string.parent_video_count, totalVideos))
             if (!settings.pinChangedFromDefault) {
-                addInfo(it, "Change default PIN (2580) before release-ready.")
+                addInfo(it, getString(R.string.parent_default_pin_warning))
             }
             addInfo(
                 it,
@@ -71,12 +72,21 @@ class ParentActivity : AppCompatActivity() {
                     }
                 }"
             )
+            val sha1 = AndroidAppIdentity.signingCertSha1Hex(this)
+            addInfo(
+                it,
+                if (sha1.isNullOrBlank()) {
+                    getString(R.string.parent_signing_sha1_unavailable)
+                } else {
+                    getString(R.string.parent_signing_sha1, sha1)
+                }
+            )
         }
 
         addSectionCard {
             addSectionTitle(it, getString(R.string.parent_section_actions))
-            addButton(it, "Set YouTube API key") { promptApiKey() }
-            addButton(it, "Refresh all playlists") {
+            addButton(it, getString(R.string.parent_set_api_key)) { promptApiKey() }
+            addButton(it, getString(R.string.parent_refresh_playlists)) {
                 lifecycleScope.launch {
                     val result =
                         (application as KiddyTubeApp).catalogRepository.refreshAllPlaylists(force = true)
@@ -92,13 +102,13 @@ class ParentActivity : AppCompatActivity() {
                                 result.message ?: "Sync failed"
                             SyncStatus.SKIPPED_TTL ->
                                 result.message
-                                    ?: "Nothing to sync — enable Follow uploads to import playlists"
+                                    ?: getString(R.string.sync_enable_follow_uploads)
                         }
                     )
                     reload()
                 }
             }
-            addButton(it, "Export catalog JSON") {
+            addButton(it, getString(R.string.parent_export_catalog)) {
                 lifecycleScope.launch {
                     val json = (application as KiddyTubeApp).catalogRepository.exportJson()
                     val share = Intent(Intent.ACTION_SEND).apply {
@@ -129,14 +139,18 @@ class ParentActivity : AppCompatActivity() {
 
         addSectionCard {
             addSectionTitle(it, getString(R.string.parent_section_security))
-            addButton(it, "Change PIN") { promptChangePin() }
-            addSwitch(it, "Release ready", settings.releaseReady && settings.pinChangedFromDefault) { checked ->
+            addButton(it, getString(R.string.parent_change_pin)) { promptChangePin() }
+            addSwitch(
+                it,
+                getString(R.string.parent_release_ready),
+                settings.releaseReady && settings.pinChangedFromDefault
+            ) { checked ->
                 if (checked && !settings.pinChangedFromDefault) {
-                    toast("Change default PIN first")
+                    toast(getString(R.string.parent_change_pin_first))
                     lifecycleScope.launch { reload() }
                     return@addSwitch
                 }
-                update { s -> s.copy(releaseReady = checked) }
+                update { s -> s.copy(releaseReady = checked && s.pinChangedFromDefault) }
             }
             addButton(it, "Reset all settings") {
                 AlertDialog.Builder(this)
@@ -383,16 +397,20 @@ class ParentActivity : AppCompatActivity() {
             .setPositiveButton("Add") { _, _ ->
                 val u = url.text.toString().trim()
                 if (!MediaUrlValidator.isDirectMediaUrl(u)) {
-                    toast("Need HTTPS URL ending in .mp4, .m3u8, or .mpd")
+                    toast(getString(R.string.parent_invalid_direct_url))
                     return@setPositiveButton
                 }
                 lifecycleScope.launch {
-                    (application as KiddyTubeApp).catalogRepository.addDirectVideo(
-                        channel.id,
-                        title.text.toString(),
-                        u
-                    )
-                    reload()
+                    try {
+                        (application as KiddyTubeApp).catalogRepository.addDirectVideo(
+                            channel.id,
+                            title.text.toString(),
+                            u
+                        )
+                        reload()
+                    } catch (_: IllegalArgumentException) {
+                        toast(getString(R.string.parent_invalid_direct_url))
+                    }
                 }
             }
             .setNegativeButton(R.string.cancel, null)

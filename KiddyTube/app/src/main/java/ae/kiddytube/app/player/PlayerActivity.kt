@@ -12,7 +12,6 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -290,12 +289,7 @@ class PlayerActivity : AppCompatActivity() {
             webChromeClient = WebChromeClient()
             webViewClient = WebViewClient()
             addJavascriptInterface(
-                object {
-                    @JavascriptInterface
-                    fun onEnded() {
-                        runOnUiThread { finish() }
-                    }
-                },
+                YoutubePlayerBridge { runOnUiThread { finish() } },
                 "KiddyNative"
             )
         }

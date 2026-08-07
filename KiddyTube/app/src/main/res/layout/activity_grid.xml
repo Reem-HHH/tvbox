@@ -126,7 +126,6 @@
             android:descendantFocusability="afterDescendants"
             android:focusable="true"
             android:focusedByDefault="true"
-            android:nextFocusUp="@id/continueWatchingList"
             android:padding="@dimen/grid_padding" />
 
         <TextView

@@ -129,12 +129,33 @@ class ChannelGridActivity : AppCompatActivity() {
                     getString(R.string.sync_failed)
                 }
             }
-            SyncStatus.SKIPPED_TTL -> getString(R.string.sync_skipped)
+            SyncStatus.SKIPPED_TTL -> {
+                val needsFollow = settings.channels.any {
+                    it.enabled &&
+                        !it.youtubePlaylistId.isNullOrBlank() &&
+                        it.videos.isEmpty() &&
+                        !it.followUploads
+                }
+                if (needsFollow) {
+                    getString(R.string.sync_enable_follow_uploads)
+                } else {
+                    result.message?.takeIf { it.contains("Follow uploads", ignoreCase = true) }
+                        ?.let { getString(R.string.sync_enable_follow_uploads) }
+                        ?: getString(R.string.sync_skipped)
+                }
+            }
         }
         val stickyNoKey = result.status == SyncStatus.SKIPPED_NO_KEY &&
             settings.channels.any { it.enabled && it.videos.isEmpty() }
+        val stickyFollow = result.status == SyncStatus.SKIPPED_TTL &&
+            settings.channels.any {
+                it.enabled &&
+                    !it.youtubePlaylistId.isNullOrBlank() &&
+                    it.videos.isEmpty() &&
+                    !it.followUploads
+            }
         showSyncChip(message)
-        if (!stickyNoKey) {
+        if (!stickyNoKey && !stickyFollow) {
             delay(2800)
             if (syncStatus.text == message) {
                 syncStatus.visibility = View.GONE
@@ -182,7 +203,9 @@ class ChannelGridActivity : AppCompatActivity() {
         val isTv = isTelevision()
         val widthDp = resources.configuration.screenWidthDp
         return when {
-            isTv || widthDp >= 900 -> 6
+            // TV: fewer columns so channel thumbs read at 10-foot distance.
+            isTv -> 4
+            widthDp >= 900 -> 6
             widthDp >= 600 -> 4
             else -> 2
         }
@@ -204,7 +227,10 @@ class ChannelGridActivity : AppCompatActivity() {
             val recent = app.recentWatchStore.current()
             val playable = RecentWatchLogic.resolvePlayable(recent, settings)
             continueAdapter.submit(playable)
-            continueSection.visibility = if (playable.isEmpty()) View.GONE else View.VISIBLE
+            val showContinue = playable.isNotEmpty()
+            continueSection.visibility = if (showContinue) View.VISIBLE else View.GONE
+            // Avoid trapping D-pad up when the continue row is gone.
+            grid.nextFocusUpId = if (showContinue) R.id.continueWatchingList else View.NO_ID
         }
         if (channels.isEmpty()) {
             emptyMessage.visibility = View.VISIBLE

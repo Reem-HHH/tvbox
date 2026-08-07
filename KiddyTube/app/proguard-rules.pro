@@ -15,10 +15,15 @@
 -keep class ae.kiddytube.app.catalog.VideoItem { *; }
 -keep class ae.kiddytube.app.catalog.CatalogSettings { *; }
 
-# YouTube iframe WebView bridge (anonymous @JavascriptInterface in PlayerActivity).
+# YouTube iframe WebView bridge.
+-keep class ae.kiddytube.app.player.YoutubePlayerBridge { *; }
 -keepclassmembers class * {
     @android.webkit.JavascriptInterface <methods>;
 }
+
+# Continue-watching JSON models.
+-keep class ae.kiddytube.app.catalog.RecentWatchJson { *; }
+-keep class ae.kiddytube.app.catalog.RecentWatchItem { *; }
 
 # AndroidX Security Crypto / Tink (EncryptedSharedPreferences + MasterKeys).
 -keep class androidx.security.crypto.** { *; }

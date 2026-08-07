@@ -44,4 +44,15 @@
     <string name="parent_section_actions">الكتالوج</string>
     <string name="parent_section_channels">القنوات</string>
     <string name="parent_section_security">الأمان</string>
+    <string name="parent_default_pin_warning">غيّر رمز PIN الافتراضي (2580) قبل الإصدار. جاهزية الإصدار تبقى متوقفة حتى تغيّره.</string>
+    <string name="parent_change_pin_first">غيّر رمز PIN الافتراضي أولاً</string>
+    <string name="parent_release_ready">جاهز للإصدار</string>
+    <string name="parent_signing_sha1">بصمة SHA-1 للتطبيق (لمفاتيح Android المقيّدة):\n%1$s</string>
+    <string name="parent_signing_sha1_unavailable">بصمة SHA-1 غير متاحة على هذا الجهاز</string>
+    <string name="parent_set_api_key">تعيين مفتاح YouTube API</string>
+    <string name="parent_refresh_playlists">تحديث كل القوائم</string>
+    <string name="parent_export_catalog">تصدير كتالوج JSON</string>
+    <string name="parent_change_pin">تغيير PIN</string>
+    <string name="sync_enable_follow_uploads">فعّل متابعة الرفعات للقنوات الفارغة من إعدادات الوالدين</string>
+    <string name="parent_invalid_direct_url">استخدم رابط HTTPS بصيغة .mp4 / .m3u8 / .mpd</string>
 </resources>

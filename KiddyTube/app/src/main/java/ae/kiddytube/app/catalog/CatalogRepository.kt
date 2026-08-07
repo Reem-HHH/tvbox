@@ -14,6 +14,7 @@ import ae.kiddytube.app.security.EncryptedSensitiveSecretsStore
 import ae.kiddytube.app.security.SensitiveSecrets
 import ae.kiddytube.app.security.SensitiveSecretsMigrator
 import ae.kiddytube.app.security.SensitiveSecretsStore
+import ae.kiddytube.app.sources.MediaUrlValidator
 import ae.kiddytube.app.sources.NetworkStatus
 import ae.kiddytube.app.sources.YoutubeCatalogSource
 import ae.kiddytube.app.sources.YoutubeUrlParser
@@ -366,11 +367,14 @@ class CatalogRepository(
     }
 
     suspend fun addDirectVideo(channelId: String, title: String, url: String) {
+        if (!MediaUrlValidator.isDirectMediaUrl(url)) {
+            throw IllegalArgumentException("Invalid direct media URL")
+        }
         val id = "direct_${System.currentTimeMillis()}"
         val item = VideoItem(
             id = id,
             title = title.ifBlank { "Video" },
-            directUrl = url,
+            directUrl = url.trim(),
             publishedAtMs = System.currentTimeMillis(),
             manual = true
         )
@@ -431,7 +435,8 @@ class CatalogRepository(
         prefs[Keys.PIN_CHANGED] = next.pinChangedFromDefault
         prefs[Keys.FAIL_COUNT] = next.failCount
         prefs[Keys.LOCKED_UNTIL] = next.lockedUntilMs
-        prefs[Keys.RELEASE_READY] = next.releaseReady
+        // Never mark release-ready while still on the factory default PIN.
+        prefs[Keys.RELEASE_READY] = next.releaseReady && next.pinChangedFromDefault
         prefs[Keys.LAST_SYNC] = next.lastSyncMs
         prefs[Keys.SEED_VERSION] = next.seedVersion
     }

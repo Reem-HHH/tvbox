@@ -106,6 +106,15 @@ class RecentWatchLogicTest {
         assertEquals(items, decoded)
     }
 
+    @Test
+    fun invalidJsonDecodeFallsBackForLastGoodPattern() {
+        assertEquals(null, RecentWatchJson.decodeOrNull("{not-json"))
+        assertEquals(emptyList<RecentWatchItem>(), RecentWatchJson.decode(""))
+        val good = listOf(item("v1", title = "OK", watchedAtMs = 9))
+        val encoded = RecentWatchJson.encode(good)
+        assertEquals(good, RecentWatchJson.decodeOrNull(encoded))
+    }
+
     private fun item(
         videoId: String,
         channelId: String = "ch",

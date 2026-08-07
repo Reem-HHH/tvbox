@@ -122,7 +122,8 @@ class VideoLibraryActivity : AppCompatActivity() {
         val isTv = isTelevision()
         val widthDp = resources.configuration.screenWidthDp
         return when {
-            isTv || widthDp >= 900 -> 5
+            isTv -> 4
+            widthDp >= 900 -> 5
             widthDp >= 600 -> 3
             else -> 2
         }

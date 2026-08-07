@@ -44,4 +44,15 @@
     <string name="parent_section_actions">Catalog</string>
     <string name="parent_section_channels">Channels</string>
     <string name="parent_section_security">Security</string>
+    <string name="parent_default_pin_warning">Change the default PIN (2580) before release. Release ready stays off until you change it.</string>
+    <string name="parent_change_pin_first">Change the default PIN first</string>
+    <string name="parent_release_ready">Release ready</string>
+    <string name="parent_signing_sha1">App signing SHA-1 (for Android-restricted API keys):\n%1$s</string>
+    <string name="parent_signing_sha1_unavailable">App signing SHA-1 unavailable on this device</string>
+    <string name="parent_set_api_key">Set YouTube API key</string>
+    <string name="parent_refresh_playlists">Refresh all playlists</string>
+    <string name="parent_export_catalog">Export catalog JSON</string>
+    <string name="parent_change_pin">Change PIN</string>
+    <string name="sync_enable_follow_uploads">Enable Follow uploads on empty channels in Parent settings</string>
+    <string name="parent_invalid_direct_url">Use an HTTPS .mp4 / .m3u8 / .mpd link</string>
 </resources>
