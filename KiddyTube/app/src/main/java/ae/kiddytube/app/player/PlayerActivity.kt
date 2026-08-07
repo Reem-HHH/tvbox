@@ -8,8 +8,10 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
+import android.os.SystemClock
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.JavascriptInterface
@@ -23,6 +25,7 @@ import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -30,6 +33,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
+import ae.kiddytube.app.catalog.RecentWatchItem
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.parent.ParentUnlockCoordinator
@@ -37,7 +41,7 @@ import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import ae.kiddytube.app.sources.MediaUrlValidator
 import ae.kiddytube.app.sources.YoutubeUrlParser
-import ae.kiddytube.app.catalog.RecentWatchItem
+import kotlin.math.abs
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -54,6 +58,9 @@ class PlayerActivity : AppCompatActivity() {
     private var allowSeek = true
     private val handler = Handler(Looper.getMainLooper())
     private val seekMs = 10_000L
+    private val doubleTapMs = 320L
+    private var lastTapUptimeMs = 0L
+    private var lastTapX = 0f
     private val hideSeekFeedback = Runnable {
         if (::seekFeedback.isInitialized) {
             seekFeedback.visibility = View.GONE
@@ -64,6 +71,7 @@ class PlayerActivity : AppCompatActivity() {
             titleOverlay.visibility = View.GONE
         }
     }
+    private val pendingSingleTap = Runnable { togglePlayback() }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,11 +114,17 @@ class PlayerActivity : AppCompatActivity() {
         // Edge masks cover YouTube watermark / chrome that sits over the iframe edges.
         addBrandMasks()
 
-        // Transparent touch layer: play/pause without opening YouTube chrome
+        // Transparent touch layer: single tap = play/pause; double-tap L/R = seek
+        // (without opening YouTube chrome).
         val tapLayer = View(this).apply {
             isClickable = true
             isFocusable = false
-            setOnClickListener { togglePlayback() }
+            setOnTouchListener { v, event ->
+                if (event.actionMasked == MotionEvent.ACTION_UP) {
+                    handlePlayerTap(v, event.x)
+                }
+                true
+            }
         }
         container.addView(
             tapLayer,
@@ -119,6 +133,11 @@ class PlayerActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
+        // Keep D-pad seeks from fighting focus navigation on Back.
+        findViewById<TextView>(R.id.navBack).isFocusable = true
+        container.isFocusable = true
+        container.isFocusableInTouchMode = true
+        container.requestFocus()
 
         lifecycleScope.launch {
             val settings = (application as KiddyTubeApp).catalogRepository.current()
@@ -221,6 +240,27 @@ class PlayerActivity : AppCompatActivity() {
         )
     }
 
+    private fun handlePlayerTap(view: View, x: Float) {
+        val now = SystemClock.uptimeMillis()
+        val width = view.width.coerceAtLeast(1).toFloat()
+        val isDouble = now - lastTapUptimeMs <= doubleTapMs &&
+            abs(x - lastTapX) <= width * 0.35f
+        if (isDouble) {
+            handler.removeCallbacks(pendingSingleTap)
+            lastTapUptimeMs = 0L
+            when {
+                x < width / 3f -> seekBy(-seekMs)
+                x > width * 2f / 3f -> seekBy(seekMs)
+                else -> togglePlayback()
+            }
+            return
+        }
+        lastTapUptimeMs = now
+        lastTapX = x
+        handler.removeCallbacks(pendingSingleTap)
+        handler.postDelayed(pendingSingleTap, doubleTapMs)
+    }
+
     private fun togglePlayback() {
         player?.let { it.playWhenReady = !it.isPlaying }
         webView?.evaluateJavascript("toggle()", null)
@@ -237,12 +277,21 @@ class PlayerActivity : AppCompatActivity() {
             return
         }
         player?.let {
-            val next = (it.currentPosition + deltaMs).coerceAtLeast(0L)
+            val duration = it.duration
+            val next = (it.currentPosition + deltaMs).coerceAtLeast(0L).let { pos ->
+                if (duration != C.TIME_UNSET && duration > 0L) {
+                    pos.coerceAtMost((duration - 250L).coerceAtLeast(0L))
+                } else {
+                    pos
+                }
+            }
             it.seekTo(next)
+            it.playWhenReady = true
         }
         val deltaSec = deltaMs / 1000.0
+        // Call the page-global helper; harden against not-ready / NaN inside JS.
         webView?.evaluateJavascript("seekBy($deltaSec)", null)
-        val seconds = kotlin.math.abs(deltaMs / 1000L).toInt()
+        val seconds = abs(deltaMs / 1000L).toInt()
         val label = if (deltaMs >= 0) {
             getString(R.string.player_seek_forward, seconds)
         } else {
@@ -325,11 +374,26 @@ class PlayerActivity : AppCompatActivity() {
               function toggle(){if(!player)return;var s=player.getPlayerState();
                 if(s===1)player.pauseVideo();else player.playVideo();}
               function seekBy(deltaSec){
-                if(!player||!player.getCurrentTime||!player.seekTo)return;
-                var t=player.getCurrentTime()+deltaSec;
+                if(!player||typeof player.seekTo!=='function')return;
+                var cur=0;
+                try{
+                  if(typeof player.getCurrentTime==='function'){
+                    var g=player.getCurrentTime();
+                    if(typeof g==='number'&&!isNaN(g))cur=g;
+                  }
+                }catch(e){}
+                var t=cur+(Number(deltaSec)||0);
                 if(t<0)t=0;
-                player.seekTo(t,true);
-                player.playVideo();
+                try{
+                  if(typeof player.getDuration==='function'){
+                    var d=player.getDuration();
+                    if(typeof d==='number'&&d>0&&t>d-1)t=Math.max(0,d-1);
+                  }
+                }catch(e){}
+                try{
+                  player.seekTo(t,true);
+                  if(player.playVideo)player.playVideo();
+                }catch(e){}
               }
             </script></body></html>
         """.trimIndent()
