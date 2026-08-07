@@ -10,6 +10,10 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import ae.kiddytube.app.security.EncryptedSensitiveSecretsStore
+import ae.kiddytube.app.security.SensitiveSecrets
+import ae.kiddytube.app.security.SensitiveSecretsMigrator
+import ae.kiddytube.app.security.SensitiveSecretsStore
 import ae.kiddytube.app.sources.NetworkStatus
 import ae.kiddytube.app.sources.YoutubeCatalogSource
 import ae.kiddytube.app.sources.YoutubeUrlParser
@@ -34,15 +38,69 @@ data class CatalogSettings(
     val seedVersion: Int = 0
 )
 
-class CatalogRepository(private val context: Context) {
+class CatalogRepository(
+    private val context: Context,
+    private val secretsStore: SensitiveSecretsStore = EncryptedSensitiveSecretsStore(context)
+) {
     private val store = context.catalogStore
     private val youtube = YoutubeCatalogSource()
     private val syncTtlMs = 24 * 60 * 60 * 1000L
     private val writeMutex = Mutex()
+    private var bootstrap: CatalogBootstrap? = null
+    @Volatile private var migrationDone = false
 
     val settingsFlow: Flow<CatalogSettings> = store.data.map { it.toSettings() }
 
     suspend fun current(): CatalogSettings = settingsFlow.first()
+
+    /** Wired from [ae.kiddytube.app.KiddyTubeApp] so sync cannot race seed/PIN bootstrap. */
+    fun bindBootstrap(gate: CatalogBootstrap) {
+        bootstrap = gate
+    }
+
+    suspend fun awaitReady() {
+        bootstrap?.await()
+    }
+
+    /**
+     * Moves API key / PIN material from plaintext DataStore (and any legacy plain SharedPreferences)
+     * into [secretsStore], then clears the plain copies. Idempotent; safe before PIN bootstrap.
+     */
+    suspend fun migrateSensitiveSecretsIfNeeded() {
+        if (migrationDone) return
+        writeMutex.withLock {
+            if (migrationDone) return
+            val encrypted = secretsStore.read()
+            val legacyPlain = (secretsStore as? EncryptedSensitiveSecretsStore)
+                ?.readLegacyPlainSharedPrefs()
+                ?: SensitiveSecrets()
+            store.edit { prefs ->
+                val fromDataStore = SensitiveSecrets(
+                    youtubeApiKey = prefs[Keys.YOUTUBE_API_KEY]?.ifBlank { null },
+                    pinSalt = prefs[Keys.PIN_SALT]?.ifBlank { null },
+                    pinHash = prefs[Keys.PIN_HASH]?.ifBlank { null }
+                )
+                val plainMerged = SensitiveSecrets(
+                    youtubeApiKey = fromDataStore.youtubeApiKey ?: legacyPlain.youtubeApiKey,
+                    pinSalt = fromDataStore.pinSalt ?: legacyPlain.pinSalt,
+                    pinHash = fromDataStore.pinHash ?: legacyPlain.pinHash
+                )
+                val result = SensitiveSecretsMigrator.migrate(encrypted, plainMerged)
+                if (result.writeEncrypted) {
+                    secretsStore.write(result.secrets)
+                }
+                if (result.clearPlain || !fromDataStore.isEmpty()) {
+                    prefs.remove(Keys.YOUTUBE_API_KEY)
+                    prefs.remove(Keys.PIN_SALT)
+                    prefs.remove(Keys.PIN_HASH)
+                }
+            }
+            if (!legacyPlain.isEmpty()) {
+                (secretsStore as? EncryptedSensitiveSecretsStore)?.clearLegacyPlainSharedPrefs()
+            }
+            migrationDone = true
+        }
+    }
 
     fun enabledChannels(settings: CatalogSettings): List<ContentChannel> =
         settings.channels.filter { it.enabled }.sortedBy { it.sortOrder }
@@ -87,7 +145,9 @@ class CatalogRepository(private val context: Context) {
 
     suspend fun resetAll() {
         writeMutex.withLock {
+            secretsStore.clear()
             store.edit { it.clear() }
+            migrationDone = true
         }
     }
 
@@ -191,6 +251,10 @@ class CatalogRepository(private val context: Context) {
     }
 
     suspend fun refreshAllPlaylists(force: Boolean = false): SyncResult {
+        // Never sync against a pre-upgrade / pre-PIN catalog on first launch.
+        awaitReady()
+        applySeedUpgradeIfNeeded()
+
         val settings = current()
         val apiKey = ApiKeyResolver.effective(settings.youtubeApiKey)
         if (apiKey.isNullOrBlank()) {
@@ -203,9 +267,9 @@ class CatalogRepository(private val context: Context) {
         val emptyPlaylistLibraries = settings.channels.any {
             it.enabled && !it.youtubePlaylistId.isNullOrBlank() && it.videos.isEmpty()
         }
-        val needsForce = force || emptyPlaylistLibraries
         val now = System.currentTimeMillis()
-        if (!needsForce && now - settings.lastSyncMs < syncTtlMs) {
+        val withinTtl = now - settings.lastSyncMs < syncTtlMs
+        if (!SyncPolicy.shouldBypassTtl(force, emptyPlaylistLibraries) && withinTtl) {
             return SyncResult(SyncStatus.SKIPPED_TTL, message = "Within sync TTL")
         }
 
@@ -216,13 +280,17 @@ class CatalogRepository(private val context: Context) {
             if (!ch.enabled) continue
             val hasPlaylist = !ch.youtubePlaylistId.isNullOrBlank()
             val hasYoutubeVideos = ch.videos.any { !it.youtubeVideoId.isNullOrBlank() }
-            if (!hasPlaylist && !hasYoutubeVideos) continue
             val importPlaylist =
                 SyncPolicy.shouldImportPlaylist(ch.followUploads, ch.videos.size)
             // Force and auto both honor followUploads — never dump UU playlists without opt-in.
-            if (hasPlaylist && !importPlaylist) {
-                if (!force) continue // auto: leave closed libraries alone
-                if (!hasYoutubeVideos) continue // force: nothing to metadata-enrich
+            if (!SyncPolicy.shouldRefreshChannel(
+                    force = force,
+                    hasPlaylist = hasPlaylist,
+                    hasYoutubeVideos = hasYoutubeVideos,
+                    importPlaylist = importPlaylist
+                )
+            ) {
+                continue
             }
             val result = refreshChannelFromYoutube(ch.id, allowPlaylistImport = importPlaylist)
             if (result.isSuccess) {
@@ -340,9 +408,17 @@ class CatalogRepository(private val context: Context) {
         if (CatalogJson.decodeOrNull(encoded) != null) {
             prefs[Keys.CHANNELS_JSON_LAST_GOOD] = encoded
         }
-        prefs[Keys.YOUTUBE_API_KEY] = next.youtubeApiKey.orEmpty()
-        prefs[Keys.PIN_SALT] = next.pinSalt.orEmpty()
-        prefs[Keys.PIN_HASH] = next.pinHash.orEmpty()
+        secretsStore.write(
+            SensitiveSecrets(
+                youtubeApiKey = next.youtubeApiKey,
+                pinSalt = next.pinSalt,
+                pinHash = next.pinHash
+            )
+        )
+        // Never leave sensitive values in plaintext DataStore after a write.
+        prefs.remove(Keys.YOUTUBE_API_KEY)
+        prefs.remove(Keys.PIN_SALT)
+        prefs.remove(Keys.PIN_HASH)
         prefs[Keys.PIN_CHANGED] = next.pinChangedFromDefault
         prefs[Keys.FAIL_COUNT] = next.failCount
         prefs[Keys.LOCKED_UNTIL] = next.lockedUntilMs
@@ -365,11 +441,15 @@ class CatalogRepository(private val context: Context) {
             }
             else -> DefaultChannels.seed()
         }
+        val secrets = secretsStore.read()
+        // During the brief window before migrateSensitiveSecretsIfNeeded(), fall back to
+        // any leftover plaintext DataStore keys so UI/PIN bootstrap still sees values.
         return CatalogSettings(
             channels = channels,
-            youtubeApiKey = this[Keys.YOUTUBE_API_KEY]?.ifBlank { null },
-            pinSalt = this[Keys.PIN_SALT]?.ifBlank { null },
-            pinHash = this[Keys.PIN_HASH]?.ifBlank { null },
+            youtubeApiKey = secrets.youtubeApiKey
+                ?: this[Keys.YOUTUBE_API_KEY]?.ifBlank { null },
+            pinSalt = secrets.pinSalt ?: this[Keys.PIN_SALT]?.ifBlank { null },
+            pinHash = secrets.pinHash ?: this[Keys.PIN_HASH]?.ifBlank { null },
             pinChangedFromDefault = this[Keys.PIN_CHANGED] ?: false,
             failCount = this[Keys.FAIL_COUNT] ?: 0,
             lockedUntilMs = this[Keys.LOCKED_UNTIL] ?: 0L,
@@ -382,6 +462,7 @@ class CatalogRepository(private val context: Context) {
     private object Keys {
         val CHANNELS_JSON = stringPreferencesKey("channels_json")
         val CHANNELS_JSON_LAST_GOOD = stringPreferencesKey("channels_json_last_good")
+        /** Legacy plaintext keys — cleared by [migrateSensitiveSecretsIfNeeded] / [writeSettings]. */
         val YOUTUBE_API_KEY = stringPreferencesKey("youtube_api_key")
         val PIN_SALT = stringPreferencesKey("pin_salt")
         val PIN_HASH = stringPreferencesKey("pin_hash")

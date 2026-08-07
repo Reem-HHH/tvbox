@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KiddyTube</string>
+    <string name="empty_channels">لا توجد قنوات بعد.\nاطلب من أحد الوالدين تفعيل بعضها.</string>
+    <string name="empty_videos">لا توجد فيديوهات بعد.\nاطلب من أحد الوالدين مزامنة القوائم أو إضافة روابط.</string>
+    <string name="empty_no_api_key">اتصل بالإنترنت وأضف مفتاح YouTube API من إعدادات الوالدين لملء القنوات.</string>
+    <string name="sync_updating">جاري تحديث القنوات…</string>
+    <string name="sync_updated">تم تحديث القنوات!</string>
+    <string name="sync_offline">بدون اتصال — عرض الفيديوهات المحفوظة</string>
+    <string name="sync_no_key">أضف مفتاح YouTube API من إعدادات الوالدين</string>
+    <string name="sync_failed">تعذّر التحديث — عرض الفيديوهات المحفوظة</string>
+    <string name="sync_skipped">القنوات محدّثة</string>
+    <string name="parent_settings">إعدادات الوالدين</string>
+    <string name="parent_dashboard">إعدادات الوالدين</string>
+    <string name="parent_pin_title">رمز الوالدين</string>
+    <string name="back_to_channels">العودة إلى القنوات</string>
+    <string name="nav_back">رجوع</string>
+    <string name="unlock">فتح</string>
+    <string name="cancel">إلغاء</string>
+    <string name="parent_locked_out">محاولات كثيرة. حاول لاحقاً.</string>
+    <string name="parent_pin_wrong">رمز خاطئ. حاول مرة أخرى.</string>
+    <string name="parent_session_expired">انتهت جلسة الوالدين. افتح القفل مرة أخرى.</string>
+    <string name="parent_video_count">%1$d فيديو في الكتالوج</string>
+    <string name="parent_follow_uploads">متابعة رفعات القائمة عند المزامنة/التحديث</string>
+    <string name="parent_seek_enabled">التقديم/الترجيع مفعّل لهذه القناة</string>
+    <string name="parent_manage_videos">إدارة الفيديوهات</string>
+    <string name="parent_no_videos">لا توجد فيديوهات في هذه القناة</string>
+    <string name="parent_remove_video_title">إزالة الفيديو؟</string>
+    <string name="parent_remove">إزالة</string>
+    <string name="parent_clear_synced">مسح المتزامن</string>
+    <string name="parent_clear_synced_message">إزالة فيديوهات القائمة/المتزامنة. الروابط اليدوية والمباشرة تبقى.</string>
+    <string name="player_blocked">هذا الفيديو غير موجود في كتالوجك.</string>
+    <string name="player_seek_forward">+%1$d ث</string>
+    <string name="player_seek_back">−%1$d ث</string>
+    <string name="player_seek_disabled">التقديم/الترجيع متوقف</string>
+    <string name="a11y_channel_tile">قناة: %1$s</string>
+    <string name="a11y_video_tile">فيديو: %1$s</string>
+    <string name="parent_section_overview">نظرة عامة</string>
+    <string name="parent_section_actions">الكتالوج</string>
+    <string name="parent_section_channels">القنوات</string>
+    <string name="parent_section_security">الأمان</string>
+</resources>

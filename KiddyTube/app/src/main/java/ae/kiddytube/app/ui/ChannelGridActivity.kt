@@ -1,6 +1,7 @@
 package ae.kiddytube.app.ui
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Bundle
@@ -23,7 +24,6 @@ import ae.kiddytube.app.parent.ParentUnlockCoordinator
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ChannelGridActivity : AppCompatActivity() {
@@ -40,6 +40,7 @@ class ChannelGridActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyPreferredOrientation()
         setContentView(R.layout.activity_grid)
         grid = findViewById(R.id.grid)
         emptyMessage = findViewById(R.id.emptyMessage)
@@ -73,7 +74,10 @@ class ChannelGridActivity : AppCompatActivity() {
 
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
-            settings = (application as KiddyTubeApp).catalogRepository.settingsFlow.first()
+            val app = application as KiddyTubeApp
+            // Wait for default PIN + seed upgrade before first paint / launch sync.
+            app.awaitCatalogReady()
+            settings = app.catalogRepository.current()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
             remote = RemoteKeyHandler(
@@ -119,12 +123,37 @@ class ChannelGridActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        grid.layoutManager = GridLayoutManager(this, spanCount())
+        val focused = GridFocus.capturePosition(grid)
+        reflowSpans()
+        GridFocus.restore(grid, focused)
+    }
+
+    private fun applyPreferredOrientation() {
+        // TV stays landscape; phones/tablets follow user rotation (fullUser).
+        requestedOrientation = if (isTelevision()) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+        }
+    }
+
+    private fun reflowSpans() {
+        val spans = spanCount()
+        val lm = grid.layoutManager as? GridLayoutManager
+        if (lm != null) {
+            if (lm.spanCount != spans) lm.spanCount = spans
+        } else {
+            grid.layoutManager = GridLayoutManager(this, spans)
+        }
+    }
+
+    private fun isTelevision(): Boolean {
+        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     private fun spanCount(): Int {
-        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        val isTv = uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+        val isTv = isTelevision()
         val widthDp = resources.configuration.screenWidthDp
         return when {
             isTv || widthDp >= 900 -> 6
@@ -188,7 +217,9 @@ class ChannelGridActivity : AppCompatActivity() {
         super.onResume()
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
-            settings = (application as KiddyTubeApp).catalogRepository.current()
+            val app = application as KiddyTubeApp
+            app.awaitCatalogReady()
+            settings = app.catalogRepository.current()
             render(focusFirstIfNeeded = false)
         }
     }

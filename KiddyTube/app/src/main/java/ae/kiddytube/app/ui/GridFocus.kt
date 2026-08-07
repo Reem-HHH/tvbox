@@ -3,7 +3,7 @@ package ae.kiddytube.app.ui
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 
-/** Preserve D-pad focus across notifyDataSetChanged-style list rebinds. */
+/** Preserve D-pad focus across list rebinds (DiffUtil / dataset updates). */
 object GridFocus {
     fun capturePosition(grid: RecyclerView): Int {
         val focused = grid.findFocus() ?: return RecyclerView.NO_POSITION

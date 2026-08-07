@@ -30,6 +30,11 @@
     <string name="parent_clear_synced">Clear synced</string>
     <string name="parent_clear_synced_message">Remove playlist/synced videos. Manual and direct URLs are kept.</string>
     <string name="player_blocked">That video is not in your catalog.</string>
+    <string name="player_seek_forward">+%1$ds</string>
+    <string name="player_seek_back">−%1$ds</string>
+    <string name="player_seek_disabled">Seeking is off</string>
+    <string name="a11y_channel_tile">Channel: %1$s</string>
+    <string name="a11y_video_tile">Video: %1$s</string>
     <string name="parent_section_overview">Overview</string>
     <string name="parent_section_actions">Catalog</string>
     <string name="parent_section_channels">Channels</string>

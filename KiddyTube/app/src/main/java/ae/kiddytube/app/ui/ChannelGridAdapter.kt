@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.R
 import coil.load
@@ -19,10 +20,13 @@ class ChannelGridAdapter(
 
     private val items = mutableListOf<ContentChannel>()
 
+    /** Synchronous DiffUtil so [GridFocus] restore after submit still sees the new list. */
     fun submit(list: List<ContentChannel>) {
+        val newItems = list.toList()
+        val diff = DiffUtil.calculateDiff(ChannelDiff(items, newItems))
         items.clear()
-        items.addAll(list)
-        notifyDataSetChanged()
+        items.addAll(newItems)
+        diff.dispatchUpdatesTo(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
@@ -45,6 +49,8 @@ class ChannelGridAdapter(
 
         fun bind(channel: ContentChannel) {
             title.text = channel.title
+            itemView.contentDescription =
+                itemView.context.getString(R.string.a11y_channel_tile, channel.title)
             val iconRes = channel.resolvedIconRes()
             val preview = channel.videos.newestFirst().firstOrNull()?.youtubeThumbnail()
             if (preview != null) {
@@ -71,5 +77,17 @@ class ChannelGridAdapter(
                     .start()
             }
         }
+    }
+
+    private class ChannelDiff(
+        private val old: List<ContentChannel>,
+        private val new: List<ContentChannel>
+    ) : DiffUtil.Callback() {
+        override fun getOldListSize(): Int = old.size
+        override fun getNewListSize(): Int = new.size
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+            old[oldItemPosition].id == new[newItemPosition].id
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
+            old[oldItemPosition] == new[newItemPosition]
     }
 }

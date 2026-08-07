@@ -43,6 +43,7 @@ import kotlinx.coroutines.launch
 class PlayerActivity : AppCompatActivity() {
     private lateinit var container: FrameLayout
     private lateinit var titleOverlay: TextView
+    private lateinit var seekFeedback: TextView
     private lateinit var pinManager: ParentPinManager
     private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
@@ -52,6 +53,16 @@ class PlayerActivity : AppCompatActivity() {
     private var allowSeek = true
     private val handler = Handler(Looper.getMainLooper())
     private val seekMs = 10_000L
+    private val hideSeekFeedback = Runnable {
+        if (::seekFeedback.isInitialized) {
+            seekFeedback.visibility = View.GONE
+        }
+    }
+    private val hideTitleOverlay = Runnable {
+        if (::titleOverlay.isInitialized) {
+            titleOverlay.visibility = View.GONE
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,6 +70,7 @@ class PlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_player)
         container = findViewById(R.id.playerContainer)
         titleOverlay = findViewById(R.id.titleOverlay)
+        seekFeedback = findViewById(R.id.seekFeedback)
         findViewById<TextView>(R.id.navBack).setOnClickListener { finish() }
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)
@@ -87,7 +99,7 @@ class PlayerActivity : AppCompatActivity() {
         if (title.isNotBlank()) {
             titleOverlay.text = title
             titleOverlay.visibility = View.VISIBLE
-            handler.postDelayed({ titleOverlay.visibility = View.GONE }, 3_000)
+            handler.postDelayed(hideTitleOverlay, 3_000)
         }
 
         // Edge masks cover YouTube watermark / chrome that sits over the iframe edges.
@@ -185,19 +197,36 @@ class PlayerActivity : AppCompatActivity() {
         webView?.evaluateJavascript("toggle()", null)
         if (titleOverlay.text.isNotBlank()) {
             titleOverlay.visibility = View.VISIBLE
-            handler.removeCallbacksAndMessages(null)
-            handler.postDelayed({ titleOverlay.visibility = View.GONE }, 2_000)
+            handler.removeCallbacks(hideTitleOverlay)
+            handler.postDelayed(hideTitleOverlay, 2_000)
         }
     }
 
     private fun seekBy(deltaMs: Long) {
-        if (!allowSeek) return
+        if (!allowSeek) {
+            showSeekFeedback(getString(R.string.player_seek_disabled))
+            return
+        }
         player?.let {
             val next = (it.currentPosition + deltaMs).coerceAtLeast(0L)
             it.seekTo(next)
         }
         val deltaSec = deltaMs / 1000.0
         webView?.evaluateJavascript("seekBy($deltaSec)", null)
+        val seconds = kotlin.math.abs(deltaMs / 1000L).toInt()
+        val label = if (deltaMs >= 0) {
+            getString(R.string.player_seek_forward, seconds)
+        } else {
+            getString(R.string.player_seek_back, seconds)
+        }
+        showSeekFeedback(label)
+    }
+
+    private fun showSeekFeedback(message: String) {
+        seekFeedback.text = message
+        seekFeedback.visibility = View.VISIBLE
+        handler.removeCallbacks(hideSeekFeedback)
+        handler.postDelayed(hideSeekFeedback, 1_200)
     }
 
     @SuppressLint("SetJavaScriptEnabled")

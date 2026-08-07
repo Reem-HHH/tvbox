@@ -1,6 +1,7 @@
 package ae.kiddytube.app.ui
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Bundle
@@ -38,6 +39,7 @@ class VideoLibraryActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyPreferredOrientation()
         setContentView(R.layout.activity_grid)
         channelId = intent.getStringExtra(EXTRA_CHANNEL_ID).orEmpty()
         val channelTitle = intent.getStringExtra(EXTRA_CHANNEL_TITLE).orEmpty()
@@ -88,12 +90,36 @@ class VideoLibraryActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        grid.layoutManager = GridLayoutManager(this, spanCount())
+        val focused = GridFocus.capturePosition(grid)
+        reflowSpans()
+        GridFocus.restore(grid, focused)
+    }
+
+    private fun applyPreferredOrientation() {
+        requestedOrientation = if (isTelevision()) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+        }
+    }
+
+    private fun reflowSpans() {
+        val spans = spanCount()
+        val lm = grid.layoutManager as? GridLayoutManager
+        if (lm != null) {
+            if (lm.spanCount != spans) lm.spanCount = spans
+        } else {
+            grid.layoutManager = GridLayoutManager(this, spans)
+        }
+    }
+
+    private fun isTelevision(): Boolean {
+        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     private fun spanCount(): Int {
-        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        val isTv = uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+        val isTv = isTelevision()
         val widthDp = resources.configuration.screenWidthDp
         return when {
             isTv || widthDp >= 900 -> 5

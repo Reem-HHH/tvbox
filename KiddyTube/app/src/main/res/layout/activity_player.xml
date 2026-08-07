@@ -50,4 +50,19 @@
             android:textSize="16sp"
             android:visibility="gone" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/seekFeedback"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/player_title_chip"
+        android:fontFamily="sans-serif-medium"
+        android:paddingStart="22dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="22dp"
+        android:paddingBottom="14dp"
+        android:textColor="@color/player_chip_text"
+        android:textSize="20sp"
+        android:visibility="gone" />
 </FrameLayout>

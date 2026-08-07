@@ -39,6 +39,28 @@ class MediaUrlValidatorTest {
         assertFalse(MediaUrlValidator.isDirectMediaUrl("https://www.youtube.com/shorts/abcdef"))
         assertFalse(MediaUrlValidator.isDirectMediaUrl(null))
     }
+
+    @Test
+    fun rejectsDropboxShareWithoutDlFlag() {
+        assertFalse(
+            MediaUrlValidator.isDirectMediaUrl("https://www.dropbox.com/s/abc123/kids.mp4")
+        )
+    }
+
+    @Test
+    fun acceptsMediaExtensionCaseAndTrailingSlashPath() {
+        assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/Kids.MP4"))
+        assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/stream.m3u8/"))
+    }
+
+    @Test
+    fun rejectsDocsViewerPages() {
+        assertFalse(
+            MediaUrlValidator.isDirectMediaUrl(
+                "https://docs.google.com/document/d/abc/edit"
+            )
+        )
+    }
 }
 
 class YoutubeUrlParserTest {
