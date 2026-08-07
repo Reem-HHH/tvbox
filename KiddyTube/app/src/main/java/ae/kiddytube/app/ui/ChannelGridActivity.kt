@@ -68,6 +68,8 @@ class ChannelGridActivity : AppCompatActivity() {
         grid.layoutManager = GridLayoutManager(this, spanCount())
         grid.clipToPadding = false
         grid.clipChildren = false
+        grid.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        grid.isFocusable = true
 
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
@@ -79,7 +81,7 @@ class ChannelGridActivity : AppCompatActivity() {
                 getSystemService(AUDIO_SERVICE) as AudioManager,
                 consumeBack = true
             )
-            render()
+            render(focusFirstIfNeeded = true)
             runLaunchSync()
         }
     }
@@ -87,9 +89,10 @@ class ChannelGridActivity : AppCompatActivity() {
     private suspend fun runLaunchSync() {
         showSyncChip(getString(R.string.sync_updating))
         val repo = (application as KiddyTubeApp).catalogRepository
+        val focused = GridFocus.capturePosition(grid)
         val result = repo.refreshAllPlaylists()
         settings = repo.current()
-        render()
+        render(restoreFocusAt = focused)
 
         val message = when (result.status) {
             SyncStatus.UPDATED -> getString(R.string.sync_updated)
@@ -130,9 +133,17 @@ class ChannelGridActivity : AppCompatActivity() {
         }
     }
 
-    private fun render() {
+    private fun render(
+        restoreFocusAt: Int = RecyclerView.NO_POSITION,
+        focusFirstIfNeeded: Boolean = false
+    ) {
         val repo = (application as KiddyTubeApp).catalogRepository
         val channels = repo.enabledChannels(settings)
+        val focused = if (restoreFocusAt != RecyclerView.NO_POSITION) {
+            restoreFocusAt
+        } else {
+            GridFocus.capturePosition(grid)
+        }
         adapter.submit(channels)
         if (channels.isEmpty()) {
             emptyMessage.visibility = View.VISIBLE
@@ -144,6 +155,10 @@ class ChannelGridActivity : AppCompatActivity() {
             if (noKey && emptyLibs) {
                 emptyMessage.visibility = View.VISIBLE
                 emptyMessage.text = getString(R.string.empty_no_api_key)
+            }
+            when {
+                focused != RecyclerView.NO_POSITION -> GridFocus.restore(grid, focused)
+                focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
             }
         }
     }
@@ -174,7 +189,7 @@ class ChannelGridActivity : AppCompatActivity() {
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
             settings = (application as KiddyTubeApp).catalogRepository.current()
-            render()
+            render(focusFirstIfNeeded = false)
         }
     }
 }

@@ -52,6 +52,7 @@ class VideoLibraryActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.navBack).apply {
             visibility = View.VISIBLE
             setOnClickListener { finish() }
+            nextFocusDownId = R.id.grid
         }
 
         pinManager = ParentPinManager()
@@ -69,6 +70,8 @@ class VideoLibraryActivity : AppCompatActivity() {
         grid.layoutManager = GridLayoutManager(this, spanCount())
         grid.clipChildren = false
         grid.clipToPadding = false
+        grid.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        grid.isFocusable = true
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
             val settings = (application as KiddyTubeApp).catalogRepository.current()
@@ -79,7 +82,7 @@ class VideoLibraryActivity : AppCompatActivity() {
                 getSystemService(AUDIO_SERVICE) as AudioManager,
                 consumeBack = true
             )
-            reload()
+            reload(focusFirst = true)
         }
     }
 
@@ -99,13 +102,18 @@ class VideoLibraryActivity : AppCompatActivity() {
         }
     }
 
-    private fun reload() {
+    private fun reload(focusFirst: Boolean = false) {
         lifecycleScope.launch {
             val channel = (application as KiddyTubeApp).catalogRepository.channelById(channelId)
             val videos = channel?.videos.orEmpty().newestFirst()
+            val focused = GridFocus.capturePosition(grid)
             adapter.submit(videos)
             emptyMessage.visibility = if (videos.isEmpty()) View.VISIBLE else View.GONE
             emptyMessage.text = getString(R.string.empty_videos)
+            when {
+                focused != RecyclerView.NO_POSITION -> GridFocus.restore(grid, focused)
+                focusFirst && videos.isNotEmpty() -> GridFocus.requestGridDefault(grid)
+            }
         }
     }
 

@@ -429,7 +429,7 @@ object DefaultChannels {
             title = "داوود — جزء ٢٦",
             icon = R.drawable.tile_dawood,
             order = 37,
-            playlistId = "PLJBjyx9DErqk"
+            playlistId = "PLJBjyx9DErqk" // verified short YouTube playlist id for Juz 26
         )
     )
 

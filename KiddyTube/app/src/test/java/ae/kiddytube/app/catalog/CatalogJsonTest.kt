@@ -328,6 +328,21 @@ class CatalogJsonTest {
     }
 
     @Test
+    fun roundTripTitleContainingClosingBracket() {
+        val channel = DefaultChannels.seed().first().copy(
+            videos = listOf(
+                VideoItem(
+                    id = "abc123xyz__",
+                    title = "Surah [1] and part ] end",
+                    youtubeVideoId = "abc123xyz__"
+                )
+            )
+        )
+        val decoded = CatalogJson.decodeOrNull(CatalogJson.encode(listOf(channel)))
+        assertEquals("Surah [1] and part ] end", decoded!!.first().videos.first().title)
+    }
+
+    @Test
     fun roundTripFollowUploadsAndManualFlags() {
         val channel = DefaultChannels.seed().first().copy(
             followUploads = true,

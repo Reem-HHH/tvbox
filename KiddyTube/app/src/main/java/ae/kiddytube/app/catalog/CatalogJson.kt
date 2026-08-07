@@ -211,8 +211,20 @@ object CatalogJson {
                 body[i] == '[' -> {
                     var depth = 0
                     val start = i
+                    var inString = false
+                    var escape = false
                     while (i < body.length) {
-                        when (body[i++]) {
+                        val ch = body[i++]
+                        if (inString) {
+                            when {
+                                escape -> escape = false
+                                ch == '\\' -> escape = true
+                                ch == '"' -> inString = false
+                            }
+                            continue
+                        }
+                        when (ch) {
+                            '"' -> inString = true
                             '[' -> depth++
                             ']' -> {
                                 depth--

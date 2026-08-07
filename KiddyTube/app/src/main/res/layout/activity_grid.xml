@@ -72,6 +72,7 @@
             android:contentDescription="@string/parent_settings"
             android:focusable="true"
             android:focusableInTouchMode="false"
+            android:focusedByDefault="false"
             android:padding="12dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_parent_lock" />
@@ -89,6 +90,9 @@
             android:layout_height="match_parent"
             android:clipChildren="false"
             android:clipToPadding="false"
+            android:descendantFocusability="afterDescendants"
+            android:focusable="true"
+            android:focusedByDefault="true"
             android:padding="@dimen/grid_padding" />
 
         <TextView

@@ -74,7 +74,8 @@ class PlayerActivity : AppCompatActivity() {
             this,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    // Consumed; finish is handled after short Back-up.
+                    // Soft / gesture / predictive Back — TV long-press unlock still uses KeyEvent.
+                    finish()
                 }
             }
         )

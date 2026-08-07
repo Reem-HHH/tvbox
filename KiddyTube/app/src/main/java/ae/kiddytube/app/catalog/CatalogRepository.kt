@@ -76,12 +76,10 @@ class CatalogRepository(private val context: Context) {
 
     /** One-time merge of newer hardcoded playlist seeds into existing catalogs. */
     suspend fun applySeedUpgradeIfNeeded() {
-        val settings = current()
-        if (settings.seedVersion >= DefaultChannels.SEED_VERSION) return
-        val merged = DefaultChannels.mergeSeedUpdates(settings.channels)
-        update {
-            it.copy(
-                channels = merged,
+        update { current ->
+            if (current.seedVersion >= DefaultChannels.SEED_VERSION) current
+            else current.copy(
+                channels = DefaultChannels.mergeSeedUpdates(current.channels),
                 seedVersion = DefaultChannels.SEED_VERSION
             )
         }
@@ -122,9 +120,18 @@ class CatalogRepository(private val context: Context) {
             return fetched.fold(
                     onSuccess = { videos ->
                     updateChannel(channelId) { ch ->
-                        val retained = ch.videos.filter { it.manual || it.isDirect() }
+                        val seedIds = DefaultChannels.seed()
+                            .firstOrNull { it.id == channelId }
+                            ?.videos
+                            ?.map { it.id }
+                            ?.toSet()
+                            .orEmpty()
+                        val previous = ch.videos
+                        val seekById = previous.associate { it.id to it.allowSeek }
+                        val retained = previous.filter {
+                            it.manual || it.isDirect() || it.id in seedIds
+                        }
                         val retainedIds = retained.map { it.id }.toSet()
-                        val seekById = ch.videos.associate { it.id to it.allowSeek }
                         val remote = videos
                             .filter { it.id !in retainedIds }
                             .map {
@@ -133,8 +140,9 @@ class CatalogRepository(private val context: Context) {
                                     allowSeek = seekById[it.id] ?: true
                                 )
                             }
+                        // Keep retained items that aren't already represented by remote fetch.
                         ch.copy(
-                            videos = (remote + retained).newestFirst(),
+                            videos = (remote + retained).distinctBy { it.id }.newestFirst(),
                             sourceType = SourceType.YOUTUBE_PLAYLIST
                         )
                     }
@@ -300,7 +308,10 @@ class CatalogRepository(private val context: Context) {
     private fun writeSettings(prefs: MutablePreferences, next: CatalogSettings) {
         val encoded = CatalogJson.encode(next.channels)
         prefs[Keys.CHANNELS_JSON] = encoded
-        prefs[Keys.CHANNELS_JSON_LAST_GOOD] = encoded
+        // Only promote last-good when the payload round-trips — never mirror corrupt writes.
+        if (CatalogJson.decodeOrNull(encoded) != null) {
+            prefs[Keys.CHANNELS_JSON_LAST_GOOD] = encoded
+        }
         prefs[Keys.YOUTUBE_API_KEY] = next.youtubeApiKey.orEmpty()
         prefs[Keys.PIN_SALT] = next.pinSalt.orEmpty()
         prefs[Keys.PIN_HASH] = next.pinHash.orEmpty()
@@ -316,10 +327,15 @@ class CatalogRepository(private val context: Context) {
         val channelsJson = this[Keys.CHANNELS_JSON]
         val lastGood = this[Keys.CHANNELS_JSON_LAST_GOOD]
         val channels = when {
-            channelsJson.isNullOrBlank() -> DefaultChannels.seed()
-            else -> CatalogJson.decodeOrNull(channelsJson)
-                ?: CatalogJson.decodeOrNull(lastGood.orEmpty())
-                ?: DefaultChannels.seed()
+            !channelsJson.isNullOrBlank() -> {
+                CatalogJson.decodeOrNull(channelsJson)
+                    ?: CatalogJson.decodeOrNull(lastGood.orEmpty())
+                    ?: DefaultChannels.seed()
+            }
+            !lastGood.isNullOrBlank() -> {
+                CatalogJson.decodeOrNull(lastGood) ?: DefaultChannels.seed()
+            }
+            else -> DefaultChannels.seed()
         }
         return CatalogSettings(
             channels = channels,
