@@ -228,7 +228,8 @@ class ParentActivity : AppCompatActivity() {
                 lifecycleScope.launch {
                     val import = SyncPolicy.shouldImportPlaylist(
                         channel.followUploads,
-                        channel.videos.size
+                        channel.videos.size,
+                        channel.suppressEmptyPlaylistImport
                     )
                     val r = (application as KiddyTubeApp).catalogRepository
                         .refreshChannelFromYoutube(channel.id, allowPlaylistImport = import)
@@ -245,7 +246,11 @@ class ParentActivity : AppCompatActivity() {
                 }
             }
         )
-        val seekOn = channel.videos.isEmpty() || channel.videos.all { it.allowSeek }
+        val seekOn = if (channel.videos.isEmpty()) {
+            channel.defaultAllowSeek
+        } else {
+            channel.videos.all { it.allowSeek }
+        }
         addSwitch(
             actions,
             getString(R.string.parent_seek_enabled),

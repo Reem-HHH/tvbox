@@ -4,6 +4,7 @@ import android.app.Application
 import ae.kiddytube.app.catalog.CatalogBootstrap
 import ae.kiddytube.app.catalog.CatalogRepository
 import ae.kiddytube.app.catalog.RecentWatchItem
+import ae.kiddytube.app.catalog.RecentWatchLogic
 import ae.kiddytube.app.catalog.RecentWatchStore
 import ae.kiddytube.app.diagnostics.DiagnosticsLogger
 import ae.kiddytube.app.parent.ParentPinManager
@@ -38,7 +39,7 @@ class KiddyTubeApp : Application() {
                 ensureDefaultPin()
                 catalogRepository.applySeedUpgradeIfNeeded()
             }
-            republishWatchNext()
+            syncWatchNext()
         }
     }
 
@@ -59,11 +60,19 @@ class KiddyTubeApp : Application() {
         }
     }
 
-    private suspend fun republishWatchNext() {
-        val items = recentWatchStore.current()
-        if (items.isEmpty()) return
+    /** Upsert playable continues; remove stale Watch Next cards for disabled/removed videos. */
+    suspend fun syncWatchNext() {
+        val settings = catalogRepository.current()
+        val recent = recentWatchStore.current()
+        val playable = RecentWatchLogic.resolvePlayable(recent, settings).map { it.first }
+        val playableIds = playable.map { it.videoId }.toSet()
         withContext(Dispatchers.IO) {
-            items.asReversed().forEach { watchNextPublisher.upsert(it) }
+            recent.forEach { item ->
+                if (item.videoId !in playableIds) {
+                    watchNextPublisher.remove(item.videoId)
+                }
+            }
+            playable.asReversed().forEach { watchNextPublisher.upsert(it) }
         }
     }
 

@@ -11,8 +11,36 @@ class SyncPolicyTest {
     }
 
     @Test
-    fun importsWhenLibraryEmptyEvenWithoutFollow() {
-        assertTrue(SyncPolicy.shouldImportPlaylist(followUploads = false, videoCount = 0))
+    fun importsWhenLibraryEmptyAndNotSuppressed() {
+        assertTrue(
+            SyncPolicy.shouldImportPlaylist(
+                followUploads = false,
+                videoCount = 0,
+                suppressEmptyImport = false
+            )
+        )
+    }
+
+    @Test
+    fun doesNotImportEmptyLibraryAfterParentClear() {
+        assertFalse(
+            SyncPolicy.shouldImportPlaylist(
+                followUploads = false,
+                videoCount = 0,
+                suppressEmptyImport = true
+            )
+        )
+    }
+
+    @Test
+    fun followUploadsStillImportsWhenSuppressedFlagSet() {
+        assertTrue(
+            SyncPolicy.shouldImportPlaylist(
+                followUploads = true,
+                videoCount = 0,
+                suppressEmptyImport = true
+            )
+        )
     }
 
     @Test

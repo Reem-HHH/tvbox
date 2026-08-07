@@ -279,6 +279,7 @@ class ChannelGridActivity : AppCompatActivity() {
                 true
             }
             RemoteAction.Consume -> true
+            RemoteAction.VolumeUp, RemoteAction.VolumeDown -> true
             else -> super.dispatchKeyEvent(event)
         }
     }
@@ -291,6 +292,7 @@ class ChannelGridActivity : AppCompatActivity() {
             app.awaitCatalogReady()
             settings = app.catalogRepository.current()
             render(focusFirstIfNeeded = false)
+            app.syncWatchNext()
         }
     }
 }

@@ -171,7 +171,11 @@ class CatalogRepository(
         val apiKey = ApiKeyResolver.effective(settings.youtubeApiKey)
         val playlistId = channel.youtubePlaylistId
         val importPlaylist = allowPlaylistImport
-            ?: SyncPolicy.shouldImportPlaylist(channel.followUploads, channel.videos.size)
+            ?: SyncPolicy.shouldImportPlaylist(
+                channel.followUploads,
+                channel.videos.size,
+                channel.suppressEmptyPlaylistImport
+            )
 
         if (apiKey.isNullOrBlank()) {
             return if (channel.videos.isNotEmpty()) {
@@ -203,7 +207,7 @@ class CatalogRepository(
                             .map {
                                 it.copy(
                                     manual = false,
-                                    allowSeek = seekById[it.id] ?: true
+                                    allowSeek = seekById[it.id] ?: ch.defaultAllowSeek
                                 )
                             }
                         ch.copy(
@@ -266,7 +270,14 @@ class CatalogRepository(
         }
 
         val emptyPlaylistLibraries = settings.channels.any {
-            it.enabled && !it.youtubePlaylistId.isNullOrBlank() && it.videos.isEmpty()
+            it.enabled &&
+                !it.youtubePlaylistId.isNullOrBlank() &&
+                it.videos.isEmpty() &&
+                SyncPolicy.shouldImportPlaylist(
+                    it.followUploads,
+                    it.videos.size,
+                    it.suppressEmptyPlaylistImport
+                )
         }
         val now = System.currentTimeMillis()
         val withinTtl = now - settings.lastSyncMs < syncTtlMs
@@ -282,8 +293,11 @@ class CatalogRepository(
             if (!ch.enabled) continue
             val hasPlaylist = !ch.youtubePlaylistId.isNullOrBlank()
             val hasYoutubeVideos = ch.videos.any { !it.youtubeVideoId.isNullOrBlank() }
-            val importPlaylist =
-                SyncPolicy.shouldImportPlaylist(ch.followUploads, ch.videos.size)
+            val importPlaylist = SyncPolicy.shouldImportPlaylist(
+                ch.followUploads,
+                ch.videos.size,
+                ch.suppressEmptyPlaylistImport
+            )
             // Force and auto both honor followUploads — never dump UU playlists without opt-in.
             if (!SyncPolicy.shouldRefreshChannel(
                     force = force,
@@ -306,12 +320,21 @@ class CatalogRepository(
             }
         }
 
-        if (updatedChannels > 0) {
+        if (updatedChannels > 0 && failures == 0) {
             update { it.copy(lastSyncMs = System.currentTimeMillis()) }
             return SyncResult(
                 status = SyncStatus.UPDATED,
                 updatedChannels = updatedChannels,
                 videoCount = totalVideos
+            )
+        }
+        if (updatedChannels > 0) {
+            // Partial success: do not advance TTL so failed channels can retry soon.
+            return SyncResult(
+                status = SyncStatus.UPDATED,
+                updatedChannels = updatedChannels,
+                videoCount = totalVideos,
+                message = firstError?.let { "Partial sync; some channels failed: ${it.take(120)}" }
             )
         }
         if (failures > 0) {
@@ -347,7 +370,14 @@ class CatalogRepository(
     }
 
     suspend fun setFollowUploads(channelId: String, follow: Boolean) {
-        updateChannel(channelId) { it.copy(followUploads = follow, playlistManagedByParent = true) }
+        updateChannel(channelId) {
+            it.copy(
+                followUploads = follow,
+                playlistManagedByParent = true,
+                // Re-allow empty one-shot / follow import after parent opts back in.
+                suppressEmptyPlaylistImport = if (follow) false else it.suppressEmptyPlaylistImport
+            )
+        }
     }
 
     suspend fun addManualVideoIds(channelId: String, csv: String) {
@@ -361,7 +391,8 @@ class CatalogRepository(
             youtube.videosFromIds(ids).map { it.copy(manual = true) }
         }
         updateChannel(channelId) { ch ->
-            val merged = (ch.videos + newVideos).distinctBy { it.id }.newestFirst()
+            val tagged = newVideos.map { it.copy(manual = true, allowSeek = ch.defaultAllowSeek) }
+            val merged = (ch.videos + tagged).distinctBy { it.id }.newestFirst()
             ch.copy(videos = merged, sourceType = SourceType.YOUTUBE_VIDEO_LIST)
         }
     }
@@ -371,15 +402,19 @@ class CatalogRepository(
             throw IllegalArgumentException("Invalid direct media URL")
         }
         val id = "direct_${System.currentTimeMillis()}"
-        val item = VideoItem(
-            id = id,
-            title = title.ifBlank { "Video" },
-            directUrl = url.trim(),
-            publishedAtMs = System.currentTimeMillis(),
-            manual = true
-        )
         updateChannel(channelId) { ch ->
-            ch.copy(videos = (ch.videos + item).newestFirst(), sourceType = SourceType.DIRECT_URL)
+            val item = VideoItem(
+                id = id,
+                title = title.ifBlank { "Video" },
+                directUrl = url.trim(),
+                publishedAtMs = System.currentTimeMillis(),
+                manual = true,
+                allowSeek = ch.defaultAllowSeek
+            )
+            ch.copy(
+                videos = (listOf(item) + ch.videos).distinctBy { it.id }.newestFirst(),
+                sourceType = if (ch.videos.any { it.isYoutube() }) ch.sourceType else SourceType.DIRECT_URL
+            )
         }
     }
 
@@ -392,13 +427,19 @@ class CatalogRepository(
     /** Drops synced/remote items; keeps parent-added manual and direct URLs. */
     suspend fun clearSyncedVideos(channelId: String) {
         updateChannel(channelId) { ch ->
-            ch.copy(videos = ch.videos.filter { it.manual || it.isDirect() })
+            ch.copy(
+                videos = ch.videos.filter { it.manual || it.isDirect() },
+                suppressEmptyPlaylistImport = true
+            )
         }
     }
 
     suspend fun setChannelAllowSeek(channelId: String, allowSeek: Boolean) {
         updateChannel(channelId) { ch ->
-            ch.copy(videos = ch.videos.map { it.copy(allowSeek = allowSeek) })
+            ch.copy(
+                defaultAllowSeek = allowSeek,
+                videos = ch.videos.map { it.copy(allowSeek = allowSeek) }
+            )
         }
     }
 

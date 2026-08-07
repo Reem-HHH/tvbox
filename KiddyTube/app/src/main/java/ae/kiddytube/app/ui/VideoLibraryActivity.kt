@@ -174,7 +174,8 @@ class VideoLibraryActivity : AppCompatActivity() {
                     parentUnlock.beginParentAccess()
                     return true
                 }
-                RemoteAction.NavigateBack, RemoteAction.Consume -> return true
+                RemoteAction.NavigateBack, RemoteAction.Consume,
+                RemoteAction.VolumeUp, RemoteAction.VolumeDown -> return true
                 else -> Unit
             }
         }

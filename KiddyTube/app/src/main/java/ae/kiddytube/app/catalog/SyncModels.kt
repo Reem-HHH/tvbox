@@ -28,8 +28,12 @@ data class SyncResult(
 
 /** Playlist import is opt-in via followUploads, or one-shot when the library is still empty. */
 object SyncPolicy {
-    fun shouldImportPlaylist(followUploads: Boolean, videoCount: Int): Boolean =
-        followUploads || videoCount == 0
+    fun shouldImportPlaylist(
+        followUploads: Boolean,
+        videoCount: Int,
+        suppressEmptyImport: Boolean = false
+    ): Boolean =
+        followUploads || (videoCount == 0 && !suppressEmptyImport)
 
     /** Force refresh or empty playlist libraries ignore the usual sync TTL. */
     fun shouldBypassTtl(force: Boolean, emptyPlaylistLibraries: Boolean): Boolean =

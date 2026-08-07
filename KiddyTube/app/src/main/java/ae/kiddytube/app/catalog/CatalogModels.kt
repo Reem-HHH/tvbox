@@ -38,7 +38,17 @@ data class ContentChannel(
     /** When true, launch/TTL sync follows the linked playlist/uploads feed. */
     val followUploads: Boolean = false,
     /** When true, seed upgrades must not re-attach a cleared playlist id. */
-    val playlistManagedByParent: Boolean = false
+    val playlistManagedByParent: Boolean = false,
+    /**
+     * Default seek policy for new playlist imports and empty-channel Parent toggle.
+     * Kept in sync by [ae.kiddytube.app.catalog.CatalogRepository.setChannelAllowSeek].
+     */
+    val defaultAllowSeek: Boolean = true,
+    /**
+     * After Parent "clear synced", do not one-shot re-import just because the library is empty.
+     * Cleared when Follow uploads is turned on.
+     */
+    val suppressEmptyPlaylistImport: Boolean = false
 ) {
     fun resolvedIconRes(): Int =
         if (iconRes != 0) iconRes else DefaultChannels.iconResFor(id)

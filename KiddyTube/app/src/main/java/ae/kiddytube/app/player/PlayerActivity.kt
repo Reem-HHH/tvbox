@@ -89,7 +89,8 @@ class PlayerActivity : AppCompatActivity() {
         )
         ImmersiveMode.apply(this, forceImmersive = true)
         applyWatchNextDeepLinkExtras()
-        allowSeek = intent.getBooleanExtra(EXTRA_ALLOW_SEEK, true)
+        // Deny seek until catalog resolve; never trust intent extras for kid seek policy.
+        allowSeek = false
 
         onBackPressedDispatcher.addCallback(
             this,
@@ -195,7 +196,6 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private suspend fun resolveAllowSeekFromCatalog(app: KiddyTubeApp) {
-        if (intent.hasExtra(EXTRA_ALLOW_SEEK)) return
         val videoId = intent.getStringExtra(EXTRA_VIDEO_ID).orEmpty()
         val youtubeId = intent.getStringExtra(EXTRA_YOUTUBE_ID)?.trim().orEmpty()
         val directUrl = intent.getStringExtra(EXTRA_DIRECT_URL)?.trim().orEmpty()
@@ -208,6 +208,7 @@ class PlayerActivity : AppCompatActivity() {
             settings.channels
         }
         val video = channels.asSequence()
+            .filter { it.enabled }
             .flatMap { it.videos.asSequence() }
             .firstOrNull { v ->
                 (videoId.isNotBlank() && v.id == videoId) ||

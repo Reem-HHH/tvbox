@@ -28,6 +28,10 @@ object CatalogJson {
             append(',')
             append("\"playlistManagedByParent\":").append(c.playlistManagedByParent)
             append(',')
+            append("\"defaultAllowSeek\":").append(c.defaultAllowSeek)
+            append(',')
+            append("\"suppressEmptyPlaylistImport\":").append(c.suppressEmptyPlaylistImport)
+            append(',')
             append("\"videos\":")
             encodeVideos(c.videos)
             append('}')
@@ -148,7 +152,10 @@ object CatalogJson {
             sortOrder = fields["sortOrder"]?.toIntOrNull() ?: 0,
             followUploads = fields["followUploads"]?.toBooleanStrictOrNull() ?: false,
             playlistManagedByParent = fields["playlistManagedByParent"]?.toBooleanStrictOrNull()
-                ?: false
+                ?: false,
+            defaultAllowSeek = fields["defaultAllowSeek"]?.toBooleanStrictOrNull() ?: true,
+            suppressEmptyPlaylistImport =
+                fields["suppressEmptyPlaylistImport"]?.toBooleanStrictOrNull() ?: false
         )
     }
 
