@@ -38,6 +38,7 @@ import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import ae.kiddytube.app.sources.MediaUrlValidator
 import ae.kiddytube.app.sources.YoutubeUrlParser
+import ae.kiddytube.app.tv.WatchNextPublisher
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
@@ -86,6 +87,7 @@ class PlayerActivity : AppCompatActivity() {
             consumeBack = true
         )
         ImmersiveMode.apply(this, forceImmersive = true)
+        applyWatchNextDeepLinkExtras()
         allowSeek = intent.getBooleanExtra(EXTRA_ALLOW_SEEK, true)
 
         onBackPressedDispatcher.addCallback(
@@ -134,7 +136,8 @@ class PlayerActivity : AppCompatActivity() {
         container.requestFocus()
 
         lifecycleScope.launch {
-            val settings = (application as KiddyTubeApp).catalogRepository.current()
+            val app = application as KiddyTubeApp
+            val settings = app.catalogRepository.current()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
             remote = RemoteKeyHandler(
@@ -142,6 +145,10 @@ class PlayerActivity : AppCompatActivity() {
                 getSystemService(AUDIO_SERVICE) as AudioManager,
                 consumeBack = true
             )
+            resolveAllowSeekFromCatalog(app)
+
+            val youtubeId = intent.getStringExtra(EXTRA_YOUTUBE_ID)
+            val directUrl = intent.getStringExtra(EXTRA_DIRECT_URL)
 
             when {
                 !youtubeId.isNullOrBlank() -> {
@@ -149,8 +156,7 @@ class PlayerActivity : AppCompatActivity() {
                         rejectPlayback()
                         return@launch
                     }
-                    val allowed = (application as KiddyTubeApp).catalogRepository
-                        .containsYoutubeVideoId(youtubeId)
+                    val allowed = app.catalogRepository.containsYoutubeVideoId(youtubeId)
                     if (!allowed) {
                         rejectPlayback()
                         return@launch
@@ -161,8 +167,7 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 MediaUrlValidator.isDirectMediaUrl(directUrl) -> {
                     val url = directUrl!!.trim()
-                    val allowed = (application as KiddyTubeApp).catalogRepository
-                        .containsDirectUrl(url)
+                    val allowed = app.catalogRepository.containsDirectUrl(url)
                     if (!allowed) {
                         rejectPlayback()
                         return@launch
@@ -173,6 +178,44 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 else -> rejectPlayback()
             }
+        }
+    }
+
+    private fun applyWatchNextDeepLinkExtras() {
+        val uri = intent?.data ?: return
+        if (!WatchNextPublisher.isPlayUri(uri)) return
+        fun q(name: String): String? = uri.getQueryParameter(name)?.takeIf { it.isNotBlank() }
+        q("title")?.let { intent.putExtra(EXTRA_TITLE, it) }
+        q("youtubeId")?.let { intent.putExtra(EXTRA_YOUTUBE_ID, it) }
+        q("directUrl")?.let { intent.putExtra(EXTRA_DIRECT_URL, it) }
+        q("channelId")?.let { intent.putExtra(EXTRA_CHANNEL_ID, it) }
+        q("videoId")?.let { intent.putExtra(EXTRA_VIDEO_ID, it) }
+    }
+
+    private suspend fun resolveAllowSeekFromCatalog(app: KiddyTubeApp) {
+        if (intent.hasExtra(EXTRA_ALLOW_SEEK)) return
+        val videoId = intent.getStringExtra(EXTRA_VIDEO_ID).orEmpty()
+        val youtubeId = intent.getStringExtra(EXTRA_YOUTUBE_ID)?.trim().orEmpty()
+        val directUrl = intent.getStringExtra(EXTRA_DIRECT_URL)?.trim().orEmpty()
+        val channelId = intent.getStringExtra(EXTRA_CHANNEL_ID).orEmpty()
+        val settings = app.catalogRepository.current()
+        val channels = if (channelId.isNotBlank()) {
+            listOfNotNull(settings.channels.firstOrNull { it.id == channelId }) +
+                settings.channels.filter { it.id != channelId }
+        } else {
+            settings.channels
+        }
+        val video = channels.asSequence()
+            .flatMap { it.videos.asSequence() }
+            .firstOrNull { v ->
+                (videoId.isNotBlank() && v.id == videoId) ||
+                    (youtubeId.isNotBlank() &&
+                        (v.youtubeVideoId == youtubeId || v.id == youtubeId)) ||
+                    (directUrl.isNotBlank() && v.directUrl?.trim() == directUrl)
+            }
+        if (video != null) {
+            allowSeek = video.allowSeek
+            intent.putExtra(EXTRA_ALLOW_SEEK, video.allowSeek)
         }
     }
 
@@ -194,7 +237,7 @@ class PlayerActivity : AppCompatActivity() {
             else -> return
         }
         if (channelId.isBlank()) return
-        (application as KiddyTubeApp).recentWatchStore.record(
+        (application as KiddyTubeApp).recordRecentWatch(
             RecentWatchItem(
                 videoId = resolvedId,
                 channelId = channelId,

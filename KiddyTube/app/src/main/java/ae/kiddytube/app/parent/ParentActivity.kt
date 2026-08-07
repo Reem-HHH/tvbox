@@ -125,7 +125,7 @@ class ParentActivity : AppCompatActivity() {
                     .setMessage(R.string.parent_clear_continue_watching_message)
                     .setPositiveButton(R.string.parent_clear_continue_watching) { _, _ ->
                         lifecycleScope.launch {
-                            (application as KiddyTubeApp).recentWatchStore.clear()
+                            (application as KiddyTubeApp).clearRecentWatch()
                             toast(getString(R.string.parent_continue_watching_cleared))
                         }
                     }
@@ -160,7 +160,7 @@ class ParentActivity : AppCompatActivity() {
                         lifecycleScope.launch {
                             val app = application as KiddyTubeApp
                             app.catalogRepository.resetAll()
-                            app.recentWatchStore.clear()
+                            app.clearRecentWatch()
                             val salt = ParentPinManager.newSaltHex()
                             val hash = ParentPinManager.hashPin(ParentPinManager.DEFAULT_DEV_PIN, salt)
                             app.catalogRepository.update { s ->
