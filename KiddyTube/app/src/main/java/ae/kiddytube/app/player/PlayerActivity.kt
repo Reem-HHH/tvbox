@@ -37,6 +37,7 @@ import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import ae.kiddytube.app.sources.MediaUrlValidator
 import ae.kiddytube.app.sources.YoutubeUrlParser
+import ae.kiddytube.app.catalog.RecentWatchItem
 import kotlinx.coroutines.launch
 
 @UnstableApi
@@ -143,6 +144,7 @@ class PlayerActivity : AppCompatActivity() {
                     }
                     playYoutube(youtubeId.trim())
                     playbackReady = true
+                    recordContinueWatching()
                 }
                 MediaUrlValidator.isDirectMediaUrl(directUrl) -> {
                     val url = directUrl!!.trim()
@@ -154,6 +156,7 @@ class PlayerActivity : AppCompatActivity() {
                     }
                     playDirect(url)
                     playbackReady = true
+                    recordContinueWatching()
                 }
                 else -> rejectPlayback()
             }
@@ -190,6 +193,32 @@ class PlayerActivity : AppCompatActivity() {
     private fun rejectPlayback() {
         Toast.makeText(this, R.string.player_blocked, Toast.LENGTH_SHORT).show()
         finish()
+    }
+
+    private suspend fun recordContinueWatching() {
+        val channelId = intent.getStringExtra(EXTRA_CHANNEL_ID).orEmpty()
+        val videoId = intent.getStringExtra(EXTRA_VIDEO_ID).orEmpty()
+        val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
+        val youtubeId = intent.getStringExtra(EXTRA_YOUTUBE_ID)?.trim()
+        val directUrl = intent.getStringExtra(EXTRA_DIRECT_URL)?.trim()
+        val resolvedId = when {
+            videoId.isNotBlank() -> videoId
+            !youtubeId.isNullOrBlank() -> youtubeId
+            !directUrl.isNullOrBlank() -> directUrl
+            else -> return
+        }
+        if (channelId.isBlank()) return
+        (application as KiddyTubeApp).recentWatchStore.record(
+            RecentWatchItem(
+                videoId = resolvedId,
+                channelId = channelId,
+                title = title.ifBlank { resolvedId },
+                thumbnailUrl = youtubeId?.let { YoutubeUrlParser.defaultThumbnail(it) },
+                youtubeVideoId = youtubeId?.ifBlank { null },
+                directUrl = directUrl?.ifBlank { null },
+                watchedAtMs = System.currentTimeMillis()
+            )
+        )
     }
 
     private fun togglePlayback() {
@@ -412,5 +441,7 @@ class PlayerActivity : AppCompatActivity() {
         const val EXTRA_YOUTUBE_ID = "youtube_id"
         const val EXTRA_DIRECT_URL = "direct_url"
         const val EXTRA_ALLOW_SEEK = "allow_seek"
+        const val EXTRA_CHANNEL_ID = "channel_id"
+        const val EXTRA_VIDEO_ID = "video_id"
     }
 }

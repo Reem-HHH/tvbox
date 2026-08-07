@@ -35,6 +35,11 @@
     <string name="player_seek_disabled">التقديم/الترجيع متوقف</string>
     <string name="a11y_channel_tile">قناة: %1$s</string>
     <string name="a11y_video_tile">فيديو: %1$s</string>
+    <string name="a11y_continue_watch_tile">متابعة المشاهدة: %1$s</string>
+    <string name="continue_watching">متابعة المشاهدة</string>
+    <string name="parent_clear_continue_watching">مسح متابعة المشاهدة</string>
+    <string name="parent_clear_continue_watching_message">إزالة صف متابعة المشاهدة من الصفحة الرئيسية. القنوات والفيديوهات تبقى.</string>
+    <string name="parent_continue_watching_cleared">تم مسح متابعة المشاهدة</string>
     <string name="parent_section_overview">نظرة عامة</string>
     <string name="parent_section_actions">الكتالوج</string>
     <string name="parent_section_channels">القنوات</string>

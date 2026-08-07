@@ -3,6 +3,7 @@ package ae.kiddytube.app
 import android.app.Application
 import ae.kiddytube.app.catalog.CatalogBootstrap
 import ae.kiddytube.app.catalog.CatalogRepository
+import ae.kiddytube.app.catalog.RecentWatchStore
 import ae.kiddytube.app.diagnostics.DiagnosticsLogger
 import ae.kiddytube.app.parent.ParentPinManager
 import kotlinx.coroutines.CoroutineScope
@@ -14,12 +15,15 @@ class KiddyTubeApp : Application() {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     lateinit var catalogRepository: CatalogRepository
         private set
+    lateinit var recentWatchStore: RecentWatchStore
+        private set
     private val catalogBootstrap = CatalogBootstrap()
 
     override fun onCreate() {
         super.onCreate()
         catalogRepository = CatalogRepository(this)
         catalogRepository.bindBootstrap(catalogBootstrap)
+        recentWatchStore = RecentWatchStore(this)
         DiagnosticsLogger.get(this).logStartup()
         // Application.onCreate runs before Activity; sync/UI must await this gate.
         appScope.launch {

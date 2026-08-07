@@ -35,6 +35,11 @@
     <string name="player_seek_disabled">Seeking is off</string>
     <string name="a11y_channel_tile">Channel: %1$s</string>
     <string name="a11y_video_tile">Video: %1$s</string>
+    <string name="a11y_continue_watch_tile">Continue watching: %1$s</string>
+    <string name="continue_watching">Continue watching</string>
+    <string name="parent_clear_continue_watching">Clear continue watching</string>
+    <string name="parent_clear_continue_watching_message">Remove the home Continue watching row. Channels and videos stay.</string>
+    <string name="parent_continue_watching_cleared">Continue watching cleared</string>
     <string name="parent_section_overview">Overview</string>
     <string name="parent_section_actions">Catalog</string>
     <string name="parent_section_channels">Channels</string>

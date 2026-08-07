@@ -8,19 +8,25 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.ApiKeyResolver
 import ae.kiddytube.app.catalog.CatalogSettings
+import ae.kiddytube.app.catalog.RecentWatchLogic
 import ae.kiddytube.app.catalog.SyncStatus
+import ae.kiddytube.app.catalog.VideoItem
+import ae.kiddytube.app.catalog.RecentWatchItem
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.parent.ParentUnlockCoordinator
+import ae.kiddytube.app.player.PlayerActivity
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import kotlinx.coroutines.delay
@@ -28,11 +34,14 @@ import kotlinx.coroutines.launch
 
 class ChannelGridActivity : AppCompatActivity() {
     private lateinit var grid: RecyclerView
+    private lateinit var continueSection: LinearLayout
+    private lateinit var continueList: RecyclerView
     private lateinit var emptyMessage: TextView
     private lateinit var brandTitle: TextView
     private lateinit var syncStatus: TextView
     private lateinit var parentSettings: ImageButton
     private lateinit var adapter: ChannelGridAdapter
+    private lateinit var continueAdapter: ContinueWatchAdapter
     private lateinit var pinManager: ParentPinManager
     private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
@@ -43,6 +52,8 @@ class ChannelGridActivity : AppCompatActivity() {
         applyPreferredOrientation()
         setContentView(R.layout.activity_grid)
         grid = findViewById(R.id.grid)
+        continueSection = findViewById(R.id.continueWatchingSection)
+        continueList = findViewById(R.id.continueWatchingList)
         emptyMessage = findViewById(R.id.emptyMessage)
         brandTitle = findViewById(R.id.brandTitle)
         syncStatus = findViewById(R.id.syncStatus)
@@ -71,6 +82,14 @@ class ChannelGridActivity : AppCompatActivity() {
         grid.clipChildren = false
         grid.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
         grid.isFocusable = true
+
+        continueAdapter = ContinueWatchAdapter { recent, video -> openContinueWatch(recent, video) }
+        continueList.adapter = continueAdapter
+        continueList.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        continueList.clipToPadding = false
+        continueList.clipChildren = false
+        continueList.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        continueList.isFocusable = true
 
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
@@ -166,14 +185,20 @@ class ChannelGridActivity : AppCompatActivity() {
         restoreFocusAt: Int = RecyclerView.NO_POSITION,
         focusFirstIfNeeded: Boolean = false
     ) {
-        val repo = (application as KiddyTubeApp).catalogRepository
-        val channels = repo.enabledChannels(settings)
+        val app = application as KiddyTubeApp
+        val channels = app.catalogRepository.enabledChannels(settings)
         val focused = if (restoreFocusAt != RecyclerView.NO_POSITION) {
             restoreFocusAt
         } else {
             GridFocus.capturePosition(grid)
         }
         adapter.submit(channels)
+        lifecycleScope.launch {
+            val recent = app.recentWatchStore.current()
+            val playable = RecentWatchLogic.resolvePlayable(recent, settings)
+            continueAdapter.submit(playable)
+            continueSection.visibility = if (playable.isEmpty()) View.GONE else View.VISIBLE
+        }
         if (channels.isEmpty()) {
             emptyMessage.visibility = View.VISIBLE
             emptyMessage.text = getString(R.string.empty_channels)
@@ -190,6 +215,18 @@ class ChannelGridActivity : AppCompatActivity() {
                 focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
             }
         }
+    }
+
+    private fun openContinueWatch(recent: RecentWatchItem, video: VideoItem) {
+        startActivity(
+            Intent(this, PlayerActivity::class.java)
+                .putExtra(PlayerActivity.EXTRA_TITLE, video.title)
+                .putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, video.youtubeVideoId)
+                .putExtra(PlayerActivity.EXTRA_DIRECT_URL, video.directUrl)
+                .putExtra(PlayerActivity.EXTRA_ALLOW_SEEK, video.allowSeek)
+                .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, recent.channelId)
+                .putExtra(PlayerActivity.EXTRA_VIDEO_ID, video.id)
+        )
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

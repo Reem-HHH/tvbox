@@ -16,4 +16,5 @@
     <dimen name="sync_chip_max_width">168dp</dimen>
     <dimen name="header_padding_h">16dp</dimen>
     <dimen name="header_padding_v">12dp</dimen>
+    <dimen name="continue_watch_tile_width">168dp</dimen>
 </resources>
