@@ -57,8 +57,8 @@ class VideoGridAdapter(
             }
             itemView.setOnClickListener { onClick(video) }
             itemView.setOnFocusChangeListener { v, hasFocus ->
-                val scale = if (hasFocus) 1.04f else 1f
-                val ty = if (hasFocus) -6f else 0f
+                val scale = if (hasFocus) 1.02f else 1f
+                val ty = if (hasFocus) -3f else 0f
                 v.animate()
                     .scaleX(scale)
                     .scaleY(scale)

@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Phone-first defaults (2-column cards) -->
-    <dimen name="grid_padding">14dp</dimen>
-    <dimen name="tile_margin">6dp</dimen>
+    <dimen name="grid_padding">16dp</dimen>
+    <dimen name="tile_margin">8dp</dimen>
     <dimen name="tile_corner">18dp</dimen>
     <dimen name="tile_stroke">1.5dp</dimen>
     <dimen name="tile_stroke_focused">3dp</dimen>
+    <dimen name="tile_inner_padding">12dp</dimen>
     <dimen name="image_corner">14dp</dimen>
-    <dimen name="channel_image_height">112dp</dimen>
-    <dimen name="video_image_height">100dp</dimen>
+    <dimen name="tile_title_area_height">40dp</dimen>
     <dimen name="brand_title_size">22sp</dimen>
     <dimen name="channel_title_size">13sp</dimen>
     <dimen name="video_title_size">12sp</dimen>
     <dimen name="sync_chip_text">12sp</dimen>
+    <dimen name="sync_chip_max_width">168dp</dimen>
     <dimen name="header_padding_h">16dp</dimen>
     <dimen name="header_padding_v">12dp</dimen>
 </resources>

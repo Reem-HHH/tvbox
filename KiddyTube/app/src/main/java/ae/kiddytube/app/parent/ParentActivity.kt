@@ -159,14 +159,20 @@ class ParentActivity : AppCompatActivity() {
         card.findViewById<TextView>(R.id.channelPlaylist).text =
             "playlist: ${channel.youtubePlaylistId ?: "(none)"}"
         val actions = card.findViewById<LinearLayout>(R.id.channelActions)
-        addButton(actions, if (channel.enabled) "Disable" else "Enable") {
-            update { s ->
-                s.copy(channels = s.channels.map {
-                    if (it.id == channel.id) it.copy(enabled = !it.enabled) else it
-                })
-            }
-        }
-        addButton(actions, "Playlist") { promptPlaylist(channel) }
+        addButtonRow(
+            actions,
+            Pair(
+                if (channel.enabled) "Disable" else "Enable",
+                {
+                    update { s ->
+                        s.copy(channels = s.channels.map {
+                            if (it.id == channel.id) it.copy(enabled = !it.enabled) else it
+                        })
+                    }
+                }
+            ),
+            "Playlist" to { promptPlaylist(channel) }
+        )
         if (!channel.youtubePlaylistId.isNullOrBlank()) {
             addSwitch(
                 actions,
@@ -180,8 +186,11 @@ class ParentActivity : AppCompatActivity() {
                 }
             }
         }
-        addButton(actions, "Video IDs") { promptVideoIds(channel) }
-        addButton(actions, "Direct URL") { promptDirect(channel) }
+        addButtonRow(
+            actions,
+            "Video IDs" to { promptVideoIds(channel) },
+            "Direct URL" to { promptDirect(channel) }
+        )
         val seekOn = channel.videos.isEmpty() || channel.videos.all { it.allowSeek }
         addSwitch(
             actions,
@@ -409,6 +418,31 @@ class ParentActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).also { it.topMargin = dp(8) }
         })
+    }
+
+    private fun addButtonRow(
+        parent: ViewGroup,
+        first: Pair<String, () -> Unit>,
+        second: Pair<String, () -> Unit>
+    ) {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.topMargin = dp(8) }
+        }
+        fun half(pair: Pair<String, () -> Unit>, endMargin: Int = 0): Button =
+            btn(pair.first, pair.second).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    0,
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    1f
+                ).also { it.marginEnd = endMargin }
+            }
+        row.addView(half(first, dp(6)))
+        row.addView(half(second))
+        parent.addView(row)
     }
 
     private fun btn(label: String, onClick: () -> Unit): Button =

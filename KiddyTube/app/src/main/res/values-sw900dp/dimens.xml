@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Large tablet / near-TV width -->
-    <dimen name="grid_padding">28dp</dimen>
+    <!-- Large tablet / TV — extra outer pad for overscan -->
+    <dimen name="grid_padding">36dp</dimen>
     <dimen name="tile_margin">12dp</dimen>
     <dimen name="tile_corner">24dp</dimen>
+    <dimen name="tile_inner_padding">14dp</dimen>
     <dimen name="image_corner">18dp</dimen>
-    <dimen name="channel_image_height">140dp</dimen>
-    <dimen name="video_image_height">148dp</dimen>
+    <dimen name="tile_title_area_height">46dp</dimen>
     <dimen name="brand_title_size">32sp</dimen>
     <dimen name="channel_title_size">15sp</dimen>
     <dimen name="video_title_size">14sp</dimen>
-    <dimen name="header_padding_h">28dp</dimen>
-    <dimen name="header_padding_v">18dp</dimen>
+    <dimen name="sync_chip_max_width">260dp</dimen>
+    <dimen name="header_padding_h">36dp</dimen>
+    <dimen name="header_padding_v">20dp</dimen>
 </resources>

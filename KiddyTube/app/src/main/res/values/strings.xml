@@ -14,6 +14,7 @@
     <string name="parent_dashboard">Parent settings</string>
     <string name="parent_pin_title">Parent PIN</string>
     <string name="back_to_channels">Back to channels</string>
+    <string name="nav_back">Back</string>
     <string name="unlock">Unlock</string>
     <string name="cancel">Cancel</string>
     <string name="parent_locked_out">Too many attempts. Try again later.</string>

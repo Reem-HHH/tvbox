@@ -49,6 +49,10 @@ class VideoLibraryActivity : AppCompatActivity() {
         parentSettings = findViewById(R.id.parentSettings)
         brandTitle.text = channelTitle.ifBlank { getString(R.string.app_name) }
         syncStatus.visibility = View.GONE
+        findViewById<TextView>(R.id.navBack).apply {
+            visibility = View.VISIBLE
+            setOnClickListener { finish() }
+        }
 
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)

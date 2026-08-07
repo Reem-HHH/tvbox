@@ -153,27 +153,21 @@ class PlayerActivity : AppCompatActivity() {
             resources.displayMetrics
         ).toInt()
 
-        // Bottom-right YouTube watermark / logo strip
+        // Physical RIGHT — YouTube chrome is always LTR, even in RTL locales.
+        // Keep masks thin so they cover watermark chips without eating the frame.
         container.addView(
             View(this).apply { setBackgroundColor(Color.BLACK) },
-            FrameLayout.LayoutParams(dp(168f), dp(72f), Gravity.BOTTOM or Gravity.END)
+            FrameLayout.LayoutParams(dp(96f), dp(40f), Gravity.BOTTOM or Gravity.RIGHT)
         )
-        // Top-right share / watch-later chips that sometimes appear
         container.addView(
             View(this).apply { setBackgroundColor(Color.BLACK) },
-            FrameLayout.LayoutParams(dp(140f), dp(56f), Gravity.TOP or Gravity.END)
+            FrameLayout.LayoutParams(dp(88f), dp(36f), Gravity.TOP or Gravity.RIGHT)
         )
-        // Bottom-left title/channel strip after seek / pause
-        container.addView(
-            View(this).apply { setBackgroundColor(Color.BLACK) },
-            FrameLayout.LayoutParams(dp(280f), dp(64f), Gravity.BOTTOM or Gravity.START)
-        )
-        // Thin bottom control bar residual
         container.addView(
             View(this).apply { setBackgroundColor(Color.BLACK) },
             FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(28f),
+                dp(16f),
                 Gravity.BOTTOM
             )
         )
@@ -241,22 +235,10 @@ class PlayerActivity : AppCompatActivity() {
             <!doctype html><html><head>
             <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
             <style>
-              html,body,#wrap,#p{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
-              #wrap{position:relative}
+              html,body,#p{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
               iframe{pointer-events:none;border:0}
-              .mask{position:absolute;background:#000;z-index:9;pointer-events:none}
-              .br{right:0;bottom:0;width:28%;height:18%}
-              .tr{right:0;top:0;width:24%;height:14%}
-              .bl{left:0;bottom:0;width:46%;height:16%}
-              .bb{left:0;right:0;bottom:0;height:8%}
             </style></head><body>
-            <div id="wrap">
-              <div id="p"></div>
-              <div class="mask br"></div>
-              <div class="mask tr"></div>
-              <div class="mask bl"></div>
-              <div class="mask bb"></div>
-            </div>
+            <div id="p"></div>
             <script src="https://www.youtube.com/iframe_api"></script>
             <script>
               var player;
@@ -365,7 +347,6 @@ class PlayerActivity : AppCompatActivity() {
                 true
             }
             RemoteAction.VolumeUp, RemoteAction.VolumeDown -> true
-            else -> true
         }
     }
 
