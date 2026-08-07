@@ -13,6 +13,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -139,7 +140,14 @@ class PlayerActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val app = application as KiddyTubeApp
-            app.awaitCatalogReady()
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                if (isFinishing || isDestroyed) return@launch
+                rejectPlayback()
+                return@launch
+            }
+            if (isFinishing || isDestroyed) return@launch
             val settings = app.catalogRepository.current()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
@@ -153,6 +161,7 @@ class PlayerActivity : AppCompatActivity() {
             val youtubeId = intent.getStringExtra(EXTRA_YOUTUBE_ID)
             val directUrl = intent.getStringExtra(EXTRA_DIRECT_URL)
 
+            if (isFinishing || isDestroyed) return@launch
             when {
                 !youtubeId.isNullOrBlank() -> {
                     if (!YoutubeUrlParser.isValidVideoId(youtubeId)) {
@@ -164,6 +173,7 @@ class PlayerActivity : AppCompatActivity() {
                         rejectPlayback()
                         return@launch
                     }
+                    if (isFinishing || isDestroyed) return@launch
                     playYoutube(youtubeId.trim())
                     playbackReady = true
                     recordContinueWatching()
@@ -175,6 +185,7 @@ class PlayerActivity : AppCompatActivity() {
                         rejectPlayback()
                         return@launch
                     }
+                    if (isFinishing || isDestroyed) return@launch
                     playDirect(url)
                     playbackReady = true
                     recordContinueWatching()
@@ -333,7 +344,21 @@ class PlayerActivity : AppCompatActivity() {
             settings.cacheMode = WebSettings.LOAD_DEFAULT
             setOnTouchListener { _, _ -> true }
             webChromeClient = WebChromeClient()
-            webViewClient = WebViewClient()
+            webViewClient = object : WebViewClient() {
+                override fun shouldOverrideUrlLoading(
+                    view: WebView?,
+                    request: WebResourceRequest?
+                ): Boolean {
+                    val host = request?.url?.host ?: return true
+                    return !isAllowedYoutubeHost(host)
+                }
+
+                @Deprecated("Deprecated in Java")
+                override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                    val host = url?.let { Uri.parse(it).host } ?: return true
+                    return !isAllowedYoutubeHost(host)
+                }
+            }
             addJavascriptInterface(
                 YoutubePlayerBridge { runOnUiThread { finish() } },
                 "KiddyNative"
@@ -551,5 +576,19 @@ class PlayerActivity : AppCompatActivity() {
         const val EXTRA_ALLOW_SEEK = "allow_seek"
         const val EXTRA_CHANNEL_ID = "channel_id"
         const val EXTRA_VIDEO_ID = "video_id"
+
+        internal fun isAllowedYoutubeHost(host: String): Boolean {
+            val h = host.lowercase()
+            return h == "youtube.com" ||
+                h == "www.youtube.com" ||
+                h == "m.youtube.com" ||
+                h == "youtube-nocookie.com" ||
+                h == "www.youtube-nocookie.com" ||
+                h.endsWith(".youtube.com") ||
+                h.endsWith(".youtube-nocookie.com") ||
+                h.endsWith(".googlevideo.com") ||
+                h == "i.ytimg.com" ||
+                h.endsWith(".ytimg.com")
+        }
     }
 }

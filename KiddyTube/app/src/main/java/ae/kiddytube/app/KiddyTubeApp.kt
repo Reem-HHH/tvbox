@@ -34,12 +34,19 @@ class KiddyTubeApp : Application() {
         DiagnosticsLogger.get(this).logStartup()
         // Application.onCreate runs before Activity; sync/UI must await this gate.
         appScope.launch {
-            catalogBootstrap.run {
-                catalogRepository.migrateSensitiveSecretsIfNeeded()
-                ensureDefaultPin()
-                catalogRepository.applySeedUpgradeIfNeeded()
+            try {
+                catalogBootstrap.run {
+                    catalogRepository.migrateSensitiveSecretsIfNeeded()
+                    ensureDefaultPin()
+                    catalogRepository.applySeedUpgradeIfNeeded()
+                }
+                syncWatchNext()
+            } catch (e: Exception) {
+                DiagnosticsLogger.get(this@KiddyTubeApp).log(
+                    "bootstrap_failed",
+                    "err=${e.javaClass.simpleName}:${e.message?.take(160)}"
+                )
             }
-            syncWatchNext()
         }
     }
 

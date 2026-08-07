@@ -76,7 +76,19 @@ class VideoLibraryActivity : AppCompatActivity() {
         grid.isFocusable = true
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
-            val settings = (application as KiddyTubeApp).catalogRepository.current()
+            val app = application as KiddyTubeApp
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                // Best-effort UI if bootstrap failed; home may retry later.
+            }
+            val channel = app.catalogRepository.channelById(channelId)
+            if (channel == null || !channel.enabled) {
+                finish()
+                return@launch
+            }
+            brandTitle.text = channel.title.ifBlank { channelTitle.ifBlank { getString(R.string.app_name) } }
+            val settings = app.catalogRepository.current()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
             remote = RemoteKeyHandler(
@@ -131,8 +143,18 @@ class VideoLibraryActivity : AppCompatActivity() {
 
     private fun reload(focusFirst: Boolean = false) {
         lifecycleScope.launch {
-            val channel = (application as KiddyTubeApp).catalogRepository.channelById(channelId)
-            val videos = channel?.videos.orEmpty().newestFirst()
+            val app = application as KiddyTubeApp
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                // continue with available catalog
+            }
+            val channel = app.catalogRepository.channelById(channelId)
+            if (channel == null || !channel.enabled) {
+                finish()
+                return@launch
+            }
+            val videos = channel.videos.newestFirst()
             val focused = GridFocus.capturePosition(grid)
             adapter.submit(videos)
             emptyMessage.visibility = if (videos.isEmpty()) View.VISIBLE else View.GONE

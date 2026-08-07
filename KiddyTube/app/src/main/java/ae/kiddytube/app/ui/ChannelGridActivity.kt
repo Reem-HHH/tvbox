@@ -95,7 +95,11 @@ class ChannelGridActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val app = application as KiddyTubeApp
             // Wait for default PIN + seed upgrade before first paint / launch sync.
-            app.awaitCatalogReady()
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                // Continue with best-effort catalog if bootstrap failed.
+            }
             settings = app.catalogRepository.current()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
@@ -289,7 +293,11 @@ class ChannelGridActivity : AppCompatActivity() {
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
             val app = application as KiddyTubeApp
-            app.awaitCatalogReady()
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                // continue
+            }
             settings = app.catalogRepository.current()
             render(focusFirstIfNeeded = false)
             app.syncWatchNext()

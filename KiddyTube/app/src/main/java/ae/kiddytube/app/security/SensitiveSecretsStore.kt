@@ -39,11 +39,11 @@ class EncryptedSensitiveSecretsStore(
             .putString(KEY_API, secrets.youtubeApiKey.orEmpty())
             .putString(KEY_SALT, secrets.pinSalt.orEmpty())
             .putString(KEY_HASH, secrets.pinHash.orEmpty())
-            .apply()
+            .commit()
     }
 
     override fun clear() {
-        prefs.edit().clear().apply()
+        prefs.edit().clear().commit()
     }
 
     /**
@@ -63,7 +63,7 @@ class EncryptedSensitiveSecretsStore(
         appContext.getSharedPreferences(LEGACY_PLAIN_PREFS, Context.MODE_PRIVATE)
             .edit()
             .clear()
-            .apply()
+            .commit()
     }
 
     companion object {

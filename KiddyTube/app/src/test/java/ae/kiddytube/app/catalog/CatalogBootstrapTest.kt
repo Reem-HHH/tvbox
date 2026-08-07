@@ -3,8 +3,10 @@ package ae.kiddytube.app.catalog
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -41,7 +43,7 @@ class CatalogBootstrapTest {
         gate.run { runs.incrementAndGet() }
 
         assertTrue(gate.isReady)
-        assertTrue(runs.get() == 1)
+        assertEquals(1, runs.get())
     }
 
     @Test
@@ -56,5 +58,27 @@ class CatalogBootstrapTest {
         assertTrue(a.await())
         assertTrue(b.await())
         assertTrue(gate.isReady)
+    }
+
+    @Test
+    fun failedRunDoesNotMarkReadyAndCanRetry() = runTest {
+        val gate = CatalogBootstrap()
+        val runs = AtomicInteger(0)
+        try {
+            gate.run {
+                runs.incrementAndGet()
+                error("boom")
+            }
+            fail("expected failure")
+        } catch (_: IllegalStateException) {
+            // expected
+        }
+        assertFalse(gate.isReady)
+        assertEquals(1, runs.get())
+
+        gate.run { runs.incrementAndGet() }
+        assertTrue(gate.isReady)
+        assertEquals(2, runs.get())
+        gate.await()
     }
 }

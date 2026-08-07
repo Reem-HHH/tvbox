@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -39,6 +40,14 @@ class ParentActivity : AppCompatActivity() {
         setContentView(R.layout.activity_parent)
         container = findViewById(R.id.parentContent)
         findViewById<TextView>(R.id.parentBack).setOnClickListener { goBackToChannels() }
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    goBackToChannels()
+                }
+            }
+        )
         ImmersiveMode.apply(this)
         lifecycleScope.launch { reload() }
     }
@@ -596,7 +605,10 @@ class ParentActivity : AppCompatActivity() {
         }
 
     private fun goBackToChannels() {
-        startActivity(Intent(this, ChannelGridActivity::class.java))
+        startActivity(
+            Intent(this, ChannelGridActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        )
         finish()
     }
 
@@ -609,7 +621,7 @@ class ParentActivity : AppCompatActivity() {
     private fun expireSession() {
         ParentSession.clear()
         Toast.makeText(this, R.string.parent_session_expired, Toast.LENGTH_SHORT).show()
-        finish()
+        goBackToChannels()
     }
 
     private fun toast(msg: String) {

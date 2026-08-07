@@ -477,10 +477,14 @@ object DefaultChannels {
                 (seed.id == "spacetoon" || clearSpacetoonUploads)
 
             if (clearSpacetoonUploads || needsPlaylist || missingVideos.isNotEmpty() || titleStale) {
+                fun withSeekPolicy(items: List<VideoItem>): List<VideoItem> =
+                    items.map { it.copy(allowSeek = current.defaultAllowSeek) }
                 val videos = when {
-                    clearSpacetoonUploads -> seed.videos
-                    current.videos.isEmpty() && seed.videos.isNotEmpty() -> seed.videos
-                    missingVideos.isNotEmpty() -> current.videos + missingVideos
+                    clearSpacetoonUploads -> withSeekPolicy(seed.videos)
+                    current.videos.isEmpty() && seed.videos.isNotEmpty() ->
+                        withSeekPolicy(seed.videos)
+                    missingVideos.isNotEmpty() ->
+                        current.videos + withSeekPolicy(missingVideos)
                     else -> current.videos
                 }
                 byId[seed.id] = current.copy(
