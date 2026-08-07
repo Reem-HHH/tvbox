@@ -374,7 +374,7 @@ class CatalogRepository(
             it.copy(
                 followUploads = follow,
                 playlistManagedByParent = true,
-                // Re-allow empty one-shot / follow import after parent opts back in.
+                // Cleared when parent opts back into follow imports.
                 suppressEmptyPlaylistImport = if (follow) false else it.suppressEmptyPlaylistImport
             )
         }

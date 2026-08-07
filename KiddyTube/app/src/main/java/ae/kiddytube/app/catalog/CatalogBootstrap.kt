@@ -7,7 +7,8 @@ import kotlinx.coroutines.sync.withLock
 /**
  * Gates first-launch sync until default PIN setup and seed upgrade finish.
  * Safe for concurrent awaiters. Successful [run] is idempotent; a failed [run]
- * does not mark ready and may be retried.
+ * does not mark ready and may be retried. Failed attempts complete the current
+ * gate exceptionally so awaiters can fall back instead of hanging forever.
  */
 class CatalogBootstrap {
     private val mutex = Mutex()
@@ -20,6 +21,10 @@ class CatalogBootstrap {
         if (succeeded) return
         mutex.withLock {
             if (succeeded) return
+            // Previous attempt failed: open a fresh gate for this retry.
+            if (ready.isCompleted && !succeeded) {
+                ready = CompletableDeferred()
+            }
             try {
                 block()
                 succeeded = true
@@ -27,10 +32,8 @@ class CatalogBootstrap {
                     ready.complete(Unit)
                 }
             } catch (e: Exception) {
-                val failed = ready
-                ready = CompletableDeferred()
-                if (!failed.isCompleted) {
-                    failed.completeExceptionally(e)
+                if (!ready.isCompleted) {
+                    ready.completeExceptionally(e)
                 }
                 throw e
             }
@@ -46,7 +49,9 @@ class CatalogBootstrap {
             } catch (e: Exception) {
                 if (succeeded) return
                 // Another run may have replaced [ready]; retry on the new gate.
-                if (ready === gate) throw e
+                if (ready !== gate) continue
+                // No newer attempt yet — unblock callers for best-effort catalog use.
+                throw e
             }
         }
     }

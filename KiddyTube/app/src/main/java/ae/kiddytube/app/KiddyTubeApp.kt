@@ -12,8 +12,10 @@ import ae.kiddytube.app.tv.WatchNextPublisher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.min
 
 class KiddyTubeApp : Application() {
     val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -33,19 +35,27 @@ class KiddyTubeApp : Application() {
         watchNextPublisher = WatchNextPublisher(this)
         DiagnosticsLogger.get(this).logStartup()
         // Application.onCreate runs before Activity; sync/UI must await this gate.
+        // Retry with backoff so a failed run does not leave awaiters permanently wedged.
         appScope.launch {
-            try {
-                catalogBootstrap.run {
-                    catalogRepository.migrateSensitiveSecretsIfNeeded()
-                    ensureDefaultPin()
-                    catalogRepository.applySeedUpgradeIfNeeded()
+            var attempt = 0
+            while (true) {
+                try {
+                    catalogBootstrap.run {
+                        catalogRepository.migrateSensitiveSecretsIfNeeded()
+                        ensureDefaultPin()
+                        catalogRepository.applySeedUpgradeIfNeeded()
+                    }
+                    syncWatchNext()
+                    return@launch
+                } catch (e: Exception) {
+                    attempt++
+                    DiagnosticsLogger.get(this@KiddyTubeApp).log(
+                        "bootstrap_failed",
+                        "attempt=$attempt err=${e.javaClass.simpleName}:${e.message?.take(160)}"
+                    )
+                    val backoffMs = min(30_000L, 1_000L * (1L shl attempt.coerceAtMost(5)))
+                    delay(backoffMs)
                 }
-                syncWatchNext()
-            } catch (e: Exception) {
-                DiagnosticsLogger.get(this@KiddyTubeApp).log(
-                    "bootstrap_failed",
-                    "err=${e.javaClass.simpleName}:${e.message?.take(160)}"
-                )
             }
         }
     }

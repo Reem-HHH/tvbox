@@ -26,14 +26,18 @@ data class SyncResult(
     val message: String? = null
 )
 
-/** Playlist import is opt-in via followUploads, or one-shot when the library is still empty. */
+/**
+ * Playlist import is opt-in via [followUploads] only.
+ * Empty seed libraries keep hand-picked starters until a parent enables Follow uploads.
+ * [suppressEmptyImport] / [videoCount] are retained for call-site compatibility.
+ */
 object SyncPolicy {
+    @Suppress("UNUSED_PARAMETER")
     fun shouldImportPlaylist(
         followUploads: Boolean,
         videoCount: Int,
         suppressEmptyImport: Boolean = false
-    ): Boolean =
-        followUploads || (videoCount == 0 && !suppressEmptyImport)
+    ): Boolean = followUploads
 
     /** Force refresh or empty playlist libraries ignore the usual sync TTL. */
     fun shouldBypassTtl(force: Boolean, emptyPlaylistLibraries: Boolean): Boolean =

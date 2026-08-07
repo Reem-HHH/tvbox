@@ -96,13 +96,14 @@ class ParentActivity : AppCompatActivity() {
             addSectionTitle(it, getString(R.string.parent_section_actions))
             addButton(it, getString(R.string.parent_set_api_key)) { promptApiKey() }
             addButton(it, getString(R.string.parent_refresh_playlists)) {
-                lifecycleScope.launch {
+                withActiveSession {
                     val result =
                         (application as KiddyTubeApp).catalogRepository.refreshAllPlaylists(force = true)
                     toast(
                         when (result.status) {
                             SyncStatus.UPDATED ->
-                                "Synced ${result.videoCount} videos in ${result.updatedChannels} channels"
+                                result.message?.takeIf { msg -> msg.isNotBlank() }
+                                    ?: "Synced ${result.videoCount} videos in ${result.updatedChannels} channels"
                             SyncStatus.SKIPPED_NO_KEY ->
                                 "Set a YouTube API key first"
                             SyncStatus.SKIPPED_OFFLINE ->
@@ -118,7 +119,7 @@ class ParentActivity : AppCompatActivity() {
                 }
             }
             addButton(it, getString(R.string.parent_export_catalog)) {
-                lifecycleScope.launch {
+                withActiveSession {
                     val json = (application as KiddyTubeApp).catalogRepository.exportJson()
                     val share = Intent(Intent.ACTION_SEND).apply {
                         type = "text/plain"
@@ -133,7 +134,7 @@ class ParentActivity : AppCompatActivity() {
                     .setTitle(R.string.parent_clear_continue_watching)
                     .setMessage(R.string.parent_clear_continue_watching_message)
                     .setPositiveButton(R.string.parent_clear_continue_watching) { _, _ ->
-                        lifecycleScope.launch {
+                        withActiveSession {
                             (application as KiddyTubeApp).clearRecentWatch()
                             toast(getString(R.string.parent_continue_watching_cleared))
                         }
@@ -166,7 +167,7 @@ class ParentActivity : AppCompatActivity() {
                     .setTitle("Reset?")
                     .setMessage("Clears channels and PIN (re-seeded to default 2580).")
                     .setPositiveButton("Reset") { _, _ ->
-                        lifecycleScope.launch {
+                        withActiveSession {
                             val app = application as KiddyTubeApp
                             app.catalogRepository.resetAll()
                             app.clearRecentWatch()
@@ -218,7 +219,7 @@ class ParentActivity : AppCompatActivity() {
                 getString(R.string.parent_follow_uploads),
                 channel.followUploads
             ) { checked ->
-                lifecycleScope.launch {
+                withActiveSession {
                     (application as KiddyTubeApp).catalogRepository
                         .setFollowUploads(channel.id, checked)
                     reload()
@@ -234,7 +235,7 @@ class ParentActivity : AppCompatActivity() {
             actions,
             "Manage videos" to { promptManageVideos(channel) },
             "Refresh" to {
-                lifecycleScope.launch {
+                withActiveSession {
                     val import = SyncPolicy.shouldImportPlaylist(
                         channel.followUploads,
                         channel.videos.size,
@@ -265,7 +266,7 @@ class ParentActivity : AppCompatActivity() {
             getString(R.string.parent_seek_enabled),
             seekOn
         ) { checked ->
-            lifecycleScope.launch {
+            withActiveSession {
                 (application as KiddyTubeApp).catalogRepository
                     .setChannelAllowSeek(channel.id, checked)
                 reload()
@@ -296,7 +297,7 @@ class ParentActivity : AppCompatActivity() {
                     .setTitle(R.string.parent_remove_video_title)
                     .setMessage(video.title)
                     .setPositiveButton(R.string.parent_remove) { _, _ ->
-                        lifecycleScope.launch {
+                        withActiveSession {
                             (application as KiddyTubeApp).catalogRepository
                                 .removeVideo(channel.id, video.id)
                             reload()
@@ -310,7 +311,7 @@ class ParentActivity : AppCompatActivity() {
                     .setTitle(R.string.parent_clear_synced)
                     .setMessage(R.string.parent_clear_synced_message)
                     .setPositiveButton(R.string.parent_clear_synced) { _, _ ->
-                        lifecycleScope.launch {
+                        withActiveSession {
                             (application as KiddyTubeApp).catalogRepository
                                 .clearSyncedVideos(channel.id)
                             reload()
@@ -353,7 +354,7 @@ class ParentActivity : AppCompatActivity() {
             .setTitle(channel.title)
             .setView(padded(input))
             .setPositiveButton("Save") { _, _ ->
-                lifecycleScope.launch {
+                withActiveSession {
                     (application as KiddyTubeApp).catalogRepository.setPlaylistId(
                         channel.id,
                         input.text.toString()
@@ -376,7 +377,7 @@ class ParentActivity : AppCompatActivity() {
             .setTitle("Add YouTube videos")
             .setView(padded(input))
             .setPositiveButton("Add") { _, _ ->
-                lifecycleScope.launch {
+                withActiveSession {
                     (application as KiddyTubeApp).catalogRepository.addManualVideoIds(
                         channel.id,
                         input.text.toString()
@@ -414,7 +415,7 @@ class ParentActivity : AppCompatActivity() {
                     toast(getString(R.string.parent_invalid_direct_url))
                     return@setPositiveButton
                 }
-                lifecycleScope.launch {
+                withActiveSession {
                     try {
                         (application as KiddyTubeApp).catalogRepository.addDirectVideo(
                             channel.id,
@@ -475,8 +476,23 @@ class ParentActivity : AppCompatActivity() {
 
     private fun update(transform: (CatalogSettings) -> CatalogSettings) {
         lifecycleScope.launch {
+            if (!ParentSession.isActive()) {
+                expireSession()
+                return@launch
+            }
             (application as KiddyTubeApp).catalogRepository.update(transform)
             reload()
+        }
+    }
+
+    /** Run a parent catalog mutation only while the PIN session is still valid. */
+    private fun withActiveSession(block: suspend () -> Unit) {
+        lifecycleScope.launch {
+            if (!ParentSession.isActive()) {
+                expireSession()
+                return@launch
+            }
+            block()
         }
     }
 

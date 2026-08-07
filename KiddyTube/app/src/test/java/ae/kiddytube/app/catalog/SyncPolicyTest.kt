@@ -11,8 +11,8 @@ class SyncPolicyTest {
     }
 
     @Test
-    fun importsWhenLibraryEmptyAndNotSuppressed() {
-        assertTrue(
+    fun doesNotOneShotImportEmptyLibraryWithoutFollow() {
+        assertFalse(
             SyncPolicy.shouldImportPlaylist(
                 followUploads = false,
                 videoCount = 0,
@@ -92,10 +92,10 @@ class SyncPolicyTest {
     }
 
     @Test
-    fun emptyLibraryImportsEvenWithoutFollowThenRefreshes() {
+    fun emptyLibraryNeedsFollowBeforeRefresh() {
         val import = SyncPolicy.shouldImportPlaylist(followUploads = false, videoCount = 0)
-        assertTrue(import)
-        assertTrue(
+        assertFalse(import)
+        assertFalse(
             SyncPolicy.shouldRefreshChannel(
                 force = false,
                 hasPlaylist = true,

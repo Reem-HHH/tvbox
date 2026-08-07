@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -69,6 +70,15 @@ class ChannelGridActivity : AppCompatActivity() {
         )
         parentSettings.setOnClickListener { parentUnlock.beginParentAccess() }
 
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    moveTaskToBack(true)
+                }
+            }
+        )
+
         adapter = ChannelGridAdapter { channel ->
             startActivity(
                 Intent(this, VideoLibraryActivity::class.java)
@@ -122,7 +132,14 @@ class ChannelGridActivity : AppCompatActivity() {
         render(restoreFocusAt = focused)
 
         val message = when (result.status) {
-            SyncStatus.UPDATED -> getString(R.string.sync_updated)
+            SyncStatus.UPDATED -> {
+                val detail = result.message?.trim().orEmpty()
+                if (detail.isNotEmpty()) {
+                    getString(R.string.sync_partial) + " — " + detail.take(80)
+                } else {
+                    getString(R.string.sync_updated)
+                }
+            }
             SyncStatus.SKIPPED_OFFLINE -> getString(R.string.sync_offline)
             SyncStatus.SKIPPED_NO_KEY -> getString(R.string.sync_no_key)
             SyncStatus.FAILED -> {
@@ -158,8 +175,10 @@ class ChannelGridActivity : AppCompatActivity() {
                     it.videos.isEmpty() &&
                     !it.followUploads
             }
+        val stickyPartial = result.status == SyncStatus.UPDATED &&
+            !result.message.isNullOrBlank()
         showSyncChip(message)
-        if (!stickyNoKey && !stickyFollow) {
+        if (!stickyNoKey && !stickyFollow && !stickyPartial) {
             delay(2800)
             if (syncStatus.text == message) {
                 syncStatus.visibility = View.GONE
@@ -270,6 +289,10 @@ class ChannelGridActivity : AppCompatActivity() {
         if (event.action == KeyEvent.ACTION_UP) {
             if (remote.handleKeyUp(event.keyCode) is RemoteAction.ParentTriggered) {
                 parentUnlock.beginParentAccess()
+                return true
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                moveTaskToBack(true)
                 return true
             }
         }

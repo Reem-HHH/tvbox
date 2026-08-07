@@ -6,6 +6,7 @@
     <string name="empty_no_api_key">اتصل بالإنترنت وأضف مفتاح YouTube API من إعدادات الوالدين لملء القنوات.</string>
     <string name="sync_updating">جاري تحديث القنوات…</string>
     <string name="sync_updated">تم تحديث القنوات!</string>
+    <string name="sync_partial">تم تحديث بعض القنوات — وفشلت أخرى</string>
     <string name="sync_offline">بدون اتصال — عرض الفيديوهات المحفوظة</string>
     <string name="sync_no_key">أضف مفتاح YouTube API من إعدادات الوالدين</string>
     <string name="sync_failed">تعذّر التحديث — عرض الفيديوهات المحفوظة</string>
@@ -30,6 +31,7 @@
     <string name="parent_clear_synced">مسح المتزامن</string>
     <string name="parent_clear_synced_message">إزالة فيديوهات القائمة/المتزامنة. الروابط اليدوية والمباشرة تبقى.</string>
     <string name="player_blocked">هذا الفيديو غير موجود في كتالوجك.</string>
+    <string name="player_playback_error">تعذّر تشغيل هذا الفيديو.</string>
     <string name="player_seek_forward">+%1$d ث</string>
     <string name="player_seek_back">−%1$d ث</string>
     <string name="player_seek_disabled">التقديم/الترجيع متوقف</string>

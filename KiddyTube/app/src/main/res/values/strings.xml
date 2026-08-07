@@ -6,6 +6,7 @@
     <string name="empty_no_api_key">Connect to the internet and set a YouTube API key in Parent settings to fill channels.</string>
     <string name="sync_updating">Updating channels…</string>
     <string name="sync_updated">Channels updated!</string>
+    <string name="sync_partial">Some channels updated — others failed</string>
     <string name="sync_offline">Offline — showing saved videos</string>
     <string name="sync_no_key">Add YouTube API key in Parent settings</string>
     <string name="sync_failed">Couldn\'t update — showing saved videos</string>
@@ -30,6 +31,7 @@
     <string name="parent_clear_synced">Clear synced</string>
     <string name="parent_clear_synced_message">Remove playlist/synced videos. Manual and direct URLs are kept.</string>
     <string name="player_blocked">That video is not in your catalog.</string>
+    <string name="player_playback_error">Couldn\'t play this video.</string>
     <string name="player_seek_forward">+%1$ds</string>
     <string name="player_seek_back">−%1$ds</string>
     <string name="player_seek_disabled">Seeking is off</string>

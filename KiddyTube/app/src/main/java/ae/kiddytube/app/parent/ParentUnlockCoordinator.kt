@@ -46,7 +46,22 @@ class ParentUnlockCoordinator(
                     val repo = (activity.application as KiddyTubeApp).catalogRepository
                     val latest = repo.current()
                     if (latest.releaseReady && pin == ParentPinManager.DEFAULT_DEV_PIN) {
-                        Toast.makeText(activity, R.string.parent_pin_wrong, Toast.LENGTH_SHORT).show()
+                        val locked = pinManager.registerFailure(System.currentTimeMillis())
+                        repo.update {
+                            it.copy(
+                                failCount = pinManager.failureCount,
+                                lockedUntilMs = pinManager.lockedUntilMs
+                            )
+                        }
+                        if (locked) {
+                            dialog.dismiss()
+                            Toast.makeText(activity, R.string.parent_locked_out, Toast.LENGTH_SHORT)
+                                .show()
+                        } else {
+                            Toast.makeText(activity, R.string.parent_pin_wrong, Toast.LENGTH_SHORT)
+                                .show()
+                            input.text?.clear()
+                        }
                         return@launch
                     }
                     if (pinManager.verifyPin(pin, latest.pinSalt, latest.pinHash)) {

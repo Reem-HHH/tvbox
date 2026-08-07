@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -238,6 +239,12 @@ class PlayerActivity : AppCompatActivity() {
         finish()
     }
 
+    private fun failPlayback() {
+        if (isFinishing || isDestroyed) return
+        Toast.makeText(this, R.string.player_playback_error, Toast.LENGTH_SHORT).show()
+        finish()
+    }
+
     private suspend fun recordContinueWatching() {
         val channelId = intent.getStringExtra(EXTRA_CHANNEL_ID).orEmpty()
         val videoId = intent.getStringExtra(EXTRA_VIDEO_ID).orEmpty()
@@ -360,7 +367,10 @@ class PlayerActivity : AppCompatActivity() {
                 }
             }
             addJavascriptInterface(
-                YoutubePlayerBridge { runOnUiThread { finish() } },
+                YoutubePlayerBridge(
+                    onEndedOnMain = { runOnUiThread { finish() } },
+                    onErrorOnMain = { runOnUiThread { failPlayback() } }
+                ),
                 "KiddyNative"
             )
         }
@@ -423,6 +433,11 @@ class PlayerActivity : AppCompatActivity() {
                     },
                     onStateChange:function(e){
                       if(e.data===0 && window.KiddyNative) KiddyNative.onEnded();
+                    },
+                    onError:function(e){
+                      if(window.KiddyNative&&typeof KiddyNative.onError==='function'){
+                        KiddyNative.onError((e&&e.data)||0);
+                      }
                     }
                   }
                 });
@@ -492,6 +507,10 @@ class PlayerActivity : AppCompatActivity() {
         exo.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) finish()
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                failPlayback()
             }
         })
     }

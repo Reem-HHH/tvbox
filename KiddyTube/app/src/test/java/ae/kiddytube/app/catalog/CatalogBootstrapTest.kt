@@ -81,4 +81,26 @@ class CatalogBootstrapTest {
         assertEquals(2, runs.get())
         gate.await()
     }
+
+    @Test
+    fun failedRunUnblocksAwaitWithException() = runTest {
+        val gate = CatalogBootstrap()
+        val waiter = async {
+            try {
+                gate.await()
+                false
+            } catch (_: Exception) {
+                true
+            }
+        }
+        delay(10)
+        try {
+            gate.run { error("boom") }
+            fail("expected failure")
+        } catch (_: IllegalStateException) {
+            // expected
+        }
+        assertTrue(waiter.await())
+        assertFalse(gate.isReady)
+    }
 }
