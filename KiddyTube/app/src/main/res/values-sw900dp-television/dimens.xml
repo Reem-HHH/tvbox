@@ -7,4 +7,5 @@
     <dimen name="header_padding_h">20dp</dimen>
     <dimen name="header_padding_v">12dp</dimen>
     <dimen name="continue_watch_tile_width">340dp</dimen>
+    <dimen name="player_safe_inset">36dp</dimen>
 </resources>

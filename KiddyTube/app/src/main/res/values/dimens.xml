@@ -17,4 +17,6 @@
     <dimen name="header_padding_h">16dp</dimen>
     <dimen name="header_padding_v">12dp</dimen>
     <dimen name="continue_watch_tile_width">168dp</dimen>
+    <!-- Extra inset so video stays inside TV overscan; 0 on phones. -->
+    <dimen name="player_safe_inset">0dp</dimen>
 </resources>

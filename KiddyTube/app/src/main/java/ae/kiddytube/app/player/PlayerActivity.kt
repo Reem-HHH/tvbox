@@ -27,6 +27,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
@@ -347,18 +348,40 @@ class PlayerActivity : AppCompatActivity() {
         )
         val html = """
             <!doctype html><html><head>
-            <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+            <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover"/>
             <style>
-              html,body,#p{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden}
-              iframe{pointer-events:none;border:0}
+              html,body{margin:0;padding:0;width:100%;height:100%;background:#000;overflow:hidden;
+                display:flex;align-items:center;justify-content:center}
+              #stage{position:relative;background:#000;overflow:hidden}
+              #stage iframe{pointer-events:none;border:0;display:block}
             </style></head><body>
-            <div id="p"></div>
+            <div id="stage"><div id="p"></div></div>
             <script src="https://www.youtube.com/iframe_api"></script>
             <script>
               var player;
+              function stageSize(){
+                var w=window.innerWidth||document.documentElement.clientWidth||0;
+                var h=window.innerHeight||document.documentElement.clientHeight||0;
+                if(w<1||h<1)return {w:640,h:360};
+                var tw=Math.min(w,h*16/9), th=Math.min(h,w*9/16);
+                return {w:Math.max(1,Math.floor(tw)),h:Math.max(1,Math.floor(th))};
+              }
+              function applyStageSize(){
+                var s=document.getElementById('stage');
+                if(!s)return stageSize();
+                var sz=stageSize();
+                s.style.width=sz.w+'px';
+                s.style.height=sz.h+'px';
+                if(player&&typeof player.setSize==='function'){
+                  try{player.setSize(sz.w,sz.h);}catch(e){}
+                }
+                return sz;
+              }
+              window.addEventListener('resize',function(){applyStageSize();});
               function onYouTubeIframeAPIReady(){
+                var sz=applyStageSize();
                 player=new YT.Player('p',{
-                  width:'100%',height:'100%',
+                  width:sz.w,height:sz.h,
                   videoId:'$safeId',
                   host:'https://www.youtube-nocookie.com',
                   playerVars:{
@@ -367,7 +390,10 @@ class PlayerActivity : AppCompatActivity() {
                     showinfo:0,origin:location.origin
                   },
                   events:{
-                    onReady:function(e){e.target.playVideo();},
+                    onReady:function(e){
+                      applyStageSize();
+                      e.target.playVideo();
+                    },
                     onStateChange:function(e){
                       if(e.data===0 && window.KiddyNative) KiddyNative.onEnded();
                     }
@@ -402,19 +428,24 @@ class PlayerActivity : AppCompatActivity() {
               }
             </script></body></html>
         """.trimIndent()
-        wv.loadDataWithBaseURL(
-            "https://appassets.androidplatform.net",
-            html,
-            "text/html",
-            "UTF-8",
-            null
-        )
+        // Wait until WebView is laid out so the 16:9 stage matches the visible area.
+        wv.post {
+            if (webView !== wv) return@post
+            wv.loadDataWithBaseURL(
+                "https://appassets.androidplatform.net",
+                html,
+                "text/html",
+                "UTF-8",
+                null
+            )
+        }
     }
 
     private fun playDirect(url: String) {
         val view = PlayerView(this).apply {
             setBackgroundColor(Color.BLACK)
             useController = false
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             setOnTouchListener { _, _ -> true }
         }
         val exo = ExoPlayer.Builder(this).build()
