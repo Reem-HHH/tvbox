@@ -9,8 +9,8 @@ Classic preschool series and songs with Barney the dinosaur—sharing, manners, 
 
 ## What’s in the app
 
-- Official **uploads playlist** synced when online (can include trailers, shorts, or non-episode uploads—review after sync).
-- No hand-picked starter video list in seed (library comes from playlist sync).
+- Hand-picked **starter songs** from the official Scholastic Barney Nursery Rhymes channel (colors, animals, friendship, “I Love You”).
+- Official **uploads playlist** is linked with Follow uploads **off** by default — enable in Parent settings only after review (trailers/shorts risk).
 
 ## Audience
 

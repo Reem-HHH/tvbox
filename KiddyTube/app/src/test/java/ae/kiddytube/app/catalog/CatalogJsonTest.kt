@@ -15,27 +15,8 @@ class CatalogJsonTest {
     )
 
     private val showIds = listOf(
-        "barney",
-        "spacetoon",
-        "moda_modi",
-        "dora",
-        "fulla",
-        "smarta",
-        "sara_duck",
-        "twirlywoos",
-        "peppa",
-        "adam_mishmish",
-        "kiki_nadoush",
-        "zakaria",
-        "rayan",
-        "sweet_kalima",
-        "abata",
-        "lego_duplo",
-        "play_doh",
-        "toy_kitchen",
-        "dancing_fruit",
-        "mini_muslim",
         "omar_hana",
+        "mini_muslim",
         "dawood_juz_amma",
         "dawood_juz_amma_plain",
         "dawood_juz_amma_repeat",
@@ -48,6 +29,25 @@ class CatalogJsonTest {
         "dawood_secrets_industry",
         "dawood_quranic_games",
         "dawood_quran_quiz",
+        "spacetoon",
+        "moda_modi",
+        "smarta",
+        "fulla",
+        "adam_mishmish",
+        "zakaria",
+        "kiki_nadoush",
+        "rayan",
+        "sweet_kalima",
+        "abata",
+        "sara_duck",
+        "twirlywoos",
+        "barney",
+        "dora",
+        "peppa",
+        "lego_duplo",
+        "play_doh",
+        "toy_kitchen",
+        "dancing_fruit",
         "dawood_tabarak",
         "dawood_tabarak_plain",
         "dawood_tabarak_memorize",
@@ -62,7 +62,7 @@ class CatalogJsonTest {
         val json = CatalogJson.encode(seed)
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
-        assertEquals("barney", decoded.first().id)
+        assertEquals("omar_hana", decoded.first().id)
         assertEquals("dawood_juz_26", decoded.last().id)
     }
 
@@ -76,13 +76,16 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionTwelveIncludesTwirlywoos() {
-        assertEquals(12, DefaultChannels.SEED_VERSION)
+    fun seedVersionThirteenReorderAndWesternStarters() {
+        assertEquals(13, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
             assertFalse(seed.any { it.id == id })
         }
+
+        assertEquals("omar_hana", seed.first().id)
+        assertTrue(seed.first { it.id == "omar_hana" }.videos.any { it.id == "T6ggVnk1JZg" })
 
         val songs = seed.first { it.id == "spacetoon" }
         assertEquals("Spacetoon أناشيد", songs.title)
@@ -98,10 +101,23 @@ class CatalogJsonTest {
         assertEquals("Dora the Explorer", dora.title)
         assertEquals("UUkvPyGW-gsYucCK37UR0q2g", dora.youtubePlaylistId)
         assertFalse(dora.followUploads)
+        assertTrue(dora.videos.any { it.id == "7bqSFXuEUgo" })
+        assertTrue(dora.videos.any { it.id == "gFTaVxUynsQ" })
 
         val fulla = seed.first { it.id == "fulla" }
         assertEquals("Fulla / فلة", fulla.title)
         assertEquals("UUif2El0DYcJY9uP4DrST0Bw", fulla.youtubePlaylistId)
+        assertTrue(fulla.videos.any { it.id == "l7YnIRtwypM" })
+        assertTrue(fulla.videos.any { it.id == "DEpSoa72zYw" })
+
+        val barney = seed.first { it.id == "barney" }
+        assertTrue(barney.videos.any { it.id == "HoS5Dv4kAx8" })
+        assertTrue(barney.videos.any { it.id == "eb7yLV9moeU" })
+
+        val peppa = seed.first { it.id == "peppa" }
+        assertTrue(peppa.videos.any { it.id == "XAK5n8XUmfM" })
+        assertTrue(peppa.videos.any { it.id == "t7dTdE8Aqtw" })
+        assertTrue(peppa.videos.none { it.title.contains("Jail", ignoreCase = true) })
 
         val smarta = seed.first { it.id == "smarta" }
         assertEquals("سمارتا وحقيبتها العجيبة", smarta.title)
@@ -123,11 +139,13 @@ class CatalogJsonTest {
         assertTrue(fruit.videos.any { it.id == "kAxdvigZtw8" })
         assertEquals(6, fruit.videos.size)
 
+        assertEquals(R.drawable.tile_zakaria, seed.first { it.id == "zakaria" }.iconRes)
+        assertEquals(R.drawable.tile_kiki, seed.first { it.id == "kiki_nadoush" }.iconRes)
+        assertEquals(R.drawable.tile_lego_duplo, seed.first { it.id == "lego_duplo" }.iconRes)
+
         assertTrue(seed.first { it.id == "adam_mishmish" }.videos.any { it.id == "FurzMF0L6QI" })
         assertTrue(seed.first { it.id == "zakaria" }.videos.size == 5)
         assertTrue(seed.first { it.id == "lego_duplo" }.videos.any { it.id == "fwg0UIw0Efs" })
-        assertTrue(seed.first { it.id == "omar_hana" }.videos.any { it.id == "T6ggVnk1JZg" })
-        assertFalse(seed.first { it.id == "omar_hana" }.youtubePlaylistId.isNullOrBlank())
 
         val dawood = seed.filter { it.id.startsWith("dawood_") }
         assertEquals(18, dawood.size)
@@ -137,6 +155,17 @@ class CatalogJsonTest {
             assertEquals(R.drawable.tile_dawood, ch.iconRes)
             assertEquals(R.drawable.tile_dawood, ch.resolvedIconRes())
         }
+        listOf(
+            "dawood_tabarak",
+            "dawood_tabarak_plain",
+            "dawood_tabarak_memorize",
+            "dawood_juz_28",
+            "dawood_juz_27",
+            "dawood_juz_26"
+        ).forEach { id ->
+            assertFalse("$id should default off", seed.first { it.id == id }.enabled)
+        }
+        assertTrue(seed.first { it.id == "dawood_juz_amma" }.enabled)
         assertEquals(
             "PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR",
             seed.first { it.id == "dawood_juz_amma" }.youtubePlaylistId
@@ -146,6 +175,19 @@ class CatalogJsonTest {
             seed.first { it.id == "dawood_stories" }.youtubePlaylistId
         )
         assertEquals("PLJBjyx9DErqk", seed.first { it.id == "dawood_juz_26" }.youtubePlaylistId)
+    }
+
+    @Test
+    fun mergeDisablesOlderDawoodAjzaFromSeed() {
+        val existing = DefaultChannels.seed().map {
+            if (it.id == "dawood_tabarak" || it.id == "dawood_juz_26") {
+                it.copy(enabled = true)
+            } else it
+        }
+        val merged = DefaultChannels.mergeSeedUpdates(existing)
+        assertFalse(merged.first { it.id == "dawood_tabarak" }.enabled)
+        assertFalse(merged.first { it.id == "dawood_juz_26" }.enabled)
+        assertTrue(merged.first { it.id == "dawood_juz_amma" }.enabled)
     }
 
     @Test
