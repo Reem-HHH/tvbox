@@ -121,7 +121,14 @@ class ChannelGridActivity : AppCompatActivity() {
             SyncStatus.UPDATED -> getString(R.string.sync_updated)
             SyncStatus.SKIPPED_OFFLINE -> getString(R.string.sync_offline)
             SyncStatus.SKIPPED_NO_KEY -> getString(R.string.sync_no_key)
-            SyncStatus.FAILED -> getString(R.string.sync_failed)
+            SyncStatus.FAILED -> {
+                val detail = result.message?.substringAfter(": ")?.trim().orEmpty()
+                if (detail.isNotEmpty()) {
+                    getString(R.string.sync_failed) + " — " + detail.take(80)
+                } else {
+                    getString(R.string.sync_failed)
+                }
+            }
             SyncStatus.SKIPPED_TTL -> getString(R.string.sync_skipped)
         }
         val stickyNoKey = result.status == SyncStatus.SKIPPED_NO_KEY &&

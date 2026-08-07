@@ -7,9 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.TypedValue
 import android.os.SystemClock
-import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
@@ -111,11 +109,8 @@ class PlayerActivity : AppCompatActivity() {
             handler.postDelayed(hideTitleOverlay, 3_000)
         }
 
-        // Edge masks cover YouTube watermark / chrome that sits over the iframe edges.
-        addBrandMasks()
-
         // Transparent touch layer: single tap = play/pause; double-tap L/R = seek
-        // (without opening YouTube chrome).
+        // (YouTube iframe stays non-clickable via pointer-events + touch intercept).
         val tapLayer = View(this).apply {
             isClickable = true
             isFocusable = false
@@ -180,33 +175,6 @@ class PlayerActivity : AppCompatActivity() {
                 else -> rejectPlayback()
             }
         }
-    }
-
-    private fun addBrandMasks() {
-        fun dp(v: Float): Int = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            v,
-            resources.displayMetrics
-        ).toInt()
-
-        // Physical RIGHT — YouTube chrome is always LTR, even in RTL locales.
-        // Keep masks thin so they cover watermark chips without eating the frame.
-        container.addView(
-            View(this).apply { setBackgroundColor(Color.BLACK) },
-            FrameLayout.LayoutParams(dp(96f), dp(40f), Gravity.BOTTOM or Gravity.RIGHT)
-        )
-        container.addView(
-            View(this).apply { setBackgroundColor(Color.BLACK) },
-            FrameLayout.LayoutParams(dp(88f), dp(36f), Gravity.TOP or Gravity.RIGHT)
-        )
-        container.addView(
-            View(this).apply { setBackgroundColor(Color.BLACK) },
-            FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                dp(16f),
-                Gravity.BOTTOM
-            )
-        )
     }
 
     private fun rejectPlayback() {

@@ -43,7 +43,7 @@ class CatalogRepository(
     private val secretsStore: SensitiveSecretsStore = EncryptedSensitiveSecretsStore(context)
 ) {
     private val store = context.catalogStore
-    private val youtube = YoutubeCatalogSource()
+    private val youtube = YoutubeCatalogSource(context)
     private val syncTtlMs = 24 * 60 * 60 * 1000L
     private val writeMutex = Mutex()
     private var bootstrap: CatalogBootstrap? = null
@@ -276,6 +276,7 @@ class CatalogRepository(
         var updatedChannels = 0
         var totalVideos = 0
         var failures = 0
+        var firstError: String? = null
         for (ch in settings.channels) {
             if (!ch.enabled) continue
             val hasPlaylist = !ch.youtubePlaylistId.isNullOrBlank()
@@ -298,6 +299,9 @@ class CatalogRepository(
                 totalVideos += result.getOrDefault(0)
             } else {
                 failures++
+                if (firstError == null) {
+                    firstError = result.exceptionOrNull()?.message?.trim()?.takeIf { it.isNotEmpty() }
+                }
             }
         }
 
@@ -310,9 +314,14 @@ class CatalogRepository(
             )
         }
         if (failures > 0) {
+            val detail = firstError?.take(180)
             return SyncResult(
                 status = SyncStatus.FAILED,
-                message = "Sync failed for $failures channel(s)"
+                message = if (detail.isNullOrBlank()) {
+                    "Sync failed for $failures channel(s)"
+                } else {
+                    "Sync failed for $failures channel(s): $detail"
+                }
             )
         }
         return SyncResult(

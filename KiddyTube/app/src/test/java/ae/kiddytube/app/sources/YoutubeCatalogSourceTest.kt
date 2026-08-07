@@ -25,4 +25,20 @@ class YoutubeCatalogSourceTest {
         assertNull(YoutubeCatalogSource.parseIso8601ToMillis(null))
         assertNull(YoutubeCatalogSource.parseIso8601ToMillis(""))
     }
+
+    @Test
+    fun summarizeHttpErrorPrefersGoogleMessage() {
+        val body = """{"error":{"code":403,"message":"Requests from this Android client application ae.kiddytube.app are blocked."}}"""
+        val summary = YoutubeCatalogSource.summarizeHttpError(403, body)
+        assertEquals(
+            "HTTP 403 Requests from this Android client application ae.kiddytube.app are blocked.",
+            summary
+        )
+    }
+
+    @Test
+    fun summarizeHttpErrorFallsBackToBodySnippet() {
+        val summary = YoutubeCatalogSource.summarizeHttpError(500, "internal boom")
+        assertEquals("HTTP 500 internal boom", summary)
+    }
 }
