@@ -100,12 +100,17 @@ class CatalogRepository(private val context: Context) {
         }
     }
 
-    suspend fun refreshChannelFromYoutube(channelId: String): Result<Int> {
+    suspend fun refreshChannelFromYoutube(
+        channelId: String,
+        allowPlaylistImport: Boolean? = null
+    ): Result<Int> {
         val settings = current()
         val channel = settings.channels.firstOrNull { it.id == channelId }
             ?: return Result.failure(IllegalArgumentException("Unknown channel"))
         val apiKey = ApiKeyResolver.effective(settings.youtubeApiKey)
         val playlistId = channel.youtubePlaylistId
+        val importPlaylist = allowPlaylistImport
+            ?: SyncPolicy.shouldImportPlaylist(channel.followUploads, channel.videos.size)
 
         if (apiKey.isNullOrBlank()) {
             return if (channel.videos.isNotEmpty()) {
@@ -115,7 +120,7 @@ class CatalogRepository(private val context: Context) {
             }
         }
 
-        if (!playlistId.isNullOrBlank()) {
+        if (!playlistId.isNullOrBlank() && importPlaylist) {
             val fetched = youtube.fetchPlaylistVideos(apiKey, playlistId, maxResults = 150)
             return fetched.fold(
                     onSuccess = { videos ->
@@ -140,7 +145,6 @@ class CatalogRepository(private val context: Context) {
                                     allowSeek = seekById[it.id] ?: true
                                 )
                             }
-                        // Keep retained items that aren't already represented by remote fetch.
                         ch.copy(
                             videos = (remote + retained).distinctBy { it.id }.newestFirst(),
                             sourceType = SourceType.YOUTUBE_PLAYLIST
@@ -154,7 +158,13 @@ class CatalogRepository(private val context: Context) {
 
         val youtubeIds = channel.videos.mapNotNull { it.youtubeVideoId }.filter { it.isNotBlank() }
         if (youtubeIds.isEmpty()) {
-            return if (channel.videos.isNotEmpty()) {
+            return if (!playlistId.isNullOrBlank() && !importPlaylist) {
+                Result.failure(
+                    IllegalStateException(
+                        "Follow uploads is off — enable it to import playlist items"
+                    )
+                )
+            } else if (channel.videos.isNotEmpty()) {
                 Result.success(channel.videos.size)
             } else {
                 Result.failure(IllegalStateException("Missing API key or playlist"))
@@ -207,10 +217,14 @@ class CatalogRepository(private val context: Context) {
             val hasPlaylist = !ch.youtubePlaylistId.isNullOrBlank()
             val hasYoutubeVideos = ch.videos.any { !it.youtubeVideoId.isNullOrBlank() }
             if (!hasPlaylist && !hasYoutubeVideos) continue
-            // Auto (TTL) sync only follows playlists when parent opted into followUploads,
-            // or when the library is still empty / parent forced refresh.
-            if (!force && hasPlaylist && !ch.followUploads && ch.videos.isNotEmpty()) continue
-            val result = refreshChannelFromYoutube(ch.id)
+            val importPlaylist =
+                SyncPolicy.shouldImportPlaylist(ch.followUploads, ch.videos.size)
+            // Force and auto both honor followUploads — never dump UU playlists without opt-in.
+            if (hasPlaylist && !importPlaylist) {
+                if (!force) continue // auto: leave closed libraries alone
+                if (!hasYoutubeVideos) continue // force: nothing to metadata-enrich
+            }
+            val result = refreshChannelFromYoutube(ch.id, allowPlaylistImport = importPlaylist)
             if (result.isSuccess) {
                 updatedChannels++
                 totalVideos += result.getOrDefault(0)
@@ -233,7 +247,14 @@ class CatalogRepository(private val context: Context) {
                 message = "Sync failed for $failures channel(s)"
             )
         }
-        return SyncResult(SyncStatus.SKIPPED_TTL, message = "Nothing to sync")
+        return SyncResult(
+            status = SyncStatus.SKIPPED_TTL,
+            message = if (force) {
+                "Nothing to sync — enable Follow uploads on channels to import playlists"
+            } else {
+                "Nothing to sync"
+            }
+        )
     }
 
     suspend fun setPlaylistId(channelId: String, raw: String?) {
@@ -284,6 +305,13 @@ class CatalogRepository(private val context: Context) {
     suspend fun removeVideo(channelId: String, videoId: String) {
         updateChannel(channelId) { ch ->
             ch.copy(videos = ch.videos.filterNot { it.id == videoId })
+        }
+    }
+
+    /** Drops synced/remote items; keeps parent-added manual and direct URLs. */
+    suspend fun clearSyncedVideos(channelId: String) {
+        updateChannel(channelId) { ch ->
+            ch.copy(videos = ch.videos.filter { it.manual || it.isDirect() })
         }
     }
 

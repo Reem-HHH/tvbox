@@ -21,6 +21,7 @@ import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.CatalogSettings
 import ae.kiddytube.app.catalog.ContentChannel
+import ae.kiddytube.app.catalog.SyncPolicy
 import ae.kiddytube.app.catalog.SyncStatus
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.sources.MediaUrlValidator
@@ -90,7 +91,8 @@ class ParentActivity : AppCompatActivity() {
                             SyncStatus.FAILED ->
                                 result.message ?: "Sync failed"
                             SyncStatus.SKIPPED_TTL ->
-                                "Already up to date"
+                                result.message
+                                    ?: "Nothing to sync — enable Follow uploads to import playlists"
                         }
                     )
                     reload()
@@ -191,6 +193,30 @@ class ParentActivity : AppCompatActivity() {
             "Video IDs" to { promptVideoIds(channel) },
             "Direct URL" to { promptDirect(channel) }
         )
+        addButtonRow(
+            actions,
+            "Manage videos" to { promptManageVideos(channel) },
+            "Refresh" to {
+                lifecycleScope.launch {
+                    val import = SyncPolicy.shouldImportPlaylist(
+                        channel.followUploads,
+                        channel.videos.size
+                    )
+                    val r = (application as KiddyTubeApp).catalogRepository
+                        .refreshChannelFromYoutube(channel.id, allowPlaylistImport = import)
+                    toast(
+                        r.fold(
+                            onSuccess = { count ->
+                                if (import) "Loaded $count"
+                                else "Updated titles ($count) — Follow uploads is off"
+                            },
+                            onFailure = { it.message ?: "Failed" }
+                        )
+                    )
+                    reload()
+                }
+            }
+        )
         val seekOn = channel.videos.isEmpty() || channel.videos.all { it.allowSeek }
         addSwitch(
             actions,
@@ -203,15 +229,56 @@ class ParentActivity : AppCompatActivity() {
                 reload()
             }
         }
-        addButton(actions, "Refresh") {
-            lifecycleScope.launch {
-                val r = (application as KiddyTubeApp).catalogRepository
-                    .refreshChannelFromYoutube(channel.id)
-                toast(r.fold({ "Loaded $it" }, { it.message ?: "Failed" }))
-                reload()
-            }
-        }
         container.addView(card)
+    }
+
+    private fun promptManageVideos(channel: ContentChannel) {
+        val videos = channel.videos
+        if (videos.isEmpty()) {
+            toast(getString(R.string.parent_no_videos))
+            return
+        }
+        val labels = videos.map { v ->
+            val tag = when {
+                v.manual -> " [manual]"
+                v.isDirect() -> " [direct]"
+                else -> ""
+            }
+            (v.title.ifBlank { v.id }) + tag
+        }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.parent_manage_videos))
+            .setItems(labels) { _, which ->
+                val video = videos[which]
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.parent_remove_video_title)
+                    .setMessage(video.title)
+                    .setPositiveButton(R.string.parent_remove) { _, _ ->
+                        lifecycleScope.launch {
+                            (application as KiddyTubeApp).catalogRepository
+                                .removeVideo(channel.id, video.id)
+                            reload()
+                        }
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
+            .setNeutralButton(R.string.parent_clear_synced) { _, _ ->
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.parent_clear_synced)
+                    .setMessage(R.string.parent_clear_synced_message)
+                    .setPositiveButton(R.string.parent_clear_synced) { _, _ ->
+                        lifecycleScope.launch {
+                            (application as KiddyTubeApp).catalogRepository
+                                .clearSyncedVideos(channel.id)
+                            reload()
+                        }
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun promptApiKey() {
@@ -289,7 +356,7 @@ class ParentActivity : AppCompatActivity() {
             setHintTextColor(inkMuted())
         }
         val url = EditText(this).apply {
-            hint = "https://...mp4 or .m3u8 (HTTPS only)"
+            hint = "https://.../file.mp4 or .m3u8 (HTTPS path required)"
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
             setTextColor(inkNavy())
             setHintTextColor(inkMuted())
@@ -302,7 +369,7 @@ class ParentActivity : AppCompatActivity() {
             .setPositiveButton("Add") { _, _ ->
                 val u = url.text.toString().trim()
                 if (!MediaUrlValidator.isDirectMediaUrl(u)) {
-                    toast("Invalid or blocked URL (HTTPS direct media only)")
+                    toast("Need HTTPS URL ending in .mp4, .m3u8, or .mpd")
                     return@setPositiveButton
                 }
                 lifecycleScope.launch {

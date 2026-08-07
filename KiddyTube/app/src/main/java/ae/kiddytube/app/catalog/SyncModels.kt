@@ -25,3 +25,9 @@ data class SyncResult(
     val videoCount: Int = 0,
     val message: String? = null
 )
+
+/** Playlist import is opt-in via followUploads, or one-shot when the library is still empty. */
+object SyncPolicy {
+    fun shouldImportPlaylist(followUploads: Boolean, videoCount: Int): Boolean =
+        followUploads || videoCount == 0
+}
