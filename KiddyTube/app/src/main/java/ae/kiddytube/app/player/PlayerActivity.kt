@@ -59,6 +59,7 @@ class PlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_player)
         container = findViewById(R.id.playerContainer)
         titleOverlay = findViewById(R.id.titleOverlay)
+        findViewById<TextView>(R.id.navBack).setOnClickListener { finish() }
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)
         remote = RemoteKeyHandler(
