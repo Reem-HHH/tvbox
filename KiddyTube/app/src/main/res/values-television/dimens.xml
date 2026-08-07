@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- TV: tighter chrome so 16:9 thumbs fill more of each cell (column counts unchanged). -->
-    <dimen name="grid_padding">16dp</dimen>
+    <!-- TV overscan: keep chrome/tiles inside the visible bezel (match player_safe_inset). -->
+    <dimen name="grid_padding">36dp</dimen>
     <dimen name="tile_margin">6dp</dimen>
     <dimen name="tile_inner_padding">8dp</dimen>
-    <dimen name="header_padding_h">20dp</dimen>
-    <dimen name="header_padding_v">12dp</dimen>
+    <dimen name="header_padding_h">36dp</dimen>
+    <dimen name="header_padding_v">28dp</dimen>
     <dimen name="continue_watch_tile_width">340dp</dimen>
     <dimen name="player_safe_inset">36dp</dimen>
 </resources>
