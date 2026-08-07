@@ -63,7 +63,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 11
+    const val SEED_VERSION = 12
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -160,11 +160,25 @@ object DefaultChannels {
                 yt("zGn6PwRkD7c", "Sarah, Duck and the Penguins")
             )
         ),
+        ContentChannel(
+            id = "twirlywoos",
+            title = "Twirlywoos",
+            iconRes = R.drawable.tile_twirlywoos,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UC6-m1hdh8xEu-XBJK3v1TPg"),
+            sortOrder = 7,
+            videos = listOf(
+                yt("yS4vFgys9-U", "Soft — Twirlywoos"),
+                yt("lRVTYTWPUhU", "This way, that way — Twirlywoos"),
+                yt("phqqLsmOxic", "Joining Up! — Twirlywoos"),
+                yt("Ya45-PIVjhA", "Sneaking in the Kitchen — Twirlywoos")
+            )
+        ),
         playlistChannel(
             id = "peppa",
             title = "Peppa Pig",
             icon = R.drawable.tile_peppa,
-            order = 7,
+            order = 8,
             playlistId = uploadsOf("UCAOtE1V7Ots4DjM8JLlrYgg")
         ),
         ContentChannel(
@@ -172,7 +186,7 @@ object DefaultChannels {
             title = "Adam & Mishmish",
             iconRes = R.drawable.tile_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 8,
+            sortOrder = 9,
             videos = listOf(
                 yt("FurzMF0L6QI", "Animal Sounds Songs (68 min) — Adam & Mishmish"),
                 yt("docDippkI-Q", "Farm Animal Songs — Adam & Mishmish"),
@@ -184,7 +198,7 @@ object DefaultChannels {
             title = "Kiki wa Nadoush",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 9,
+            sortOrder = 10,
             videos = listOf(
                 yt("EI3yLs6A-Qk", "Learn Arabic Colors — Kiki wa Nadoush")
             )
@@ -194,7 +208,7 @@ object DefaultChannels {
             title = "Zakaria",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 10,
+            sortOrder = 11,
             videos = listOf(
                 yt("LocumA_zI0c", "Learn Colors with Cars — Zakaria"),
                 yt("sGw7Fs7oRvw", "Vehicle Names in Arabic — Zakaria"),
@@ -208,7 +222,7 @@ object DefaultChannels {
             title = "Rayan",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 11,
+            sortOrder = 12,
             videos = listOf(
                 yt("yPhFBBMWbPU", "Shapes & Directions in Arabic — Rayan")
             )
@@ -218,7 +232,7 @@ object DefaultChannels {
             title = "Sweet Kalima",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 12,
+            sortOrder = 13,
             videos = listOf(
                 yt("En3OJwCqHx8", "Shapes, Colors & Numbers — Sweet Kalima")
             )
@@ -228,7 +242,7 @@ object DefaultChannels {
             title = "Abata",
             iconRes = R.drawable.tile_learn_arabic,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 13,
+            sortOrder = 14,
             videos = listOf(
                 yt("sVtaIloYxvw", "Arabic Alphabet with Chalk — Abata")
             )
@@ -238,7 +252,7 @@ object DefaultChannels {
             title = "LEGO DUPLO",
             iconRes = R.drawable.tile_playtime,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 14,
+            sortOrder = 15,
             videos = listOf(
                 yt("fwg0UIw0Efs", "LEGO DUPLO Numbers & Colors in Arabic"),
                 yt("w7aZLVaLTlM", "LEGO DUPLO Vehicles & Colors"),
@@ -253,7 +267,7 @@ object DefaultChannels {
             title = "Play-Doh",
             iconRes = R.drawable.tile_playtime,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 15,
+            sortOrder = 16,
             videos = listOf(
                 yt("2FyKZKNls4c", "Play-Doh Cookie Man & Shapes"),
                 yt("8581xy-tGqw", "Play-Doh Rainbow Ice Cream"),
@@ -266,7 +280,7 @@ object DefaultChannels {
             title = "Toy Kitchen",
             iconRes = R.drawable.tile_playtime,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 16,
+            sortOrder = 17,
             videos = listOf(
                 yt("mSUJM2naI7I", "Travel Kitchen Playset Unboxing"),
                 yt("TL3e2UZQxPE", "Kitchen Set & Toy Fruits")
@@ -277,7 +291,7 @@ object DefaultChannels {
             title = "Dancing Fruit",
             iconRes = R.drawable.tile_dancing_fruit,
             sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 17,
+            sortOrder = 18,
             videos = listOf(
                 yt("7mR81x2Fk7g", "Dancing Fruit! — 1 Hour Mix — Hey Bear Sensory"),
                 yt("ALaQvK7KZOY", "Dance, Colors and Counting — Dancing Fruit & Funky Veggies"),
@@ -293,7 +307,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_mini_muslim,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UCIDYe6rgdROl77DDevNIcPA"),
-            sortOrder = 18,
+            sortOrder = 19,
             videos = listOf(
                 yt("4VpiuY_C5Ok", "Ramadan Around The World — MiniMuslims"),
                 yt("vB3ffnqdNVs", "Islamic Songs for Kids (45 min) — MiniMuslims"),
@@ -306,7 +320,7 @@ object DefaultChannels {
             iconRes = R.drawable.tile_islamic,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
             youtubePlaylistId = uploadsOf("UC178EmfQAV3OT-UpuO6WUMg"),
-            sortOrder = 19,
+            sortOrder = 20,
             videos = listOf(
                 yt("T6ggVnk1JZg", "Omar & Hana 15 Minutes Song"),
                 yt("iJtM9bzScJY", "Omar & Hana — Dua & Salah (Acapella)"),
@@ -319,126 +333,126 @@ object DefaultChannels {
             id = "dawood_juz_amma",
             title = "داوود — جزء عم",
             icon = R.drawable.tile_dawood,
-            order = 20,
+            order = 21,
             playlistId = "PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR"
         ),
         playlistChannel(
             id = "dawood_juz_amma_plain",
             title = "داوود — جزء عم بدون تكرار",
             icon = R.drawable.tile_dawood,
-            order = 21,
+            order = 22,
             playlistId = "PLKhm8Z5pXdOXO8wm-pQ670wmKnoC5Be5g"
         ),
         playlistChannel(
             id = "dawood_juz_amma_repeat",
             title = "داوود — جزء عم تكرار ٣٠ دقيقة",
             icon = R.drawable.tile_dawood,
-            order = 22,
+            order = 23,
             playlistId = "PLKhm8Z5pXdOUcx5ho4DuPRtBvu8wlIkB6"
         ),
         playlistChannel(
             id = "dawood_juz_amma_selection",
             title = "داوود — تعليم جزء عم (سور مختارة)",
             icon = R.drawable.tile_dawood,
-            order = 23,
+            order = 24,
             playlistId = "PLKhm8Z5pXdOUKa4_VNwykMYSfreDijDKX"
         ),
         playlistChannel(
             id = "dawood_juz_amma_memorize",
             title = "داوود — حفظ جزء عم",
             icon = R.drawable.tile_dawood,
-            order = 24,
+            order = 25,
             playlistId = "PLKhm8Z5pXdOXjBYqLvu2L2YCghTEPkMJj"
         ),
         playlistChannel(
             id = "dawood_juz_amma_3d",
             title = "Dawood TV — Juz 30 (3D EN)",
             icon = R.drawable.tile_dawood,
-            order = 25,
+            order = 26,
             playlistId = "PLKhm8Z5pXdOV_cEl6uIyQWAjB6mfyKpZl"
         ),
         playlistChannel(
             id = "dawood_stories",
             title = "داوود — قصص",
             icon = R.drawable.tile_dawood,
-            order = 26,
+            order = 27,
             playlistId = "PLKhm8Z5pXdOWeVW24vPIRcmyWJJI3JOLC"
         ),
         playlistChannel(
             id = "dawood_teaches_me",
             title = "داوود يعلمني",
             icon = R.drawable.tile_dawood,
-            order = 27,
+            order = 28,
             playlistId = "PLKhm8Z5pXdOWOOCtznZHhFVIVUD4GK4wf"
         ),
         playlistChannel(
             id = "dawood_and_me",
             title = "أنا و داوود",
             icon = R.drawable.tile_dawood,
-            order = 28,
+            order = 29,
             playlistId = "PLKhm8Z5pXdOW8-ft9ncMR9XBFTtTxLujw"
         ),
         playlistChannel(
             id = "dawood_secrets_industry",
             title = "داوود — أسرار الصناعة",
             icon = R.drawable.tile_dawood,
-            order = 29,
+            order = 30,
             playlistId = "PLKhm8Z5pXdOXpOLnMI0XNq-IjbNeS4CrB"
         ),
         playlistChannel(
             id = "dawood_quranic_games",
             title = "داوود — ألعاب قرآنية",
             icon = R.drawable.tile_dawood,
-            order = 30,
+            order = 31,
             playlistId = "PLKhm8Z5pXdOVpBgwR82zlLRIJFQdiS3gU"
         ),
         playlistChannel(
             id = "dawood_quran_quiz",
             title = "داوود — مسابقات قرآنية",
             icon = R.drawable.tile_dawood,
-            order = 31,
+            order = 32,
             playlistId = "PLKhm8Z5pXdOXJPE0FwCbyKXQW6EjldHxN"
         ),
         playlistChannel(
             id = "dawood_tabarak",
             title = "داوود — جزء تبارك",
             icon = R.drawable.tile_dawood,
-            order = 32,
+            order = 33,
             playlistId = "PLKhm8Z5pXdOXqBC9Gmh2MVTEVQj6x_4or"
         ),
         playlistChannel(
             id = "dawood_tabarak_plain",
             title = "داوود — جزء تبارك بدون تكرار",
             icon = R.drawable.tile_dawood,
-            order = 33,
+            order = 34,
             playlistId = "PLKhm8Z5pXdOWcPJqYwIEy3cySbyATyyLE"
         ),
         playlistChannel(
             id = "dawood_tabarak_memorize",
             title = "داوود — حفظ جزء تبارك",
             icon = R.drawable.tile_dawood,
-            order = 34,
+            order = 35,
             playlistId = "PLKhm8Z5pXdOXR75WBeBFDve5gSR_wfA1o"
         ),
         playlistChannel(
             id = "dawood_juz_28",
             title = "داوود — جزء ٢٨",
             icon = R.drawable.tile_dawood,
-            order = 35,
+            order = 36,
             playlistId = "PLKhm8Z5pXdOWx9JleIpX8EakeXcwLFTvm"
         ),
         playlistChannel(
             id = "dawood_juz_27",
             title = "داوود — جزء ٢٧",
             icon = R.drawable.tile_dawood,
-            order = 36,
+            order = 37,
             playlistId = "PLKhm8Z5pXdOUiE1L6BBQAYIn-phTTHNpT"
         ),
         playlistChannel(
             id = "dawood_juz_26",
             title = "داوود — جزء ٢٦",
             icon = R.drawable.tile_dawood,
-            order = 37,
+            order = 38,
             playlistId = "PLJBjyx9DErqk" // verified short YouTube playlist id for Juz 26
         )
     )

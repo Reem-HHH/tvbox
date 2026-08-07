@@ -22,6 +22,7 @@ class CatalogJsonTest {
         "fulla",
         "smarta",
         "sara_duck",
+        "twirlywoos",
         "peppa",
         "adam_mishmish",
         "kiki_nadoush",
@@ -75,8 +76,8 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionElevenIncludesDawoodTv() {
-        assertEquals(11, DefaultChannels.SEED_VERSION)
+    fun seedVersionTwelveIncludesTwirlywoos() {
+        assertEquals(12, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -107,6 +108,12 @@ class CatalogJsonTest {
         assertTrue(smarta.youtubePlaylistId.isNullOrBlank())
         assertTrue(smarta.videos.any { it.id == "USLdtIWQrLU" })
         assertTrue(smarta.videos.any { it.id == "xIFNnxZD5IQ" })
+
+        val twirly = seed.first { it.id == "twirlywoos" }
+        assertEquals("Twirlywoos", twirly.title)
+        assertEquals("UU6-m1hdh8xEu-XBJK3v1TPg", twirly.youtubePlaylistId)
+        assertTrue(twirly.videos.any { it.id == "yS4vFgys9-U" })
+        assertTrue(twirly.videos.any { it.id == "Ya45-PIVjhA" })
         assertEquals(11, smarta.videos.size)
 
         val fruit = seed.first { it.id == "dancing_fruit" }

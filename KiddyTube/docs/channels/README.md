@@ -13,6 +13,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [fulla](fulla.md) | Fulla / فلة | High | High | Official قناة فلة; toy ads possible |
 | [smarta](smarta.md) | سمارتا وحقيبتها العجيبة | High | High | Spacetoon Arabic curated |
 | [sara_duck](sara_duck.md) | Sarah & Duck | High | High | Gentle preschool |
+| [twirlywoos](twirlywoos.md) | Twirlywoos | High | High | Official WildBrain uploads |
 | [peppa](peppa.md) | Peppa Pig | High | Medium–High | Mild sibling squabbles |
 | [adam_mishmish](adam_mishmish.md) | Adam & Mishmish | High | High | Arabic songs / letters |
 | [kiki_nadoush](kiki_nadoush.md) | Kiki wa Nadoush | High | High | Colors in Arabic |
