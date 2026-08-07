@@ -44,11 +44,11 @@ class RemoteKeyHandler(
             KeyEvent.KEYCODE_DPAD_CENTER,
             KeyEvent.KEYCODE_ENTER,
             KeyEvent.KEYCODE_NUMPAD_ENTER,
-            KeyEvent.KEYCODE_SPACE -> RemoteAction.EnsurePlaying
-
-            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> RemoteAction.TogglePlayPause
-            KeyEvent.KEYCODE_MEDIA_PLAY -> RemoteAction.EnsurePlaying
+            KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
             KeyEvent.KEYCODE_MEDIA_PAUSE -> RemoteAction.TogglePlayPause
+
+            KeyEvent.KEYCODE_MEDIA_PLAY -> RemoteAction.EnsurePlaying
 
             KeyEvent.KEYCODE_DPAD_RIGHT,
             KeyEvent.KEYCODE_MEDIA_NEXT -> RemoteAction.NextItem
