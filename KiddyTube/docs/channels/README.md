@@ -26,6 +26,24 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [dancing_fruit](dancing_fruit.md) | Dancing Fruit | High | Medium–High | Black-screen sensory fruit dance |
 | [mini_muslim](mini_muslim.md) | Mini Muslim | High | High | Islamic kids songs |
 | [omar_hana](omar_hana.md) | Omar & Hana | High | High | Islamic preschool series |
+| [dawood_juz_amma](dawood_juz_amma.md) | داوود — جزء عم | High | High | Dawood TV Juz Amma |
+| [dawood_juz_amma_plain](dawood_juz_amma_plain.md) | داوود — جزء عم بدون تكرار | High | High | Dawood TV |
+| [dawood_juz_amma_repeat](dawood_juz_amma_repeat.md) | داوود — جزء عم تكرار ٣٠ دقيقة | High | High | Dawood TV |
+| [dawood_juz_amma_selection](dawood_juz_amma_selection.md) | داوود — سور مختارة | High | High | Dawood TV |
+| [dawood_juz_amma_memorize](dawood_juz_amma_memorize.md) | داوود — حفظ جزء عم | High | High | Dawood TV |
+| [dawood_juz_amma_3d](dawood_juz_amma_3d.md) | Dawood TV — Juz 30 3D EN | High | High | English subtitles |
+| [dawood_stories](dawood_stories.md) | داوود — قصص | High | High | Dawood TV stories |
+| [dawood_teaches_me](dawood_teaches_me.md) | داوود يعلمني | High | High | Dawood TV |
+| [dawood_and_me](dawood_and_me.md) | أنا و داوود | High | High | Dawood TV |
+| [dawood_secrets_industry](dawood_secrets_industry.md) | داوود — أسرار الصناعة | High | High | How-things-are-made cartoon |
+| [dawood_quranic_games](dawood_quranic_games.md) | داوود — ألعاب قرآنية | High | High | Dawood TV |
+| [dawood_quran_quiz](dawood_quran_quiz.md) | داوود — مسابقات قرآنية | High | High | Dawood TV |
+| [dawood_tabarak](dawood_tabarak.md) | داوود — جزء تبارك | High | High | Older kids / with parent |
+| [dawood_tabarak_plain](dawood_tabarak_plain.md) | داوود — تبارك بدون تكرار | High | High | Dawood TV |
+| [dawood_tabarak_memorize](dawood_tabarak_memorize.md) | داوود — حفظ تبارك | High | High | Dawood TV |
+| [dawood_juz_28](dawood_juz_28.md) | داوود — جزء ٢٨ | High | High | Older kids / with parent |
+| [dawood_juz_27](dawood_juz_27.md) | داوود — جزء ٢٧ | High | High | Older kids / with parent |
+| [dawood_juz_26](dawood_juz_26.md) | داوود — جزء ٢٦ | High | High | Older kids / with parent |
 
 **Rating scale used in dossiers**
 

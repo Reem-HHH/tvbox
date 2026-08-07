@@ -34,7 +34,25 @@ class CatalogJsonTest {
         "toy_kitchen",
         "dancing_fruit",
         "mini_muslim",
-        "omar_hana"
+        "omar_hana",
+        "dawood_juz_amma",
+        "dawood_juz_amma_plain",
+        "dawood_juz_amma_repeat",
+        "dawood_juz_amma_selection",
+        "dawood_juz_amma_memorize",
+        "dawood_juz_amma_3d",
+        "dawood_stories",
+        "dawood_teaches_me",
+        "dawood_and_me",
+        "dawood_secrets_industry",
+        "dawood_quranic_games",
+        "dawood_quran_quiz",
+        "dawood_tabarak",
+        "dawood_tabarak_plain",
+        "dawood_tabarak_memorize",
+        "dawood_juz_28",
+        "dawood_juz_27",
+        "dawood_juz_26"
     )
 
     @Test
@@ -44,7 +62,7 @@ class CatalogJsonTest {
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
         assertEquals("barney", decoded.first().id)
-        assertEquals("omar_hana", decoded.last().id)
+        assertEquals("dawood_juz_26", decoded.last().id)
     }
 
     @Test
@@ -57,8 +75,8 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionTenIncludesDancingFruit() {
-        assertEquals(10, DefaultChannels.SEED_VERSION)
+    fun seedVersionElevenIncludesDawoodTv() {
+        assertEquals(11, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -103,6 +121,24 @@ class CatalogJsonTest {
         assertTrue(seed.first { it.id == "lego_duplo" }.videos.any { it.id == "fwg0UIw0Efs" })
         assertTrue(seed.first { it.id == "omar_hana" }.videos.any { it.id == "T6ggVnk1JZg" })
         assertFalse(seed.first { it.id == "omar_hana" }.youtubePlaylistId.isNullOrBlank())
+
+        val dawood = seed.filter { it.id.startsWith("dawood_") }
+        assertEquals(18, dawood.size)
+        dawood.forEach { ch ->
+            assertFalse("${ch.id} needs playlist id", ch.youtubePlaylistId.isNullOrBlank())
+            assertFalse(ch.followUploads)
+            assertEquals(R.drawable.tile_dawood, ch.iconRes)
+            assertEquals(R.drawable.tile_dawood, ch.resolvedIconRes())
+        }
+        assertEquals(
+            "PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR",
+            seed.first { it.id == "dawood_juz_amma" }.youtubePlaylistId
+        )
+        assertEquals(
+            "PLKhm8Z5pXdOWeVW24vPIRcmyWJJI3JOLC",
+            seed.first { it.id == "dawood_stories" }.youtubePlaylistId
+        )
+        assertEquals("PLJBjyx9DErqk", seed.first { it.id == "dawood_juz_26" }.youtubePlaylistId)
     }
 
     @Test

@@ -53,7 +53,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 10
+    const val SEED_VERSION = 11
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -303,6 +303,133 @@ object DefaultChannels {
                 yt("HvzYeFB0lB4", "Breakfasting — Omar & Hana"),
                 yt("AkSrzSwK2wE", "Omar & Hana Arabic — Please Come Home Dad")
             )
+        ),
+        // Dawood TV (@DawoodKidsTV) — one app channel per educational playlist.
+        playlistChannel(
+            id = "dawood_juz_amma",
+            title = "داوود — جزء عم",
+            icon = R.drawable.tile_dawood,
+            order = 20,
+            playlistId = "PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR"
+        ),
+        playlistChannel(
+            id = "dawood_juz_amma_plain",
+            title = "داوود — جزء عم بدون تكرار",
+            icon = R.drawable.tile_dawood,
+            order = 21,
+            playlistId = "PLKhm8Z5pXdOXO8wm-pQ670wmKnoC5Be5g"
+        ),
+        playlistChannel(
+            id = "dawood_juz_amma_repeat",
+            title = "داوود — جزء عم تكرار ٣٠ دقيقة",
+            icon = R.drawable.tile_dawood,
+            order = 22,
+            playlistId = "PLKhm8Z5pXdOUcx5ho4DuPRtBvu8wlIkB6"
+        ),
+        playlistChannel(
+            id = "dawood_juz_amma_selection",
+            title = "داوود — تعليم جزء عم (سور مختارة)",
+            icon = R.drawable.tile_dawood,
+            order = 23,
+            playlistId = "PLKhm8Z5pXdOUKa4_VNwykMYSfreDijDKX"
+        ),
+        playlistChannel(
+            id = "dawood_juz_amma_memorize",
+            title = "داوود — حفظ جزء عم",
+            icon = R.drawable.tile_dawood,
+            order = 24,
+            playlistId = "PLKhm8Z5pXdOXjBYqLvu2L2YCghTEPkMJj"
+        ),
+        playlistChannel(
+            id = "dawood_juz_amma_3d",
+            title = "Dawood TV — Juz 30 (3D EN)",
+            icon = R.drawable.tile_dawood,
+            order = 25,
+            playlistId = "PLKhm8Z5pXdOV_cEl6uIyQWAjB6mfyKpZl"
+        ),
+        playlistChannel(
+            id = "dawood_stories",
+            title = "داوود — قصص",
+            icon = R.drawable.tile_dawood,
+            order = 26,
+            playlistId = "PLKhm8Z5pXdOWeVW24vPIRcmyWJJI3JOLC"
+        ),
+        playlistChannel(
+            id = "dawood_teaches_me",
+            title = "داوود يعلمني",
+            icon = R.drawable.tile_dawood,
+            order = 27,
+            playlistId = "PLKhm8Z5pXdOWOOCtznZHhFVIVUD4GK4wf"
+        ),
+        playlistChannel(
+            id = "dawood_and_me",
+            title = "أنا و داوود",
+            icon = R.drawable.tile_dawood,
+            order = 28,
+            playlistId = "PLKhm8Z5pXdOW8-ft9ncMR9XBFTtTxLujw"
+        ),
+        playlistChannel(
+            id = "dawood_secrets_industry",
+            title = "داوود — أسرار الصناعة",
+            icon = R.drawable.tile_dawood,
+            order = 29,
+            playlistId = "PLKhm8Z5pXdOXpOLnMI0XNq-IjbNeS4CrB"
+        ),
+        playlistChannel(
+            id = "dawood_quranic_games",
+            title = "داوود — ألعاب قرآنية",
+            icon = R.drawable.tile_dawood,
+            order = 30,
+            playlistId = "PLKhm8Z5pXdOVpBgwR82zlLRIJFQdiS3gU"
+        ),
+        playlistChannel(
+            id = "dawood_quran_quiz",
+            title = "داوود — مسابقات قرآنية",
+            icon = R.drawable.tile_dawood,
+            order = 31,
+            playlistId = "PLKhm8Z5pXdOXJPE0FwCbyKXQW6EjldHxN"
+        ),
+        playlistChannel(
+            id = "dawood_tabarak",
+            title = "داوود — جزء تبارك",
+            icon = R.drawable.tile_dawood,
+            order = 32,
+            playlistId = "PLKhm8Z5pXdOXqBC9Gmh2MVTEVQj6x_4or"
+        ),
+        playlistChannel(
+            id = "dawood_tabarak_plain",
+            title = "داوود — جزء تبارك بدون تكرار",
+            icon = R.drawable.tile_dawood,
+            order = 33,
+            playlistId = "PLKhm8Z5pXdOWcPJqYwIEy3cySbyATyyLE"
+        ),
+        playlistChannel(
+            id = "dawood_tabarak_memorize",
+            title = "داوود — حفظ جزء تبارك",
+            icon = R.drawable.tile_dawood,
+            order = 34,
+            playlistId = "PLKhm8Z5pXdOXR75WBeBFDve5gSR_wfA1o"
+        ),
+        playlistChannel(
+            id = "dawood_juz_28",
+            title = "داوود — جزء ٢٨",
+            icon = R.drawable.tile_dawood,
+            order = 35,
+            playlistId = "PLKhm8Z5pXdOWx9JleIpX8EakeXcwLFTvm"
+        ),
+        playlistChannel(
+            id = "dawood_juz_27",
+            title = "داوود — جزء ٢٧",
+            icon = R.drawable.tile_dawood,
+            order = 36,
+            playlistId = "PLKhm8Z5pXdOUiE1L6BBQAYIn-phTTHNpT"
+        ),
+        playlistChannel(
+            id = "dawood_juz_26",
+            title = "داوود — جزء ٢٦",
+            icon = R.drawable.tile_dawood,
+            order = 37,
+            playlistId = "PLJBjyx9DErqk"
         )
     )
 
