@@ -138,6 +138,7 @@ class PlayerActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val app = application as KiddyTubeApp
+            app.awaitCatalogReady()
             val settings = app.catalogRepository.current()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
@@ -494,8 +495,14 @@ class PlayerActivity : AppCompatActivity() {
                 true
             }
             RemoteAction.TogglePlayPause -> {
-                togglePlayback()
-                true
+                // D-pad OK on the Back chip should exit, not toggle playback.
+                if (currentFocus?.id == R.id.navBack) {
+                    finish()
+                    true
+                } else {
+                    togglePlayback()
+                    true
+                }
             }
             // In the player, D-pad L/R and media next/prev seek instead of changing items.
             RemoteAction.SeekForward, RemoteAction.NextItem -> {

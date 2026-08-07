@@ -112,7 +112,7 @@ class CatalogRepository(
     suspend fun containsYoutubeVideoId(videoId: String): Boolean {
         val id = videoId.trim()
         return current().channels.any { ch ->
-            ch.videos.any { it.youtubeVideoId == id || it.id == id }
+            ch.enabled && ch.videos.any { it.youtubeVideoId == id || it.id == id }
         }
     }
 
@@ -120,7 +120,7 @@ class CatalogRepository(
         val target = url.trim()
         if (target.isEmpty()) return false
         return current().channels.any { ch ->
-            ch.videos.any { it.directUrl == target }
+            ch.enabled && ch.videos.any { it.directUrl == target }
         }
     }
 

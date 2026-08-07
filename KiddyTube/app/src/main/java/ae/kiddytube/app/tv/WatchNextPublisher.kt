@@ -1,6 +1,7 @@
 package ae.kiddytube.app.tv
 
 import android.content.Context
+import android.content.Intent
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
@@ -9,6 +10,8 @@ import androidx.tvprovider.media.tv.PreviewChannelHelper
 import androidx.tvprovider.media.tv.TvContractCompat
 import androidx.tvprovider.media.tv.WatchNextProgram
 import ae.kiddytube.app.catalog.RecentWatchItem
+import ae.kiddytube.app.diagnostics.DiagnosticsLogger
+import ae.kiddytube.app.player.PlayerActivity
 import java.net.URLEncoder
 
 /**
@@ -31,8 +34,11 @@ class WatchNextPublisher(context: Context) {
             } else {
                 helper.publishWatchNextProgram(program)
             }
-        } catch (_: Exception) {
-            // TV provider missing / OEM without channels — ignore.
+        } catch (e: Exception) {
+            DiagnosticsLogger.get(appContext).log(
+                "watch_next_upsert_failed",
+                "videoId=${item.videoId} err=${e.javaClass.simpleName}:${e.message?.take(120)}"
+            )
         }
     }
 
@@ -45,8 +51,11 @@ class WatchNextPublisher(context: Context) {
                 null,
                 null
             )
-        } catch (_: Exception) {
-            // ignore
+        } catch (e: Exception) {
+            DiagnosticsLogger.get(appContext).log(
+                "watch_next_remove_failed",
+                "videoId=$videoId err=${e.javaClass.simpleName}:${e.message?.take(120)}"
+            )
         }
     }
 
@@ -61,8 +70,11 @@ class WatchNextPublisher(context: Context) {
                     null
                 )
             }
-        } catch (_: Exception) {
-            // ignore
+        } catch (e: Exception) {
+            DiagnosticsLogger.get(appContext).log(
+                "watch_next_clear_failed",
+                "err=${e.javaClass.simpleName}:${e.message?.take(120)}"
+            )
         }
     }
 
@@ -73,7 +85,7 @@ class WatchNextPublisher(context: Context) {
             .setTitle(item.title)
             .setInternalProviderId(item.videoId)
             .setLastEngagementTimeUtcMillis(item.watchedAtMs.coerceAtLeast(1L))
-            .setIntentUri(playUri(item))
+            .setIntentUri(launchIntentUri(item))
         val poster = item.thumbnailUrl?.takeIf { it.isNotBlank() }
         if (poster != null) {
             builder.setPosterArtUri(Uri.parse(poster))
@@ -128,6 +140,23 @@ class WatchNextPublisher(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
         val uiMode = appContext.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
         return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+    }
+
+    private fun launchIntentUri(item: RecentWatchItem): Uri {
+        val intent = Intent(appContext, PlayerActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            data = playUri(item)
+            putExtra(PlayerActivity.EXTRA_TITLE, item.title)
+            putExtra(PlayerActivity.EXTRA_CHANNEL_ID, item.channelId)
+            putExtra(PlayerActivity.EXTRA_VIDEO_ID, item.videoId)
+            item.youtubeVideoId?.takeIf { it.isNotBlank() }?.let {
+                putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, it)
+            }
+            item.directUrl?.takeIf { it.isNotBlank() }?.let {
+                putExtra(PlayerActivity.EXTRA_DIRECT_URL, it)
+            }
+        }
+        return Uri.parse(intent.toUri(Intent.URI_INTENT_SCHEME))
     }
 
     companion object {
