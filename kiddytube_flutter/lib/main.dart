@@ -2,17 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'catalog/catalog_repository.dart';
+import 'ui/app_orientations.dart';
 import 'ui/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Soften Android TV overscan / keep landscape friendly on tablets.
-  await SystemChrome.setPreferredOrientations(const [
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
+  // Portrait + landscape; no upside-down (matches iOS Info.plist).
+  await SystemChrome.setPreferredOrientations(kBrowseOrientations);
   final repository = CatalogRepository();
   runApp(KiddyTubeApp(repository: repository));
 }

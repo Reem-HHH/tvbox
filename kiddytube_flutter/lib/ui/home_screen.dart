@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -460,10 +461,11 @@ class _ColoredCard extends StatelessWidget {
       fit: StackFit.expand,
       children: [
         if (imageUrl != null)
-          Image.network(
-            imageUrl!,
+          CachedNetworkImage(
+            imageUrl: imageUrl!,
             fit: BoxFit.cover,
-            errorBuilder: (_, _, _) => ColoredBox(color: color),
+            placeholder: (_, _) => ColoredBox(color: color),
+            errorWidget: (_, _, _) => ColoredBox(color: color),
           )
         else
           ColoredBox(color: color),

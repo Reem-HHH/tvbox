@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../catalog/catalog_repository.dart';
+import 'parent_biometrics.dart';
 import 'parent_pin.dart';
 import 'parent_session.dart';
 import 'release_pin_policy.dart';
 
-/// Shows PIN dialog (or uses active session). Returns true if unlocked.
+/// Shows PIN dialog (or uses active session / biometrics). Returns true if unlocked.
 Future<bool> ensureParentUnlocked(
   BuildContext context,
   CatalogRepository repository, {
@@ -29,6 +30,19 @@ Future<bool> ensureParentUnlocked(
       );
     }
     return false;
+  }
+
+  // Prefer Face ID / fingerprint / device credential when available.
+  final biometrics = ParentBiometrics();
+  if (await biometrics.canAuthenticate()) {
+    final bioOk = await biometrics.authenticate();
+    if (bioOk) {
+      pinManager.registerSuccess();
+      await repository.clearPinFailures();
+      if (grantSession) ParentSession.grant();
+      return true;
+    }
+    // Cancelled or failed — fall through to app PIN.
   }
 
   if (!context.mounted) return false;

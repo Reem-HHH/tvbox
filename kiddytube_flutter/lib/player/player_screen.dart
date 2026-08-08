@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
@@ -13,6 +14,7 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import '../catalog/catalog_repository.dart';
 import '../catalog/models.dart';
 import '../catalog/recent_watch.dart';
+import '../ui/app_orientations.dart';
 import 'youtube_iframe.dart';
 
 /// Fullscreen-ish player with YouTube iframe (kid chrome) or direct HTTPS media.
@@ -35,7 +37,8 @@ class PlayerScreen extends StatefulWidget {
   State<PlayerScreen> createState() => _PlayerScreenState();
 }
 
-class _PlayerScreenState extends State<PlayerScreen> {
+class _PlayerScreenState extends State<PlayerScreen>
+    with WidgetsBindingObserver {
   late int _index;
   WebViewController? _webController;
   VideoPlayerController? _videoController;
@@ -50,28 +53,38 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _index = widget.startIndex.clamp(0, widget.queue.length - 1);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setPreferredOrientations(const [
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    SystemChrome.setPreferredOrientations(kPlayerOrientations);
+    unawaited(WakelockPlus.enable());
     _loadCurrent(startMs: widget.startPositionMs);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _progressTimer?.cancel();
     unawaited(_persistProgress());
     _disposePlayers();
+    unawaited(WakelockPlus.disable());
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-    SystemChrome.setPreferredOrientations(const [
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    SystemChrome.setPreferredOrientations(kBrowseOrientations);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      unawaited(_persistProgress());
+    }
+    if (state == AppLifecycleState.paused) {
+      unawaited(WakelockPlus.disable());
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(WakelockPlus.enable());
+    }
   }
 
   void _disposePlayers() {
