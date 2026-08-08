@@ -32,6 +32,8 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | LEGO DUPLO / Play-Doh / Toy Kitchen | Per-show toy play curated IDs |
 | Dancing Fruit | Curated Hey Bear Sensory dancing-fruit clips |
 | Mini Muslim | MiniMuslims uploads + starters |
+| داوود | Single Dawood TV hub (Juz Amma playlist) |
+| Kids Music | بابا فين / ماما جابت بيبي / مابي أنام |
 | Omar & Hana | Official uploads + starters |
 | CoComelon | Official nursery-rhyme starters |
 | Masha and the Bear | Official English episode starters |
