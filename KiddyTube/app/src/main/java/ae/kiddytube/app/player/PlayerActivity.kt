@@ -1,5 +1,6 @@
 package ae.kiddytube.app.player
 
+import android.content.res.Configuration
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.media.AudioManager
@@ -57,9 +58,12 @@ class PlayerActivity : AppCompatActivity() {
     private var webView: WebView? = null
     private var playbackReady = false
     private var allowSeek = true
+    private var startPositionMs = 0L
+    private var appliedStartSeek = false
     private val handler = Handler(Looper.getMainLooper())
     private val seekMs = 10_000L
     private val doubleTapMs = 320L
+    private val progressPersistIntervalMs = 12_000L
     private var lastTapUptimeMs = 0L
     private var lastTapX = 0f
     private val hideSeekFeedback = Runnable {
@@ -73,6 +77,12 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
     private val pendingSingleTap = Runnable { togglePlayback() }
+    private val persistProgressRunnable = object : Runnable {
+        override fun run() {
+            persistContinueProgress()
+            handler.postDelayed(this, progressPersistIntervalMs)
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -83,8 +93,9 @@ class PlayerActivity : AppCompatActivity() {
         seekFeedback = findViewById(R.id.seekFeedback)
         val navBack = findViewById<TextView>(R.id.navBack)
         navBack.setOnClickListener { finish() }
-        // Touch can tap Back; TV focus stays on the player until D-pad Down.
-        navBack.isFocusable = false
+        // Touch taps Back; on TV the chip stays focusable so Down can land on it.
+        val television = isTelevision()
+        navBack.isFocusable = television
         navBack.isFocusableInTouchMode = false
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)
@@ -95,6 +106,7 @@ class PlayerActivity : AppCompatActivity() {
         )
         ImmersiveMode.apply(this, forceImmersive = true)
         applyWatchNextDeepLinkExtras()
+        startPositionMs = intent.getLongExtra(EXTRA_START_POSITION_MS, 0L).coerceAtLeast(0L)
         // Deny seek until catalog resolve; never trust intent extras for kid seek policy.
         allowSeek = false
 
@@ -116,6 +128,9 @@ class PlayerActivity : AppCompatActivity() {
             titleOverlay.text = title
             titleOverlay.visibility = View.VISIBLE
             handler.postDelayed(hideTitleOverlay, 3_000)
+        }
+        if (television) {
+            teasePlayerBackChip()
         }
 
         // Transparent touch layer: single tap = play/pause; double-tap L/R = seek
@@ -179,7 +194,8 @@ class PlayerActivity : AppCompatActivity() {
                     if (isFinishing || isDestroyed) return@launch
                     playYoutube(youtubeId.trim())
                     playbackReady = true
-                    recordContinueWatching()
+                    recordContinueWatching(positionMs = startPositionMs)
+                    scheduleProgressPersist()
                 }
                 MediaUrlValidator.isDirectMediaUrl(directUrl) -> {
                     val url = directUrl!!.trim()
@@ -191,7 +207,8 @@ class PlayerActivity : AppCompatActivity() {
                     if (isFinishing || isDestroyed) return@launch
                     playDirect(url)
                     playbackReady = true
-                    recordContinueWatching()
+                    recordContinueWatching(positionMs = startPositionMs)
+                    scheduleProgressPersist()
                 }
                 else -> rejectPlayback()
             }
@@ -207,6 +224,9 @@ class PlayerActivity : AppCompatActivity() {
         q("directUrl")?.let { intent.putExtra(EXTRA_DIRECT_URL, it) }
         q("channelId")?.let { intent.putExtra(EXTRA_CHANNEL_ID, it) }
         q("videoId")?.let { intent.putExtra(EXTRA_VIDEO_ID, it) }
+        uri.getQueryParameter("startMs")?.toLongOrNull()?.let {
+            intent.putExtra(EXTRA_START_POSITION_MS, it.coerceAtLeast(0L))
+        }
     }
 
     private suspend fun resolveAllowSeekFromCatalog(app: KiddyTubeApp) {
@@ -247,7 +267,7 @@ class PlayerActivity : AppCompatActivity() {
         finish()
     }
 
-    private suspend fun recordContinueWatching() {
+    private suspend fun recordContinueWatching(positionMs: Long = 0L) {
         val channelId = intent.getStringExtra(EXTRA_CHANNEL_ID).orEmpty()
         val videoId = intent.getStringExtra(EXTRA_VIDEO_ID).orEmpty()
         val title = intent.getStringExtra(EXTRA_TITLE).orEmpty()
@@ -268,9 +288,63 @@ class PlayerActivity : AppCompatActivity() {
                 thumbnailUrl = youtubeId?.let { YoutubeUrlParser.defaultThumbnail(it) },
                 youtubeVideoId = youtubeId?.ifBlank { null },
                 directUrl = directUrl?.ifBlank { null },
-                watchedAtMs = System.currentTimeMillis()
+                watchedAtMs = System.currentTimeMillis(),
+                positionMs = positionMs.coerceAtLeast(0L)
             )
         )
+    }
+
+    private fun scheduleProgressPersist() {
+        handler.removeCallbacks(persistProgressRunnable)
+        handler.postDelayed(persistProgressRunnable, progressPersistIntervalMs)
+    }
+
+    private fun persistContinueProgress() {
+        if (!playbackReady || isFinishing || isDestroyed) return
+        player?.let { exo ->
+            val pos = exo.currentPosition.coerceAtLeast(0L)
+            val save = clampedResumePosition(pos, exo.duration)
+            lifecycleScope.launch { recordContinueWatching(positionMs = save) }
+            return
+        }
+        webView?.evaluateJavascript("progressSnapshot()") { raw ->
+            if (isFinishing || isDestroyed) return@evaluateJavascript
+            val clean = raw?.trim()?.removeSurrounding("\"") ?: return@evaluateJavascript
+            val parts = clean.split(',')
+            val pos = parts.getOrNull(0)?.toLongOrNull() ?: return@evaluateJavascript
+            val duration = parts.getOrNull(1)?.toLongOrNull() ?: C.TIME_UNSET
+            val save = clampedResumePosition(pos, duration)
+            lifecycleScope.launch { recordContinueWatching(positionMs = save) }
+        }
+    }
+
+    private fun clampedResumePosition(positionMs: Long, durationMs: Long): Long {
+        if (positionMs < 5_000L) return 0L
+        if (durationMs != C.TIME_UNSET && durationMs > 0L &&
+            positionMs >= (durationMs * 0.92).toLong()
+        ) {
+            return 0L
+        }
+        return positionMs
+    }
+
+    private fun isTelevision(): Boolean {
+        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+    }
+
+    /** Briefly land focus on Back so TV kids discover the chrome without keeping it there. */
+    private fun teasePlayerBackChip() {
+        handler.postDelayed({
+            if (isFinishing || isDestroyed) return@postDelayed
+            focusPlayerChromeBack()
+            handler.postDelayed({
+                if (isFinishing || isDestroyed) return@postDelayed
+                if (currentFocus?.id == R.id.navBack) {
+                    releasePlayerChromeBackFocus()
+                }
+            }, 2_200)
+        }, 700)
     }
 
     private fun handlePlayerTap(view: View, x: Float) {
@@ -343,6 +417,7 @@ class PlayerActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     private fun playYoutube(videoId: String) {
         val safeId = videoId.replace("\\", "\\\\").replace("'", "\\'")
+        val startSec = (startPositionMs / 1000.0).coerceAtLeast(0.0)
         val wv = WebView(this).apply {
             setBackgroundColor(Color.BLACK)
             settings.javaScriptEnabled = true
@@ -398,6 +473,7 @@ class PlayerActivity : AppCompatActivity() {
             <script src="https://www.youtube.com/iframe_api"></script>
             <script>
               var player;
+              var startSec=$startSec;
               function stageSize(){
                 var w=window.innerWidth||document.documentElement.clientWidth||0;
                 var h=window.innerHeight||document.documentElement.clientHeight||0;
@@ -426,11 +502,15 @@ class PlayerActivity : AppCompatActivity() {
                   playerVars:{
                     autoplay:1,controls:0,disablekb:1,fs:0,iv_load_policy:3,
                     modestbranding:1,rel:0,playsinline:1,cc_load_policy:0,
-                    showinfo:0,origin:location.origin
+                    showinfo:0,origin:location.origin,
+                    start:Math.max(0,Math.floor(startSec||0))
                   },
                   events:{
                     onReady:function(e){
                       applyStageSize();
+                      if(startSec>0 && typeof e.target.seekTo==='function'){
+                        try{e.target.seekTo(startSec,true);}catch(err){}
+                      }
                       e.target.playVideo();
                     },
                     onStateChange:function(e){
@@ -470,6 +550,20 @@ class PlayerActivity : AppCompatActivity() {
                   if(player.playVideo)player.playVideo();
                 }catch(e){}
               }
+              function progressSnapshot(){
+                try{
+                  var pos=0,dur=0;
+                  if(player&&typeof player.getCurrentTime==='function'){
+                    var t=player.getCurrentTime();
+                    if(typeof t==='number'&&!isNaN(t))pos=Math.floor(t*1000);
+                  }
+                  if(player&&typeof player.getDuration==='function'){
+                    var d=player.getDuration();
+                    if(typeof d==='number'&&!isNaN(d)&&d>0)dur=Math.floor(d*1000);
+                  }
+                  return pos+','+dur;
+                }catch(e){return '0,0';}
+              }
             </script></body></html>
         """.trimIndent()
         // Wait until WebView is laid out so the 16:9 stage matches the visible area.
@@ -508,6 +602,19 @@ class PlayerActivity : AppCompatActivity() {
         exo.playWhenReady = true
         exo.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_READY &&
+                    !appliedStartSeek &&
+                    startPositionMs >= 5_000L
+                ) {
+                    appliedStartSeek = true
+                    val duration = exo.duration
+                    val target = if (duration != C.TIME_UNSET && duration > 0L) {
+                        startPositionMs.coerceAtMost((duration - 250L).coerceAtLeast(0L))
+                    } else {
+                        startPositionMs
+                    }
+                    exo.seekTo(target)
+                }
                 if (playbackState == Player.STATE_ENDED) finish()
             }
 
@@ -528,7 +635,10 @@ class PlayerActivity : AppCompatActivity() {
         if (currentFocus?.id == R.id.navBack) {
             navBack.clearFocus()
         }
-        navBack.isFocusable = false
+        // Keep focusable on TV so D-pad Down can return without re-enabling.
+        if (!isTelevision()) {
+            navBack.isFocusable = false
+        }
         container.requestFocus()
     }
 
@@ -597,6 +707,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        persistContinueProgress()
         player?.playWhenReady = false
         webView?.evaluateJavascript("pausePlayback()", null)
         webView?.onPause()
@@ -607,6 +718,7 @@ class PlayerActivity : AppCompatActivity() {
         super.onResume()
         ImmersiveMode.apply(this, forceImmersive = true)
         webView?.onResume()
+        if (playbackReady) scheduleProgressPersist()
     }
 
     override fun onDestroy() {
@@ -629,6 +741,7 @@ class PlayerActivity : AppCompatActivity() {
         const val EXTRA_ALLOW_SEEK = "allow_seek"
         const val EXTRA_CHANNEL_ID = "channel_id"
         const val EXTRA_VIDEO_ID = "video_id"
+        const val EXTRA_START_POSITION_MS = "start_position_ms"
 
         internal fun isAllowedYoutubeHost(host: String): Boolean {
             val h = host.lowercase()

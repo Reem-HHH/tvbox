@@ -43,7 +43,11 @@ class ContinueWatchAdapter(
     inner class Holder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         private val thumb: ImageView = itemView.findViewById(R.id.videoThumb)
         private val title: TextView = itemView.findViewById(R.id.videoTitle)
-        private val cornerPx = itemView.resources.getDimension(R.dimen.image_corner)
+        private val cornerPx = itemView.resources.getDimension(R.dimen.tile_corner)
+
+        init {
+            ThumbOutline.apply(thumb, cornerPx)
+        }
 
         fun bind(pair: Pair<RecentWatchItem, VideoItem>) {
             val (recent, video) = pair
@@ -78,6 +82,7 @@ class ContinueWatchAdapter(
             old[oldItemPosition].second.id == new[newItemPosition].second.id
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
             old[oldItemPosition].second == new[newItemPosition].second &&
-                old[oldItemPosition].first.watchedAtMs == new[newItemPosition].first.watchedAtMs
+                old[oldItemPosition].first.watchedAtMs == new[newItemPosition].first.watchedAtMs &&
+                old[oldItemPosition].first.positionMs == new[newItemPosition].first.positionMs
     }
 }

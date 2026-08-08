@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:textColor="@color/ink_muted"
-        android:textSize="13sp" />
+        android:textSize="@dimen/parent_meta_text" />
 
     <TextView
         android:id="@+id/channelPlaylist"
@@ -34,7 +34,7 @@
         android:ellipsize="middle"
         android:singleLine="true"
         android:textColor="@color/ink_muted"
-        android:textSize="12sp" />
+        android:textSize="@dimen/parent_playlist_text" />
 
     <LinearLayout
         android:id="@+id/channelActions"

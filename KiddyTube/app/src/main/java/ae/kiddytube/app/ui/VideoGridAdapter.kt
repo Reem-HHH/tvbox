@@ -47,7 +47,11 @@ class VideoGridAdapter(
         private val thumb: ImageView = itemView.findViewById(R.id.videoThumb)
         private val title: TextView = itemView.findViewById(R.id.videoTitle)
         private val cornerPx =
-            itemView.resources.getDimension(R.dimen.image_corner)
+            itemView.resources.getDimension(R.dimen.tile_corner)
+
+        init {
+            ThumbOutline.apply(thumb, cornerPx)
+        }
 
         fun bind(item: PlayableVideo) {
             val video = item.video

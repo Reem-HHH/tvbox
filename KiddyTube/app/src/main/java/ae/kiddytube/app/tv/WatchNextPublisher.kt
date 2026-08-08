@@ -155,6 +155,9 @@ class WatchNextPublisher(context: Context) {
             item.directUrl?.takeIf { it.isNotBlank() }?.let {
                 putExtra(PlayerActivity.EXTRA_DIRECT_URL, it)
             }
+            if (item.positionMs >= 5_000L) {
+                putExtra(PlayerActivity.EXTRA_START_POSITION_MS, item.positionMs)
+            }
         }
         return Uri.parse(intent.toUri(Intent.URI_INTENT_SCHEME))
     }
@@ -176,6 +179,9 @@ class WatchNextPublisher(context: Context) {
             }
             item.directUrl?.takeIf { it.isNotBlank() }?.let {
                 qb.append("&directUrl=").append(enc(it))
+            }
+            if (item.positionMs >= 5_000L) {
+                qb.append("&startMs=").append(item.positionMs)
             }
             return qb.toString()
         }

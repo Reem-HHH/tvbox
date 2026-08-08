@@ -22,6 +22,8 @@ object RecentWatchJson {
             appendJsonString("directUrl", item.directUrl)
             append(',')
             append("\"watchedAtMs\":").append(item.watchedAtMs)
+            append(',')
+            append("\"positionMs\":").append(item.positionMs.coerceAtLeast(0L))
             append('}')
         }
         append(']')
@@ -112,7 +114,8 @@ object RecentWatchJson {
             thumbnailUrl = fields["thumbnailUrl"],
             youtubeVideoId = fields["youtubeVideoId"],
             directUrl = fields["directUrl"],
-            watchedAtMs = fields["watchedAtMs"]?.toLongOrNull() ?: 0L
+            watchedAtMs = fields["watchedAtMs"]?.toLongOrNull() ?: 0L,
+            positionMs = fields["positionMs"]?.toLongOrNull()?.coerceAtLeast(0L) ?: 0L
         )
     }
 

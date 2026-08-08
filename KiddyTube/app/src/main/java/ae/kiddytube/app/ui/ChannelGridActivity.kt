@@ -249,23 +249,27 @@ class ChannelGridActivity : AppCompatActivity() {
 
     private fun updateHomeModeChip() {
         val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
-        homeModeToggle.text = getString(if (mix) R.string.home_mode_mix else R.string.home_mode_shows)
+        homeModeToggle.text = getString(
+            if (mix) R.string.home_mode_switch_to_shows else R.string.home_mode_switch_to_mix
+        )
         homeModeToggle.contentDescription = getString(
             if (mix) R.string.a11y_home_mode_mix else R.string.a11y_home_mode_shows
         )
     }
 
     private fun toggleHomeMode() {
-        lifecycleScope.launch {
-            val app = application as KiddyTubeApp
-            val next = if (settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS) {
-                HomeLibraryMode.CHANNELS
-            } else {
-                HomeLibraryMode.MIX_VIDEOS
+        parentUnlock.beginParentAccess {
+            lifecycleScope.launch {
+                val app = application as KiddyTubeApp
+                val next = if (settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS) {
+                    HomeLibraryMode.CHANNELS
+                } else {
+                    HomeLibraryMode.MIX_VIDEOS
+                }
+                app.catalogRepository.update { it.copy(homeLibraryMode = next) }
+                settings = app.catalogRepository.current()
+                render(focusFirstIfNeeded = true)
             }
-            app.catalogRepository.update { it.copy(homeLibraryMode = next) }
-            settings = app.catalogRepository.current()
-            render(focusFirstIfNeeded = true)
         }
     }
 
@@ -375,6 +379,7 @@ class ChannelGridActivity : AppCompatActivity() {
     private fun openContinueWatch(recent: RecentWatchItem, video: VideoItem) {
         if (!OpenDebouncer.tryOpen("continue:${video.id}")) return
         NavFocusMemory.rememberVideo(recent.channelId, video.id)
+        val resumeMs = recent.positionMs.takeIf { it >= 5_000L } ?: 0L
         startActivity(
             Intent(this, PlayerActivity::class.java)
                 .putExtra(PlayerActivity.EXTRA_TITLE, video.title)
@@ -383,6 +388,7 @@ class ChannelGridActivity : AppCompatActivity() {
                 .putExtra(PlayerActivity.EXTRA_ALLOW_SEEK, video.allowSeek)
                 .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, recent.channelId)
                 .putExtra(PlayerActivity.EXTRA_VIDEO_ID, video.id)
+                .putExtra(PlayerActivity.EXTRA_START_POSITION_MS, resumeMs)
         )
     }
 

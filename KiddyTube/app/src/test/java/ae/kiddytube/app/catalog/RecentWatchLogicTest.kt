@@ -91,7 +91,8 @@ class RecentWatchLogicTest {
                 title = "Hello \"Kids\"",
                 thumbnailUrl = "https://example.com/a.jpg",
                 youtubeVideoId = "AAAAAAAAAAA",
-                watchedAtMs = 42
+                watchedAtMs = 42,
+                positionMs = 90_000L
             ),
             item(
                 "v2",
@@ -104,6 +105,15 @@ class RecentWatchLogicTest {
         val encoded = RecentWatchJson.encode(items)
         val decoded = RecentWatchJson.decode(encoded)
         assertEquals(items, decoded)
+        assertEquals(90_000L, decoded.first().positionMs)
+    }
+
+    @Test
+    fun jsonDecodeMissingPositionDefaultsZero() {
+        val legacy = """[{"videoId":"v1","channelId":"c1","title":"T","thumbnailUrl":null,"youtubeVideoId":null,"directUrl":null,"watchedAtMs":9}]"""
+        val decoded = RecentWatchJson.decode(legacy)
+        assertEquals(1, decoded.size)
+        assertEquals(0L, decoded.first().positionMs)
     }
 
     @Test
@@ -122,7 +132,8 @@ class RecentWatchLogicTest {
         thumbnailUrl: String? = null,
         youtubeVideoId: String? = null,
         directUrl: String? = null,
-        watchedAtMs: Long = 0L
+        watchedAtMs: Long = 0L,
+        positionMs: Long = 0L
     ) = RecentWatchItem(
         videoId = videoId,
         channelId = channelId,
@@ -130,6 +141,7 @@ class RecentWatchLogicTest {
         thumbnailUrl = thumbnailUrl,
         youtubeVideoId = youtubeVideoId,
         directUrl = directUrl,
-        watchedAtMs = watchedAtMs
+        watchedAtMs = watchedAtMs,
+        positionMs = positionMs
     )
 }

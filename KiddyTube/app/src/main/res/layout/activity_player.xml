@@ -35,7 +35,7 @@
             android:paddingBottom="12dp"
             android:text="@string/nav_back"
             android:textColor="@color/player_chip_text"
-            android:textSize="16sp" />
+            android:textSize="@dimen/player_chip_text" />
 
         <TextView
             android:id="@+id/titleOverlay"
@@ -52,7 +52,7 @@
             android:paddingEnd="18dp"
             android:paddingBottom="12dp"
             android:textColor="@color/player_chip_text"
-            android:textSize="16sp"
+            android:textSize="@dimen/player_chip_text"
             android:visibility="gone" />
     </LinearLayout>
 

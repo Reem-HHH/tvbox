@@ -48,7 +48,11 @@ class ChannelGridAdapter(
         private val icon: ImageView = itemView.findViewById(R.id.channelIcon)
         private val title: TextView = itemView.findViewById(R.id.channelTitle)
         private val cornerPx =
-            itemView.resources.getDimension(R.dimen.image_corner)
+            itemView.resources.getDimension(R.dimen.tile_corner)
+
+        init {
+            ThumbOutline.apply(icon, cornerPx)
+        }
 
         fun bind(channel: ContentChannel) {
             title.text = channel.title

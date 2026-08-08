@@ -7,9 +7,12 @@
     <string name="empty_no_api_key">اتصل بالإنترنت وأضف مفتاح YouTube API من إعدادات الوالدين لملء القنوات.</string>
     <string name="home_mode_shows">عرض</string>
     <string name="home_mode_mix">مزيج</string>
-    <string name="a11y_home_mode_shows">الرئيسية تعرض القنوات. التبديل إلى مزيج الفيديوهات.</string>
-    <string name="a11y_home_mode_mix">الرئيسية تعرض مزيج الفيديوهات. التبديل إلى القنوات.</string>
+    <string name="home_mode_switch_to_mix">التبديل إلى المزيج</string>
+    <string name="home_mode_switch_to_shows">التبديل إلى العروض</string>
+    <string name="a11y_home_mode_shows">الرئيسية تعرض القنوات. اطلب من أحد الوالدين التبديل إلى مزيج الفيديوهات.</string>
+    <string name="a11y_home_mode_mix">الرئيسية تعرض مزيج الفيديوهات. اطلب من أحد الوالدين التبديل إلى القنوات.</string>
     <string name="parent_home_mix_videos">الرئيسية: مزج كل الفيديوهات</string>
+    <string name="home_mode_pin_required">اطلب من أحد الوالدين فتح القفل لتغيير شكل الرئيسية</string>
     <string name="sync_updating">جاري تحديث القنوات…</string>
     <string name="sync_updated">تم تحديث القنوات!</string>
     <string name="sync_partial">تم تحديث بعض القنوات — وفشلت أخرى</string>

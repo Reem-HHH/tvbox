@@ -7,9 +7,12 @@
     <string name="empty_no_api_key">Connect to the internet and set a YouTube API key in Parent settings to fill channels.</string>
     <string name="home_mode_shows">Shows</string>
     <string name="home_mode_mix">Mix</string>
-    <string name="a11y_home_mode_shows">Home shows channels. Switch to mixed videos.</string>
-    <string name="a11y_home_mode_mix">Home shows mixed videos. Switch to channels.</string>
+    <string name="home_mode_switch_to_mix">Switch to Mix</string>
+    <string name="home_mode_switch_to_shows">Switch to Shows</string>
+    <string name="a11y_home_mode_shows">Home shows channels. Ask a parent to switch to mixed videos.</string>
+    <string name="a11y_home_mode_mix">Home shows mixed videos. Ask a parent to switch to channels.</string>
     <string name="parent_home_mix_videos">Home: mix all videos</string>
+    <string name="home_mode_pin_required">Ask a parent to unlock to change home layout</string>
     <string name="sync_updating">Updating channels…</string>
     <string name="sync_updated">Channels updated!</string>
     <string name="sync_partial">Some channels updated — others failed</string>

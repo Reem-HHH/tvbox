@@ -11,7 +11,9 @@ data class RecentWatchItem(
     val thumbnailUrl: String? = null,
     val youtubeVideoId: String? = null,
     val directUrl: String? = null,
-    val watchedAtMs: Long
+    val watchedAtMs: Long,
+    /** Last known playback position for continue-watching resume. */
+    val positionMs: Long = 0L
 )
 
 object RecentWatchLogic {
