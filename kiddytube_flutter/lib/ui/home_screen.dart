@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import '../catalog/catalog_repository.dart';
 import '../catalog/home_library.dart';
 import '../catalog/models.dart';
+import '../catalog/recent_watch.dart';
+import '../parent/parent_settings_screen.dart';
+import '../parent/pin_gate.dart';
+import '../player/player_screen.dart';
 import 'focus_tile.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,6 +20,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   CatalogSettings? _settings;
+  List<RecentWatchItem> _recent = const [];
   Object? _error;
 
   @override
@@ -27,9 +32,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _reload() async {
     try {
       final settings = await widget.repository.load();
+      final recent = await widget.repository.recentWatch.load();
       if (!mounted) return;
       setState(() {
         _settings = settings;
+        _recent = recent;
         _error = null;
       });
     } catch (e) {
@@ -39,6 +46,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _toggleMode() async {
+    final unlocked = await ensureParentUnlocked(context, widget.repository);
+    if (!unlocked || !mounted) return;
     final current = _settings;
     if (current == null) return;
     final next = current.homeLibraryMode == HomeLibraryMode.channels
@@ -48,21 +57,60 @@ class _HomeScreenState extends State<HomeScreen> {
     await _reload();
   }
 
+  Future<void> _openParent() async {
+    final unlocked = await ensureParentUnlocked(context, widget.repository);
+    if (!unlocked || !mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => ParentSettingsScreen(repository: widget.repository),
+      ),
+    );
+    await _reload();
+  }
+
   void _openChannel(ContentChannel channel) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => LibraryScreen(channel: channel),
+        builder: (_) => LibraryScreen(
+          channel: channel,
+          repository: widget.repository,
+          onPlayed: _reload,
+        ),
       ),
     );
   }
 
-  void _openVideo(PlayableVideo item) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Player coming soon: ${item.video.title}'),
-        duration: const Duration(seconds: 2),
+  Future<void> _openVideo(
+    PlayableVideo item, {
+    int startPositionMs = 0,
+  }) async {
+    final settings = _settings;
+    if (settings == null) return;
+    ContentChannel? channel;
+    for (final c in settings.channels) {
+      if (c.id == item.channelId) {
+        channel = c;
+        break;
+      }
+    }
+    final videos = channel?.videos ?? [item.video];
+    var index = videos.indexWhere((v) => v.id == item.video.id);
+    if (index < 0) index = 0;
+    final queue = [
+      for (final v in videos)
+        PlayableVideo(channelId: item.channelId, video: v),
+    ];
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PlayerScreen(
+          repository: widget.repository,
+          queue: queue,
+          startIndex: index,
+          startPositionMs: startPositionMs,
+        ),
       ),
     );
+    await _reload();
   }
 
   @override
@@ -88,10 +136,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     final width = MediaQuery.sizeOf(context).width;
-    final isTvWide = width >= 900;
+    // Phone < 600, tablet/iPad ~600–1100, Android TV / wide ≥ 1100.
+    final isTvWide = width >= 1100;
+    final isTablet = width >= 600;
     final crossAxisCount = isMix
-        ? (isTvWide ? 4 : (width >= 600 ? 3 : 2))
-        : (isTvWide ? 3 : (width >= 600 ? 4 : 2));
+        ? (isTvWide ? 5 : (isTablet ? 4 : 2))
+        : (isTvWide ? 4 : (isTablet ? 4 : 2));
 
     return Scaffold(
       body: DecoratedBox(
@@ -137,9 +187,64 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    FocusTile(
+                      onActivated: _openParent,
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        color: const Color(0xCCFFFFFF),
+                        child: const Icon(
+                          Icons.lock_outline,
+                          color: Color(0xFF0D47A1),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
+              if (_recent.isNotEmpty && !isMix) ...[
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 4),
+                  child: Text(
+                    'Continue watching',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0D47A1),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: isTablet ? 140 : 120,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _recent.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 12),
+                    itemBuilder: (context, index) {
+                      final item = _recent[index];
+                      return SizedBox(
+                        width: isTablet ? 220 : 180,
+                        child: FocusTile(
+                          autofocus: index == 0,
+                          onActivated: () => _openVideo(
+                            item.toPlayable(),
+                            startPositionMs: item.positionMs,
+                          ),
+                          child: _ColoredCard(
+                            color: const Color(0xFF5C6BC0),
+                            title: item.title,
+                            subtitle: 'Continue',
+                            imageUrl: item.youtubeVideoId == null
+                                ? null
+                                : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/hqdefault.jpg',
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Expanded(
                 child: isMix
                     ? _VideoGrid(
@@ -151,6 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         channels: channels,
                         crossAxisCount: crossAxisCount,
                         onOpen: _openChannel,
+                        autofocusFirst: _recent.isEmpty,
                       ),
               ),
             ],
@@ -166,11 +272,13 @@ class _ChannelGrid extends StatelessWidget {
     required this.channels,
     required this.crossAxisCount,
     required this.onOpen,
+    this.autofocusFirst = true,
   });
 
   final List<ContentChannel> channels;
   final int crossAxisCount;
   final ValueChanged<ContentChannel> onOpen;
+  final bool autofocusFirst;
 
   @override
   Widget build(BuildContext context) {
@@ -189,7 +297,7 @@ class _ChannelGrid extends StatelessWidget {
       itemBuilder: (context, index) {
         final channel = channels[index];
         return FocusTile(
-          autofocus: index == 0,
+          autofocus: autofocusFirst && index == 0,
           onActivated: () => onOpen(channel),
           child: _ColoredCard(
             color: Color(channel.color),
@@ -322,14 +430,38 @@ class _ColoredCard extends StatelessWidget {
 }
 
 class LibraryScreen extends StatelessWidget {
-  const LibraryScreen({super.key, required this.channel});
+  const LibraryScreen({
+    super.key,
+    required this.channel,
+    required this.repository,
+    this.onPlayed,
+  });
 
   final ContentChannel channel;
+  final CatalogRepository repository;
+  final Future<void> Function()? onPlayed;
+
+  Future<void> _play(BuildContext context, int index) async {
+    final queue = [
+      for (final v in channel.videos)
+        PlayableVideo(channelId: channel.id, video: v),
+    ];
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PlayerScreen(
+          repository: repository,
+          queue: queue,
+          startIndex: index,
+        ),
+      ),
+    );
+    await onPlayed?.call();
+  }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final crossAxisCount = width >= 900 ? 4 : (width >= 600 ? 3 : 2);
+    final crossAxisCount = width >= 1100 ? 5 : (width >= 600 ? 4 : 2);
     return Scaffold(
       appBar: AppBar(
         title: Text(channel.title),
@@ -351,11 +483,7 @@ class LibraryScreen extends StatelessWidget {
                 final video = channel.videos[index];
                 return FocusTile(
                   autofocus: index == 0,
-                  onActivated: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Player coming soon: ${video.title}')),
-                    );
-                  },
+                  onActivated: () => _play(context, index),
                   child: _ColoredCard(
                     color: Color(channel.color),
                     title: video.title,

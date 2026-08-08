@@ -1,0 +1,34 @@
+name: Flutter
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'kiddytube_flutter/**'
+      - '.github/workflows/flutter.yml'
+  pull_request:
+    paths:
+      - 'kiddytube_flutter/**'
+      - '.github/workflows/flutter.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: kiddytube_flutter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          # Pinned to match pubspec SDK ^3.12.2 (Dart 3.12.2 on Flutter 3.44.9).
+          flutter-version: '3.44.9'
+          channel: stable
+          cache: true
+      - name: Pub get
+        run: flutter pub get
+      - name: Analyze
+        run: flutter analyze
+      - name: Test
+        run: flutter test
