@@ -2,9 +2,9 @@
 
 KiddyTube’s home grid is **one channel = one named show**. Generic mixes (Arabic Cartoons, Learn Arabic, Playtime, Islamic Kids) were retired in seed v6.
 
-Seed **v14** adds a preschool batch: طيور بيبي (allowlist), Pingu, Daniel Tiger, Hey Duggee, Numberblocks (S1), and Pocoyo—each with verified embeddable starters and Follow uploads **off**.
+Seed **v15** retires Fulla, expands Spacetoon أناشيد, and adds طيور الجنة، CoComelon، Masha and the Bear، and منصور—each with verified starters and Follow uploads **off**.
 
-Each file below describes what ships in the app, audience fit (~ages 3–5), and parent-facing clean / conservative notes. These docs are **not** packaged in the APK; edit the live catalog in the parent dashboard.
+Each file below describes what ships in the app, audience fit (~ages 3–5 unless noted), and parent-facing clean / conservative notes. These docs are **not** packaged in the APK; edit the live catalog in the parent dashboard.
 
 | Channel id | Show | Clean | Conservative fit | Notes |
 |---|---|---|---|---|
@@ -22,10 +22,10 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [dawood_secrets_industry](dawood_secrets_industry.md) | داوود — أسرار الصناعة | High | High | How-things-are-made cartoon |
 | [dawood_quranic_games](dawood_quranic_games.md) | داوود — ألعاب قرآنية | High | High | Dawood TV |
 | [dawood_quran_quiz](dawood_quran_quiz.md) | داوود — مسابقات قرآنية | High | High | Dawood TV |
-| [spacetoon](spacetoon.md) | Spacetoon أناشيد | High | High | Curated nasheeds only |
+| [spacetoon](spacetoon.md) | Spacetoon أناشيد | High | High | Expanded curated songs |
 | [moda_modi](moda_modi.md) | مودا مودي | High | High | Ramadan / Eid songs |
 | [smarta](smarta.md) | سمارتا وحقيبتها العجيبة | High | High | Spacetoon Arabic curated |
-| [fulla](fulla.md) | Fulla / فلة | High | High | Official قناة فلة starters |
+| [toyor_jana](toyor_jana.md) | طيور الجنة | High | High | Islamic Arabic songs allowlist |
 | [adam_mishmish](adam_mishmish.md) | Adam & Mishmish | High | High | Arabic songs / letters |
 | [zakaria](zakaria.md) | Zakaria | High | High | Arabic ABC / numbers |
 | [kiki_nadoush](kiki_nadoush.md) | Kiki wa Nadoush | High | High | Colors in Arabic |
@@ -47,6 +47,10 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [hey_duggee](hey_duggee.md) | Hey Duggee | High | High | Badge episodes |
 | [numberblocks](numberblocks.md) | Numberblocks | High | High | Series 1 counting starters |
 | [pocoyo](pocoyo.md) | Pocoyo | High | High | Official English episodes feed |
+| [cocomelon](cocomelon.md) | CoComelon | High | High | English nursery rhymes |
+| [masha](masha.md) | Masha and the Bear | High | High | Classic slapstick preschool |
+| [mansour](mansour.md) | منصور | High | High | UAE kids adventure |
+| [fulla](fulla.md) | Fulla / فلة | — | — | **Retired in v15** |
 | [dawood_tabarak](dawood_tabarak.md) | داوود — جزء تبارك | High | High | Default **off** — older kids / parent |
 | [dawood_tabarak_plain](dawood_tabarak_plain.md) | داوود — تبارك بدون تكرار | High | High | Default **off** |
 | [dawood_tabarak_memorize](dawood_tabarak_memorize.md) | داوود — حفظ تبارك | High | High | Default **off** |

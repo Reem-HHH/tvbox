@@ -5,16 +5,18 @@
 
 ## What it is
 
-Branded Spacetoon **nasheed / Islamic song** clips (Qur’an praise, Madinah, Ramadan)—not Spacetoon cartoon episodes or Digimon/action dumps.
+Branded Spacetoon **nasheed / kids song** clips (Qur’an praise, Madinah, mosque, Ramadan, shapes, gentle theme songs)—not Digimon/action dumps or the full uploads feed.
 
 ## What’s in the app
 
-- كتاب الله
+- كتاب الله / كتابُ الله / أغنية الكتاب
 - يا طيبة — المدينة المنورة
-- رمضان أقبل طيباً
-- أهلاً رمضان يا شهر الإحسان
-- هلال رمضان — يوسف إسلام
-- رمضان 2020 — أطل الفجر بالبشر
+- هيا للمسجد لنصلي
+- رمضان أقبل طيباً / أهلاً رمضان / هلال رمضان / أطل الفجر بالبشر
+- أغنية بداية أنا وأختي
+- فلفول — أغنية السلطة
+- أغاني الأشكال الهندسية
+- تجميعة ~30 دقيقة من أروع أغاني سبيستون
 
 ## Audience
 
@@ -26,6 +28,6 @@ Ages ~3–8 for songs; fine for toddlers with parent nearby for attention span. 
 |---|---|
 | Suggested rating | Preschool / family religious |
 | Clean language | High |
-| Violence / scary | None |
+| Violence / scary | None on this allowlist |
 | Conservative / family fit | High |
 | Parent caveats | Do not re-attach Spacetoon Arabic uploads playlist—it mixes age-inappropriate cartoons. |

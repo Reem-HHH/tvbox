@@ -90,17 +90,18 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 14
+    const val SEED_VERSION = 15
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
 
-    /** Pre–v6 generic category channels removed when upgrading to per-show seeds. */
+    /** Pre–v6 generics plus retired show channels removed on seed upgrade. */
     private val RETIRED_CHANNEL_IDS = setOf(
         "arabic_cartoons",
         "learn_arabic",
         "islamic_kids",
-        "playtime"
+        "playtime",
+        "fulla"
     )
 
     fun seed(): List<ContentChannel> = listOf(
@@ -225,11 +226,18 @@ object DefaultChannels {
             sortOrder = 14,
             videos = listOf(
                 yt("-_Kz-hseLkc", "كتاب الله"),
+                yt("s7FQXvhwm40", "كتابُ الله"),
+                yt("mJMigyCh-I8", "أغنية الكتاب"),
                 yt("YoAU-tciuVs", "يا طيبة — المدينة المنورة"),
+                yt("2h6Y8k8fNS4", "هيا للمسجد لنصلي"),
                 yt("g7LjhyO7CEw", "رمضان أقبل طيباً"),
                 yt("INZMVhnVlRM", "أهلاً رمضان يا شهر الإحسان"),
                 yt("BojfVe5G6GM", "هلال رمضان — يوسف إسلام"),
-                yt("Jh4gl0obMK0", "رمضان 2020 — أطل الفجر بالبشر")
+                yt("Jh4gl0obMK0", "رمضان 2020 — أطل الفجر بالبشر"),
+                yt("dB95J8Pa49c", "أغنية بداية أنا وأختي"),
+                yt("o9xR7JcU2iw", "فلفول — أغنية السلطة"),
+                yt("krYQGcQ3o0U", "جميع أغاني الأشكال الهندسية"),
+                yt("fxZE5hOMyi4", "أكثر من 30 دقيقة — أروع أغاني سبيستون")
             )
         ),
         ContentChannel(
@@ -266,19 +274,18 @@ object DefaultChannels {
             )
         ),
         ContentChannel(
-            id = "fulla",
-            title = "Fulla / فلة",
-            iconRes = R.drawable.tile_fulla,
-            sourceType = SourceType.YOUTUBE_PLAYLIST,
-            youtubePlaylistId = uploadsOf("UCif2El0DYcJY9uP4DrST0Bw"),
+            id = "toyor_jana",
+            title = "طيور الجنة",
+            iconRes = R.drawable.tile_toyor_jana,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
             sortOrder = 17,
             videos = listOf(
-                yt("l7YnIRtwypM", "Fulla Song Yes I did it"),
-                yt("tSQCJf2Li3k", "Cook Song — Fulla / أغنية الطبخ"),
-                yt("DEpSoa72zYw", "DIY Prayer Set — Fashion with Fulla"),
-                yt("RpmN1lCMk_Q", "Fulla Storytelling Ep03"),
-                yt("RvCADv5165Q", "Fulla Storytelling Ep05"),
-                yt("4zFf32zSYOc", "Fulla Storytelling Ep06")
+                yt("7GgZjoF0D2I", "قلبي ينادي | طيور الجنة"),
+                yt("jlJaCmIOu8k", "الصدقة — ديمة بشار | طيور الجنة"),
+                yt("So6XIOgO4TM", "بيجاما — سند مقداد | طيور الجنة"),
+                yt("B5kD9sxd5Jg", "شاكر والببغاء الشاطر — الخلفاء الراشدون"),
+                yt("1zt6iH8R2uA", "شاكر والببغاء الشاطر — الفصول الأربعة"),
+                yt("02OKtnWyjNo", "دادا حبة حبة (بدون إيقاع) — راية مقداد")
             )
         ),
         ContentChannel(
@@ -571,12 +578,59 @@ object DefaultChannels {
                 yt("jO-AiyofVEI", "Pocoyo's New Toys — Pocoyo")
             )
         ),
+        // Seed v15 — classic preschool / Arabic family cartoons (Follow uploads stays off).
+        ContentChannel(
+            id = "cocomelon",
+            title = "CoComelon",
+            iconRes = R.drawable.tile_cocomelon,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCbCmjCuTUZos6Inko4u57UQ"),
+            sortOrder = 39,
+            videos = listOf(
+                yt("e_04ZrNroTo", "Wheels on the Bus — CoComelon"),
+                yt("WRVsOCh907o", "Bath Song — CoComelon"),
+                yt("ZzAm13KsBCc", "Bath Song + More — CoComelon"),
+                yt("tgFynI0l06U", "Old MacDonald Had A Farm + More — CoComelon"),
+                yt("hqehvbhky5k", "On My Way To School — CoComelon"),
+                yt("wfwvrawZDs8", "Happy Birthday Song — CoComelon")
+            )
+        ),
+        ContentChannel(
+            id = "masha",
+            title = "Masha and the Bear",
+            iconRes = R.drawable.tile_masha,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCu59yAFE8fM0sVNTipR4edw"),
+            sortOrder = 40,
+            videos = listOf(
+                yt("qBp1rCz_yQU", "Recipe For Disaster — Masha and the Bear"),
+                yt("1Kt9RhxJdzk", "Recipe For Disaster (4K) — Masha and the Bear"),
+                yt("g9CMF85dAt4", "Laundry Day — Best Episodes Collection"),
+                yt("AV-UBYOGB_o", "Why Should We Play Games? — Best Episodes"),
+                yt("R6Oh1xUmB3E", "Honey Day — Cartoon Collection")
+            )
+        ),
+        ContentChannel(
+            id = "mansour",
+            title = "منصور",
+            iconRes = R.drawable.tile_mansour,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCqiIbqnJB0AVTg6Z6QnZNdw"),
+            sortOrder = 41,
+            videos = listOf(
+                yt("TohnJvGq-cU", "مغامرات منصور — مغامرات مشوقة الجزء 7"),
+                yt("A1edNxaVICE", "مغامرات منصور — مغامرات مشوقة الجزء 6"),
+                yt("T1AlwoEdxGo", "مغامرات منصور — مغامرات مشوقة الجزء 5"),
+                yt("l5LwMtanIg8", "مغامرات منصور — مغامرات مشوقة الجزء 4"),
+                yt("qbrHu-vkXiI", "مغامرات منصور — الحلقات المميزة ج7")
+            )
+        ),
         // Later ajza — default off for preschool installs; parent can enable.
         playlistChannel(
             id = "dawood_tabarak",
             title = "داوود — جزء تبارك",
             icon = R.drawable.tile_dawood,
-            order = 39,
+            order = 50,
             playlistId = "PLKhm8Z5pXdOXqBC9Gmh2MVTEVQj6x_4or",
             enabled = false
         ),
@@ -584,7 +638,7 @@ object DefaultChannels {
             id = "dawood_tabarak_plain",
             title = "داوود — جزء تبارك بدون تكرار",
             icon = R.drawable.tile_dawood,
-            order = 40,
+            order = 51,
             playlistId = "PLKhm8Z5pXdOWcPJqYwIEy3cySbyATyyLE",
             enabled = false
         ),
@@ -592,7 +646,7 @@ object DefaultChannels {
             id = "dawood_tabarak_memorize",
             title = "داوود — حفظ جزء تبارك",
             icon = R.drawable.tile_dawood,
-            order = 41,
+            order = 52,
             playlistId = "PLKhm8Z5pXdOXR75WBeBFDve5gSR_wfA1o",
             enabled = false
         ),
@@ -600,7 +654,7 @@ object DefaultChannels {
             id = "dawood_juz_28",
             title = "داوود — جزء ٢٨",
             icon = R.drawable.tile_dawood,
-            order = 42,
+            order = 53,
             playlistId = "PLKhm8Z5pXdOWx9JleIpX8EakeXcwLFTvm",
             enabled = false
         ),
@@ -608,7 +662,7 @@ object DefaultChannels {
             id = "dawood_juz_27",
             title = "داوود — جزء ٢٧",
             icon = R.drawable.tile_dawood,
-            order = 43,
+            order = 54,
             playlistId = "PLKhm8Z5pXdOUiE1L6BBQAYIn-phTTHNpT",
             enabled = false
         ),
@@ -616,7 +670,7 @@ object DefaultChannels {
             id = "dawood_juz_26",
             title = "داوود — جزء ٢٦",
             icon = R.drawable.tile_dawood,
-            order = 44,
+            order = 55,
             playlistId = "PLJBjyx9DErqk", // verified short YouTube playlist id for Juz 26
             enabled = false
         )
