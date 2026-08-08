@@ -46,7 +46,14 @@ object YoutubeUrlParser {
         return null
     }
 
+    /**
+     * Grid-sized thumb (320x180). Prefer over hqdefault for list binds to cut decode/bandwidth.
+     */
     fun defaultThumbnail(videoId: String): String =
+        "https://img.youtube.com/vi/$videoId/mqdefault.jpg"
+
+    /** Larger still (480x360) for player / Watch Next chrome when needed. */
+    fun hqThumbnail(videoId: String): String =
         "https://img.youtube.com/vi/$videoId/hqdefault.jpg"
 
     fun parseVideoIdsCsv(csv: String?): List<String> {

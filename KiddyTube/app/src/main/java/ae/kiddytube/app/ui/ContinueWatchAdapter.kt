@@ -11,8 +11,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.R
-import coil.load
-import coil.transform.RoundedCornersTransformation
 
 class ContinueWatchAdapter(
     private val onClick: (RecentWatchItem, VideoItem) -> Unit
@@ -56,14 +54,9 @@ class ContinueWatchAdapter(
                 itemView.context.getString(R.string.a11y_continue_watch_tile, video.title)
             val url = video.youtubeThumbnail() ?: video.thumbnailUrl ?: recent.thumbnailUrl
             if (url != null) {
-                thumb.load(url) {
-                    crossfade(true)
-                    placeholder(R.drawable.tile_placeholder)
-                    error(R.drawable.tile_placeholder)
-                    transformations(RoundedCornersTransformation(cornerPx))
-                }
+                TileImageLoad.loadUrl(thumb, url, R.drawable.tile_placeholder)
             } else {
-                thumb.setImageResource(R.drawable.tile_placeholder)
+                TileImageLoad.clear(thumb)
             }
             itemView.setOnClickListener { onClick(recent, video) }
             itemView.setOnFocusChangeListener { v, hasFocus ->

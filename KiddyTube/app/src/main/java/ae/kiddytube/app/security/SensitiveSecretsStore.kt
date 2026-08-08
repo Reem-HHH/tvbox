@@ -34,16 +34,22 @@ class EncryptedSensitiveSecretsStore(
         pinHash = prefs.getString(KEY_HASH, null)?.ifBlank { null }
     )
 
+    /** Force MasterKey + EncryptedSharedPreferences init off the UI critical path. */
+    fun prefetch() {
+        prefs
+    }
+
     override fun write(secrets: SensitiveSecrets) {
+        // apply() avoids fsync on every catalog bootstrap write; DataStore still persists catalog.
         prefs.edit()
             .putString(KEY_API, secrets.youtubeApiKey.orEmpty())
             .putString(KEY_SALT, secrets.pinSalt.orEmpty())
             .putString(KEY_HASH, secrets.pinHash.orEmpty())
-            .commit()
+            .apply()
     }
 
     override fun clear() {
-        prefs.edit().clear().commit()
+        prefs.edit().clear().apply()
     }
 
     /**

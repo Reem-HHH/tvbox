@@ -192,9 +192,14 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = _settings;
+    final isTablet = MediaQuery.sizeOf(context).shortestSide >= 600;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent settings'),
+        title: Text(
+          'Parent settings',
+          style: TextStyle(fontSize: isTablet ? 22 : 18),
+        ),
+        toolbarHeight: isTablet ? 64 : kToolbarHeight,
         actions: [
           TextButton(
             onPressed: () {
@@ -207,118 +212,143 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
       ),
       body: settings == null
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                if (_status != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(_status!, style: const TextStyle(color: Color(0xFF1565C0))),
+          : Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isTablet ? 720 : double.infinity,
+                ),
+                child: ListView(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 28 : 16,
+                    vertical: 16,
                   ),
-                ListTile(
-                  title: const Text('Change PIN'),
-                  subtitle: Text(
-                    settings.pinChangedFromDefault
-                        ? 'Custom PIN set'
-                        : 'Default dev PIN is 2580 until changed',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _changePin,
-                ),
-                SwitchListTile(
-                  title: const Text('Release ready'),
-                  subtitle: Text(
-                    settings.pinChangedFromDefault
-                        ? 'Reject factory PIN after unlock'
-                        : 'Change PIN first',
-                  ),
-                  value: settings.releaseReady,
-                  onChanged: settings.pinChangedFromDefault
-                      ? _toggleReleaseReady
-                      : null,
-                ),
-                ListTile(
-                  title: const Text('YouTube API key'),
-                  subtitle: Text(
-                    (settings.youtubeApiKey?.isNotEmpty ?? false)
-                        ? 'Saved (hidden)'
-                        : 'Not set — needed for playlist refresh',
-                  ),
-                  trailing: const Icon(Icons.chevron_right),
-                  onTap: _editApiKey,
-                ),
-                ListTile(
-                  title: const Text('Refresh playlists'),
-                  subtitle: const Text('Sync YouTube playlist items (API key)'),
-                  trailing: _busy
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh),
-                  onTap: _busy ? null : _refreshPlaylists,
-                ),
-                ListTile(
-                  title: const Text('Home mode'),
-                  subtitle: Text(
-                    settings.homeLibraryMode == HomeLibraryMode.mixVideos
-                        ? 'Mix'
-                        : 'Shows',
-                  ),
-                  trailing: SegmentedButton<HomeLibraryMode>(
-                    segments: const [
-                      ButtonSegment(
-                        value: HomeLibraryMode.channels,
-                        label: Text('Shows'),
-                      ),
-                      ButtonSegment(
-                        value: HomeLibraryMode.mixVideos,
-                        label: Text('Mix'),
-                      ),
-                    ],
-                    selected: {settings.homeLibraryMode},
-                    onSelectionChanged: (s) => _setHomeMode(s.first),
-                  ),
-                ),
-                ListTile(
-                  title: const Text('Clear continue watching'),
-                  trailing: const Icon(Icons.delete_outline),
-                  onTap: _clearContinue,
-                ),
-                ListTile(
-                  title: const Text('Export / share catalog JSON'),
-                  trailing: const Icon(Icons.ios_share),
-                  onTap: _exportCatalog,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Channels',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-                const SizedBox(height: 8),
-                ...settings.channels.map(
-                  (ch) => Column(
-                    children: [
-                      SwitchListTile(
-                        title: Text(ch.title),
-                        subtitle: Text(
-                          '${ch.enabled ? 'ON' : 'OFF'} · ${ch.videos.length} videos'
-                          '${ch.youtubePlaylistId != null ? ' · playlist' : ''}',
+                  children: [
+                    if (_status != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          _status!,
+                          style: const TextStyle(color: Color(0xFF1565C0)),
                         ),
-                        value: ch.enabled,
-                        onChanged: (_) => _toggleChannel(ch),
                       ),
-                      SwitchListTile(
-                        dense: true,
-                        title: const Text('Allow seek (FF/RW)'),
-                        value: ch.defaultAllowSeek,
-                        onChanged: ch.enabled ? (_) => _toggleSeek(ch) : null,
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Change PIN'),
+                      subtitle: Text(
+                        settings.pinChangedFromDefault
+                            ? 'Custom PIN set'
+                            : 'Default dev PIN is 2580 until changed',
                       ),
-                    ],
-                  ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _changePin,
+                    ),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Release ready'),
+                      subtitle: Text(
+                        settings.pinChangedFromDefault
+                            ? 'Reject factory PIN after unlock'
+                            : 'Change PIN first',
+                      ),
+                      value: settings.releaseReady,
+                      onChanged: settings.pinChangedFromDefault
+                          ? _toggleReleaseReady
+                          : null,
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('YouTube API key'),
+                      subtitle: Text(
+                        (settings.youtubeApiKey?.isNotEmpty ?? false)
+                            ? 'Saved (hidden)'
+                            : 'Not set — needed for playlist refresh',
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: _editApiKey,
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Refresh playlists'),
+                      subtitle:
+                          const Text('Sync YouTube playlist items (API key)'),
+                      trailing: _busy
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh),
+                      onTap: _busy ? null : _refreshPlaylists,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Home mode',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SegmentedButton<HomeLibraryMode>(
+                        segments: const [
+                          ButtonSegment(
+                            value: HomeLibraryMode.channels,
+                            label: Text('Shows'),
+                          ),
+                          ButtonSegment(
+                            value: HomeLibraryMode.mixVideos,
+                            label: Text('Mix'),
+                          ),
+                        ],
+                        selected: {settings.homeLibraryMode},
+                        onSelectionChanged: (s) => _setHomeMode(s.first),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Clear continue watching'),
+                      trailing: const Icon(Icons.delete_outline),
+                      onTap: _clearContinue,
+                    ),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Export / share catalog JSON'),
+                      trailing: const Icon(Icons.ios_share),
+                      onTap: _exportCatalog,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Channels',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    ...settings.channels.map(
+                      (ch) => Column(
+                        children: [
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: Text(ch.title),
+                            subtitle: Text(
+                              '${ch.enabled ? 'ON' : 'OFF'} · ${ch.videos.length} videos'
+                              '${ch.youtubePlaylistId != null ? ' · playlist' : ''}',
+                            ),
+                            value: ch.enabled,
+                            onChanged: (_) => _toggleChannel(ch),
+                          ),
+                          SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            dense: true,
+                            title: const Text('Allow seek (FF/RW)'),
+                            value: ch.defaultAllowSeek,
+                            onChanged:
+                                ch.enabled ? (_) => _toggleSeek(ch) : null,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
     );
   }

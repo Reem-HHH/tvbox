@@ -289,7 +289,7 @@ class PlayerActivity : AppCompatActivity() {
                 videoId = resolvedId,
                 channelId = channelId,
                 title = title.ifBlank { resolvedId },
-                thumbnailUrl = youtubeId?.let { YoutubeUrlParser.defaultThumbnail(it) },
+                thumbnailUrl = youtubeId?.let { YoutubeUrlParser.hqThumbnail(it) },
                 youtubeVideoId = youtubeId?.ifBlank { null },
                 directUrl = directUrl?.ifBlank { null },
                 watchedAtMs = System.currentTimeMillis(),
