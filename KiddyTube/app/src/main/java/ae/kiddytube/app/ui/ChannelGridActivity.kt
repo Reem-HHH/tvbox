@@ -13,7 +13,6 @@ import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.KiddyTubeApp
@@ -51,6 +50,9 @@ class ChannelGridActivity : AppCompatActivity() {
     private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
     private var settings: CatalogSettings = CatalogSettings()
+    private var lastCatalogFingerprint: String? = null
+    private var lastContinueFingerprint: String? = null
+    private var homeGridReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,7 +99,7 @@ class ChannelGridActivity : AppCompatActivity() {
         }
         videoAdapter = VideoGridAdapter { item -> openMixVideo(item) }
         grid.adapter = channelAdapter
-        grid.layoutManager = GridLayoutManager(this, spanCount())
+        grid.layoutManager = TvGridLayoutManager(this, spanCount())
         grid.clipToPadding = false
         grid.clipChildren = false
         grid.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
@@ -110,6 +112,7 @@ class ChannelGridActivity : AppCompatActivity() {
         continueList.clipChildren = false
         continueList.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
         continueList.isFocusable = true
+        wireHeaderFocusDown(showContinue = false)
 
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
@@ -219,18 +222,15 @@ class ChannelGridActivity : AppCompatActivity() {
 
     private fun reflowSpans() {
         val spans = spanCount()
-        val lm = grid.layoutManager as? GridLayoutManager
+        val lm = grid.layoutManager as? TvGridLayoutManager
         if (lm != null) {
             if (lm.spanCount != spans) lm.spanCount = spans
         } else {
-            grid.layoutManager = GridLayoutManager(this, spans)
+            grid.layoutManager = TvGridLayoutManager(this, spans)
         }
     }
 
-    private fun isTelevision(): Boolean {
-        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
-    }
+    private fun isTelevision(): Boolean = TvUi.isTelevision(this)
 
     private fun spanCount(): Int {
         val isTv = isTelevision()
@@ -246,6 +246,30 @@ class ChannelGridActivity : AppCompatActivity() {
             else -> 2
         }
     }
+
+    private fun wireHeaderFocusDown(showContinue: Boolean) {
+        val target = if (showContinue) R.id.continueWatchingList else R.id.grid
+        syncStatus.nextFocusDownId = target
+        homeModeToggle.nextFocusDownId = target
+        parentSettings.nextFocusDownId = target
+        grid.nextFocusUpId = if (showContinue) R.id.continueWatchingList else View.NO_ID
+    }
+
+    private fun catalogFingerprint(settings: CatalogSettings): String = buildString {
+        append(settings.homeLibraryMode.name)
+        for (ch in settings.channels) {
+            append('|').append(ch.id)
+                .append(':').append(ch.enabled)
+                .append(':').append(ch.videos.size)
+            ch.videos.firstOrNull()?.let { append(':').append(it.id) }
+            ch.videos.lastOrNull()?.let { append(':').append(it.id) }
+        }
+    }
+
+    private fun continueFingerprint(items: List<Pair<RecentWatchItem, VideoItem>>): String =
+        items.joinToString("|") { (recent, video) ->
+            "${video.id}:${recent.watchedAtMs}:${recent.positionMs}"
+        }
 
     private fun updateHomeModeChip() {
         val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
@@ -282,15 +306,10 @@ class ChannelGridActivity : AppCompatActivity() {
         reflowSpans()
         val liveFocus = GridFocus.capturePosition(grid)
         val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
+        lastCatalogFingerprint = catalogFingerprint(settings)
 
         lifecycleScope.launch {
-            val recent = app.recentWatchStore.current()
-            val playable = RecentWatchLogic.resolvePlayable(recent, settings)
-            continueAdapter.submit(playable)
-            val showContinue = playable.isNotEmpty()
-            continueSection.visibility = if (showContinue) View.VISIBLE else View.GONE
-            // Avoid trapping D-pad up when the continue row is gone.
-            grid.nextFocusUpId = if (showContinue) R.id.continueWatchingList else View.NO_ID
+            refreshContinueRow()
         }
 
         if (mix) {
@@ -327,6 +346,7 @@ class ChannelGridActivity : AppCompatActivity() {
                     }
                 }
             }
+            homeGridReady = true
             return
         }
 
@@ -358,6 +378,21 @@ class ChannelGridActivity : AppCompatActivity() {
                 focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
             }
         }
+        homeGridReady = true
+    }
+
+    private suspend fun refreshContinueRow() {
+        val app = application as KiddyTubeApp
+        val recent = app.recentWatchStore.current()
+        val playable = RecentWatchLogic.resolvePlayable(recent, settings)
+        val fingerprint = continueFingerprint(playable)
+        if (fingerprint != lastContinueFingerprint) {
+            lastContinueFingerprint = fingerprint
+            continueAdapter.submit(playable)
+        }
+        val showContinue = playable.isNotEmpty()
+        continueSection.visibility = if (showContinue) View.VISIBLE else View.GONE
+        wireHeaderFocusDown(showContinue)
     }
 
     private fun openMixVideo(item: PlayableVideo) {
@@ -429,7 +464,13 @@ class ChannelGridActivity : AppCompatActivity() {
                 // continue
             }
             settings = app.catalogRepository.current()
-            render(focusFirstIfNeeded = false)
+            val fingerprint = catalogFingerprint(settings)
+            if (!homeGridReady || fingerprint != lastCatalogFingerprint) {
+                render(focusFirstIfNeeded = false)
+            } else {
+                // Keep Mix/Shows scroll + focus; only refresh Continue Watching / focus wiring.
+                refreshContinueRow()
+            }
             app.syncWatchNext()
         }
     }

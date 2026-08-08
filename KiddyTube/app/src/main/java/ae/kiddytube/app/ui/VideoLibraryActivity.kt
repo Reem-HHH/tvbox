@@ -11,7 +11,6 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
@@ -36,6 +35,8 @@ class VideoLibraryActivity : AppCompatActivity() {
     private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
     private var channelId: String = ""
+    private var lastLibraryFingerprint: String? = null
+    private var libraryReady = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,10 +67,11 @@ class VideoLibraryActivity : AppCompatActivity() {
             consumeBack = true
         )
         parentSettings.setOnClickListener { parentUnlock.beginParentAccess() }
+        parentSettings.nextFocusDownId = R.id.grid
 
         adapter = VideoGridAdapter { item -> openPlayer(item) }
         grid.adapter = adapter
-        grid.layoutManager = GridLayoutManager(this, spanCount())
+        grid.layoutManager = TvGridLayoutManager(this, spanCount())
         grid.clipChildren = false
         grid.clipToPadding = false
         grid.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
@@ -117,18 +119,15 @@ class VideoLibraryActivity : AppCompatActivity() {
 
     private fun reflowSpans() {
         val spans = spanCount()
-        val lm = grid.layoutManager as? GridLayoutManager
+        val lm = grid.layoutManager as? TvGridLayoutManager
         if (lm != null) {
             if (lm.spanCount != spans) lm.spanCount = spans
         } else {
-            grid.layoutManager = GridLayoutManager(this, spans)
+            grid.layoutManager = TvGridLayoutManager(this, spans)
         }
     }
 
-    private fun isTelevision(): Boolean {
-        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
-    }
+    private fun isTelevision(): Boolean = TvUi.isTelevision(this)
 
     private fun spanCount(): Int {
         val isTv = isTelevision()
@@ -141,7 +140,7 @@ class VideoLibraryActivity : AppCompatActivity() {
         }
     }
 
-    private fun reload(focusFirst: Boolean = false) {
+    private fun reload(focusFirst: Boolean = false, force: Boolean = false) {
         lifecycleScope.launch {
             val app = application as KiddyTubeApp
             try {
@@ -156,6 +155,15 @@ class VideoLibraryActivity : AppCompatActivity() {
             }
             val videos = channel.videos.newestFirst()
                 .map { PlayableVideo(channelId, it) }
+            val fingerprint = buildString {
+                append(channelId).append(':').append(videos.size)
+                videos.firstOrNull()?.video?.id?.let { append(':').append(it) }
+                videos.lastOrNull()?.video?.id?.let { append(':').append(it) }
+            }
+            if (!force && libraryReady && fingerprint == lastLibraryFingerprint) {
+                return@launch
+            }
+            lastLibraryFingerprint = fingerprint
             val liveFocus = GridFocus.capturePosition(grid)
             adapter.submit(videos)
             emptyMessage.visibility = if (videos.isEmpty()) View.VISIBLE else View.GONE
@@ -170,6 +178,7 @@ class VideoLibraryActivity : AppCompatActivity() {
                     GridFocus.restore(grid, rememberedIndex)
                 focusFirst && videos.isNotEmpty() -> GridFocus.requestGridDefault(grid)
             }
+            libraryReady = true
         }
     }
 
@@ -217,7 +226,7 @@ class VideoLibraryActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         ImmersiveMode.apply(this)
-        reload()
+        reload(force = false)
     }
 
     companion object {

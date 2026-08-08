@@ -56,7 +56,6 @@
             android:fontFamily="sans-serif-medium"
             android:maxLines="1"
             android:maxWidth="@dimen/sync_chip_max_width"
-            android:nextFocusDown="@id/continueWatchingList"
             android:paddingStart="16dp"
             android:paddingTop="8dp"
             android:paddingEnd="16dp"
@@ -75,7 +74,6 @@
             android:focusable="true"
             android:focusableInTouchMode="false"
             android:fontFamily="sans-serif-medium"
-            android:nextFocusDown="@id/continueWatchingList"
             android:paddingStart="14dp"
             android:paddingTop="10dp"
             android:paddingEnd="14dp"
@@ -94,7 +92,6 @@
             android:focusable="true"
             android:focusableInTouchMode="false"
             android:focusedByDefault="false"
-            android:nextFocusDown="@id/continueWatchingList"
             android:padding="12dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_parent_lock" />
