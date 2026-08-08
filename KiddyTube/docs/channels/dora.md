@@ -9,8 +9,8 @@ Preschool adventure series about Dora, her monkey friend Boots, Map, and **Backp
 
 ## What’s in the app
 
-- Official **uploads playlist** synced when online (can include trailers, shorts, live streams, or non-episode uploads—review after sync).
-- No hand-picked starter video list in seed (library comes from playlist sync).
+- Hand-picked **starters** from official Dora & Friends (theme, confidence, friendship, gentle scenes).
+- Official **uploads playlist** linked with Follow uploads **off** by default (lives/shorts/trailers on that feed—review before enabling).
 
 ## Audience
 

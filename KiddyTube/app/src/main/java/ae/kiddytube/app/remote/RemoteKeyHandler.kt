@@ -44,11 +44,11 @@ class RemoteKeyHandler(
             KeyEvent.KEYCODE_DPAD_CENTER,
             KeyEvent.KEYCODE_ENTER,
             KeyEvent.KEYCODE_NUMPAD_ENTER,
-            KeyEvent.KEYCODE_SPACE -> RemoteAction.EnsurePlaying
-
-            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> RemoteAction.TogglePlayPause
-            KeyEvent.KEYCODE_MEDIA_PLAY -> RemoteAction.EnsurePlaying
+            KeyEvent.KEYCODE_SPACE,
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
             KeyEvent.KEYCODE_MEDIA_PAUSE -> RemoteAction.TogglePlayPause
+
+            KeyEvent.KEYCODE_MEDIA_PLAY -> RemoteAction.EnsurePlaying
 
             KeyEvent.KEYCODE_DPAD_RIGHT,
             KeyEvent.KEYCODE_MEDIA_NEXT -> RemoteAction.NextItem
@@ -57,9 +57,13 @@ class RemoteKeyHandler(
             KeyEvent.KEYCODE_MEDIA_PREVIOUS -> RemoteAction.PreviousItem
 
             KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
-            KeyEvent.KEYCODE_FORWARD -> RemoteAction.SeekForward
+            KeyEvent.KEYCODE_FORWARD,
+            KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
+            KeyEvent.KEYCODE_MEDIA_STEP_FORWARD -> RemoteAction.SeekForward
 
-            KeyEvent.KEYCODE_MEDIA_REWIND -> RemoteAction.SeekBack
+            KeyEvent.KEYCODE_MEDIA_REWIND,
+            KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
+            KeyEvent.KEYCODE_MEDIA_STEP_BACKWARD -> RemoteAction.SeekBack
 
             KeyEvent.KEYCODE_VOLUME_UP -> {
                 audioManager.adjustStreamVolume(

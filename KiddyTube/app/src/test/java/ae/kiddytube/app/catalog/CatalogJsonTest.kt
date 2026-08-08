@@ -11,30 +11,61 @@ class CatalogJsonTest {
         "arabic_cartoons",
         "learn_arabic",
         "islamic_kids",
-        "playtime"
+        "playtime",
+        "fulla",
+        "dawood_juz_amma",
+        "dawood_juz_amma_plain",
+        "dawood_juz_amma_repeat",
+        "dawood_juz_amma_selection",
+        "dawood_juz_amma_memorize",
+        "dawood_juz_amma_3d",
+        "dawood_stories",
+        "dawood_teaches_me",
+        "dawood_and_me",
+        "dawood_secrets_industry",
+        "dawood_quranic_games",
+        "dawood_quran_quiz",
+        "dawood_tabarak",
+        "dawood_tabarak_plain",
+        "dawood_tabarak_memorize",
+        "dawood_juz_28",
+        "dawood_juz_27",
+        "dawood_juz_26"
     )
 
     private val showIds = listOf(
-        "barney",
+        "omar_hana",
+        "mini_muslim",
+        "dawood",
+        "kids_music",
         "spacetoon",
         "moda_modi",
-        "dora",
-        "fulla",
         "smarta",
-        "sara_duck",
-        "peppa",
+        "toyor_jana",
         "adam_mishmish",
-        "kiki_nadoush",
         "zakaria",
+        "kiki_nadoush",
         "rayan",
         "sweet_kalima",
         "abata",
+        "sara_duck",
+        "twirlywoos",
+        "barney",
+        "dora",
+        "peppa",
         "lego_duplo",
         "play_doh",
         "toy_kitchen",
         "dancing_fruit",
-        "mini_muslim",
-        "omar_hana"
+        "toyor_baby",
+        "pingu",
+        "daniel_tiger",
+        "hey_duggee",
+        "numberblocks",
+        "pocoyo",
+        "cocomelon",
+        "masha",
+        "mansour"
     )
 
     @Test
@@ -43,8 +74,8 @@ class CatalogJsonTest {
         val json = CatalogJson.encode(seed)
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
-        assertEquals("barney", decoded.first().id)
-        assertEquals("omar_hana", decoded.last().id)
+        assertEquals("omar_hana", decoded.first().id)
+        assertEquals("mansour", decoded.last().id)
     }
 
     @Test
@@ -57,18 +88,38 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionTenIncludesDancingFruit() {
-        assertEquals(10, DefaultChannels.SEED_VERSION)
+    fun seedVersionSixteenConsolidatesDawoodAndAddsKidsMusic() {
+        assertEquals(16, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
             assertFalse(seed.any { it.id == id })
         }
 
+        assertEquals("omar_hana", seed.first().id)
+        assertTrue(seed.first { it.id == "omar_hana" }.videos.any { it.id == "T6ggVnk1JZg" })
+
+        val dawood = seed.first { it.id == "dawood" }
+        assertEquals("داوود", dawood.title)
+        assertEquals("PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR", dawood.youtubePlaylistId)
+        assertFalse(dawood.followUploads)
+        assertEquals(R.drawable.tile_dawood, dawood.iconRes)
+        assertEquals(1, seed.count { it.id == "dawood" || it.id.startsWith("dawood_") })
+
+        val kidsMusic = seed.first { it.id == "kids_music" }
+        assertEquals("Kids Music", kidsMusic.title)
+        assertTrue(kidsMusic.youtubePlaylistId.isNullOrBlank())
+        assertFalse(kidsMusic.followUploads)
+        assertTrue(kidsMusic.videos.any { it.id == "wyOJfLSeZIE" })
+        assertTrue(kidsMusic.videos.any { it.id == "5wnNBQAkc-A" })
+        assertTrue(kidsMusic.videos.any { it.id == "ISSlEZyIRFw" })
+        assertEquals(R.drawable.tile_kids_music, kidsMusic.iconRes)
+
         val songs = seed.first { it.id == "spacetoon" }
         assertEquals("Spacetoon أناشيد", songs.title)
         assertTrue(songs.youtubePlaylistId.isNullOrBlank())
         assertTrue(songs.videos.any { it.id == "-_Kz-hseLkc" })
+        assertTrue(songs.videos.any { it.id == "dB95J8Pa49c" })
         assertTrue(songs.videos.none { it.id == "V2upg7iZvT0" })
 
         val moda = seed.first { it.id == "moda_modi" }
@@ -79,30 +130,62 @@ class CatalogJsonTest {
         assertEquals("Dora the Explorer", dora.title)
         assertEquals("UUkvPyGW-gsYucCK37UR0q2g", dora.youtubePlaylistId)
         assertFalse(dora.followUploads)
+        assertTrue(dora.videos.any { it.id == "7bqSFXuEUgo" })
 
-        val fulla = seed.first { it.id == "fulla" }
-        assertEquals("Fulla / فلة", fulla.title)
-        assertEquals("UUif2El0DYcJY9uP4DrST0Bw", fulla.youtubePlaylistId)
+        val toyorJana = seed.first { it.id == "toyor_jana" }
+        assertEquals("طيور الجنة", toyorJana.title)
+        assertTrue(toyorJana.videos.any { it.id == "7GgZjoF0D2I" })
 
-        val smarta = seed.first { it.id == "smarta" }
-        assertEquals("سمارتا وحقيبتها العجيبة", smarta.title)
-        assertTrue(smarta.youtubePlaylistId.isNullOrBlank())
-        assertTrue(smarta.videos.any { it.id == "USLdtIWQrLU" })
-        assertTrue(smarta.videos.any { it.id == "xIFNnxZD5IQ" })
-        assertEquals(11, smarta.videos.size)
+        val coco = seed.first { it.id == "cocomelon" }
+        assertEquals("UUbCmjCuTUZos6Inko4u57UQ", coco.youtubePlaylistId)
+        assertTrue(coco.videos.any { it.id == "e_04ZrNroTo" })
 
-        val fruit = seed.first { it.id == "dancing_fruit" }
-        assertEquals("Dancing Fruit", fruit.title)
-        assertTrue(fruit.youtubePlaylistId.isNullOrBlank())
-        assertTrue(fruit.videos.any { it.id == "7mR81x2Fk7g" })
-        assertTrue(fruit.videos.any { it.id == "kAxdvigZtw8" })
-        assertEquals(6, fruit.videos.size)
+        val masha = seed.first { it.id == "masha" }
+        assertTrue(masha.videos.any { it.id == "qBp1rCz_yQU" })
 
+        val mansour = seed.first { it.id == "mansour" }
+        assertEquals("منصور", mansour.title)
+        assertTrue(mansour.videos.any { it.id == "TohnJvGq-cU" })
+
+        assertEquals(R.drawable.tile_zakaria, seed.first { it.id == "zakaria" }.iconRes)
         assertTrue(seed.first { it.id == "adam_mishmish" }.videos.any { it.id == "FurzMF0L6QI" })
-        assertTrue(seed.first { it.id == "zakaria" }.videos.size == 5)
-        assertTrue(seed.first { it.id == "lego_duplo" }.videos.any { it.id == "fwg0UIw0Efs" })
-        assertTrue(seed.first { it.id == "omar_hana" }.videos.any { it.id == "T6ggVnk1JZg" })
-        assertFalse(seed.first { it.id == "omar_hana" }.youtubePlaylistId.isNullOrBlank())
+    }
+
+    @Test
+    fun mergeDropsSplitDawoodTilesForSingleHub() {
+        val legacySplit = listOf(
+            ContentChannel(
+                id = "dawood_juz_amma",
+                title = "داوود — جزء عم",
+                iconRes = R.drawable.tile_dawood,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR",
+                sortOrder = 2
+            ),
+            ContentChannel(
+                id = "dawood_stories",
+                title = "داوود — قصص",
+                iconRes = R.drawable.tile_dawood,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "PLKhm8Z5pXdOWeVW24vPIRcmyWJJI3JOLC",
+                sortOrder = 8
+            ),
+            ContentChannel(
+                id = "dawood_tabarak",
+                title = "داوود — جزء تبارك",
+                iconRes = R.drawable.tile_dawood,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "PLKhm8Z5pXdOXqBC9Gmh2MVTEVQj6x_4or",
+                enabled = true,
+                sortOrder = 50
+            )
+        )
+        val merged = DefaultChannels.mergeSeedUpdates(legacySplit)
+        assertFalse(merged.any { it.id.startsWith("dawood_") })
+        val hub = merged.first { it.id == "dawood" }
+        assertEquals("داوود", hub.title)
+        assertEquals("PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR", hub.youtubePlaylistId)
+        assertTrue(merged.any { it.id == "kids_music" })
     }
 
     @Test
@@ -126,7 +209,7 @@ class CatalogJsonTest {
         assertTrue(songs.videos.none { it.id == "old" })
         assertTrue(merged.any { it.id == "moda_modi" })
         assertTrue(merged.any { it.id == "dora" })
-        assertTrue(merged.any { it.id == "fulla" })
+        assertTrue(merged.any { it.id == "toyor_jana" })
         assertTrue(merged.any { it.id == "smarta" })
         assertTrue(merged.any { it.id == "omar_hana" })
     }
@@ -163,6 +246,14 @@ class CatalogJsonTest {
                 iconRes = R.drawable.tile_playtime,
                 sourceType = SourceType.YOUTUBE_VIDEO_LIST,
                 sortOrder = 9
+            ),
+            ContentChannel(
+                id = "fulla",
+                title = "Fulla / فلة",
+                iconRes = R.drawable.tile_fulla,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "UUif2El0DYcJY9uP4DrST0Bw",
+                sortOrder = 17
             )
         )
         val merged = DefaultChannels.mergeSeedUpdates(legacy)
@@ -170,11 +261,14 @@ class CatalogJsonTest {
             assertFalse(merged.any { it.id == id })
         }
         assertTrue(merged.any { it.id == "dora" })
-        assertTrue(merged.any { it.id == "fulla" })
+        assertTrue(merged.any { it.id == "toyor_jana" })
         assertTrue(merged.any { it.id == "smarta" })
         assertTrue(merged.any { it.id == "adam_mishmish" })
         assertTrue(merged.any { it.id == "omar_hana" })
         assertTrue(merged.any { it.id == "lego_duplo" })
+        assertTrue(merged.any { it.id == "cocomelon" })
+        assertTrue(merged.any { it.id == "masha" })
+        assertTrue(merged.any { it.id == "mansour" })
     }
 
     @Test
@@ -292,6 +386,21 @@ class CatalogJsonTest {
     }
 
     @Test
+    fun roundTripTitleContainingClosingBracket() {
+        val channel = DefaultChannels.seed().first().copy(
+            videos = listOf(
+                VideoItem(
+                    id = "abc123xyz__",
+                    title = "Surah [1] and part ] end",
+                    youtubeVideoId = "abc123xyz__"
+                )
+            )
+        )
+        val decoded = CatalogJson.decodeOrNull(CatalogJson.encode(listOf(channel)))
+        assertEquals("Surah [1] and part ] end", decoded!!.first().videos.first().title)
+    }
+
+    @Test
     fun roundTripFollowUploadsAndManualFlags() {
         val channel = DefaultChannels.seed().first().copy(
             followUploads = true,
@@ -309,8 +418,25 @@ class CatalogJsonTest {
         assertTrue(decoded.followUploads)
         assertTrue(decoded.playlistManagedByParent)
         assertTrue(decoded.videos.first().manual)
+        assertTrue(decoded.videos.first().allowSeek)
         assertEquals(DefaultChannels.iconResFor(channel.id), decoded.iconRes)
         assertEquals(decoded.iconRes, decoded.resolvedIconRes())
+    }
+
+    @Test
+    fun roundTripAllowSeekFalse() {
+        val channel = DefaultChannels.seed().first().copy(
+            videos = listOf(
+                VideoItem(
+                    id = "dQw4w9WgXcQ",
+                    title = "No seek",
+                    youtubeVideoId = "dQw4w9WgXcQ",
+                    allowSeek = false
+                )
+            )
+        )
+        val decoded = CatalogJson.decode(CatalogJson.encode(listOf(channel))).first()
+        assertEquals(false, decoded.videos.first().allowSeek)
     }
 
     @Test

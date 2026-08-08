@@ -11,6 +11,15 @@ class MediaUrlValidatorTest {
     fun acceptsDirectMedia() {
         assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/a.mp4"))
         assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/a.m3u8"))
+        assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/stream.mpd"))
+        assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/a.mp4?token=xyz"))
+    }
+
+    @Test
+    fun rejectsHttpsWithoutMediaExtension() {
+        assertFalse(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/video"))
+        assertFalse(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/watch.html"))
+        assertFalse(MediaUrlValidator.isDirectMediaUrl("https://example.com/"))
     }
 
     @Test
@@ -27,7 +36,30 @@ class MediaUrlValidatorTest {
             )
         )
         assertFalse(MediaUrlValidator.isDirectMediaUrl("https://www.youtube.com/watch?v=dQw4w9WgXcQ"))
+        assertFalse(MediaUrlValidator.isDirectMediaUrl("https://www.youtube.com/shorts/abcdef"))
         assertFalse(MediaUrlValidator.isDirectMediaUrl(null))
+    }
+
+    @Test
+    fun rejectsDropboxShareWithoutDlFlag() {
+        assertFalse(
+            MediaUrlValidator.isDirectMediaUrl("https://www.dropbox.com/s/abc123/kids.mp4")
+        )
+    }
+
+    @Test
+    fun acceptsMediaExtensionCaseAndTrailingSlashPath() {
+        assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/Kids.MP4"))
+        assertTrue(MediaUrlValidator.isDirectMediaUrl("https://cdn.example.com/stream.m3u8/"))
+    }
+
+    @Test
+    fun rejectsDocsViewerPages() {
+        assertFalse(
+            MediaUrlValidator.isDirectMediaUrl(
+                "https://docs.google.com/document/d/abc/edit"
+            )
+        )
     }
 }
 

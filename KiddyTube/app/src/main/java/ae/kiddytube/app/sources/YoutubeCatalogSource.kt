@@ -1,5 +1,6 @@
 package ae.kiddytube.app.sources
 
+import android.content.Context
 import ae.kiddytube.app.catalog.VideoItem
 import ae.kiddytube.app.catalog.newestFirst
 import kotlinx.coroutines.Dispatchers
@@ -13,7 +14,12 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
-class YoutubeCatalogSource {
+class YoutubeCatalogSource(
+    context: Context? = null
+) {
+    private val appContext = context?.applicationContext
+    @Volatile private var cachedCertSha1: String? = null
+
     suspend fun fetchPlaylistVideos(
         apiKey: String,
         playlistId: String,
@@ -143,12 +149,13 @@ class YoutubeCatalogSource {
             connectTimeout = 15_000
             readTimeout = 15_000
             requestMethod = "GET"
+            applyAndroidApiKeyHeaders(this)
         }
         return try {
             val code = conn.responseCode
             if (code !in 200..299) {
                 val err = conn.errorStream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                return Result.failure(IOException("HTTP $code ${err.take(200)}"))
+                return Result.failure(IOException(summarizeHttpError(code, err)))
             }
             Result.success(conn.inputStream.bufferedReader().use { it.readText() })
         } catch (e: Exception) {
@@ -158,7 +165,60 @@ class YoutubeCatalogSource {
         }
     }
 
+    private fun applyAndroidApiKeyHeaders(conn: HttpURLConnection) {
+        val ctx = appContext ?: return
+        conn.setRequestProperty("X-Android-Package", ctx.packageName)
+        val cert = cachedCertSha1
+            ?: AndroidAppIdentity.signingCertSha1Hex(ctx)?.also { cachedCertSha1 = it }
+        if (!cert.isNullOrBlank()) {
+            conn.setRequestProperty("X-Android-Cert", cert)
+        }
+    }
+
     companion object {
+        fun summarizeHttpError(code: Int, body: String): String {
+            val trimmed = body.trim()
+            if (trimmed.isEmpty()) return "HTTP $code"
+            val message = extractGoogleApiMessage(trimmed)
+            if (!message.isNullOrEmpty()) {
+                return "HTTP $code $message".take(220)
+            }
+            return "HTTP $code ${trimmed.take(180)}"
+        }
+
+        /** JVM-safe (no org.json) extract of Google API error.message. */
+        fun extractGoogleApiMessage(body: String): String? {
+            val key = "\"message\""
+            val keyAt = body.indexOf(key)
+            if (keyAt < 0) return null
+            var i = keyAt + key.length
+            while (i < body.length && body[i].isWhitespace()) i++
+            if (i >= body.length || body[i] != ':') return null
+            i++
+            while (i < body.length && body[i].isWhitespace()) i++
+            if (i >= body.length || body[i] != '"') return null
+            i++
+            val sb = StringBuilder()
+            while (i < body.length) {
+                val ch = body[i++]
+                when (ch) {
+                    '\\' -> {
+                        if (i >= body.length) break
+                        when (val esc = body[i++]) {
+                            '"', '\\', '/' -> sb.append(esc)
+                            'n' -> sb.append('\n')
+                            'r' -> sb.append('\r')
+                            't' -> sb.append('\t')
+                            else -> sb.append(esc)
+                        }
+                    }
+                    '"' -> return sb.toString().trim().ifEmpty { null }
+                    else -> sb.append(ch)
+                }
+            }
+            return null
+        }
+
         fun parseIso8601ToMillis(iso: String?): Long? {
             if (iso.isNullOrBlank()) return null
             val patterns = arrayOf(

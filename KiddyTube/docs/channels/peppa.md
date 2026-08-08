@@ -9,8 +9,8 @@ Global preschool cartoon about Peppa’s family—everyday preschool life, play,
 
 ## What’s in the app
 
-- Official **uploads playlist** (large; synced when online)
-- No separate curated starter list in seed
+- Hand-picked **official starters** (favorite sounds episode pack, muddy puddles songs, train/LEGO play). Skips odd recent “Tales” gags.
+- Official **uploads playlist** linked with Follow uploads **off** by default — enable only after parent review.
 
 ## Audience
 
