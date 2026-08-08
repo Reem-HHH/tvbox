@@ -9,6 +9,33 @@ enum class SourceType {
     DIRECT_URL
 }
 
+/** Kids home: channel tiles vs a flat shuffled video mix. */
+enum class HomeLibraryMode {
+    CHANNELS,
+    MIX_VIDEOS;
+
+    companion object {
+        fun fromStored(raw: String?): HomeLibraryMode =
+            entries.firstOrNull { it.name == raw } ?: CHANNELS
+    }
+}
+
+/** Video tile bound to its owning channel (mix home + library → player). */
+data class PlayableVideo(
+    val channelId: String,
+    val video: VideoItem
+)
+
+/** Flatten enabled channel libraries and shuffle with a stable seed. */
+fun flattenEnabledVideos(
+    channels: List<ContentChannel>,
+    seed: Long
+): List<PlayableVideo> =
+    channels
+        .filter { it.enabled }
+        .flatMap { ch -> ch.videos.map { PlayableVideo(ch.id, it) } }
+        .shuffled(kotlin.random.Random(seed))
+
 data class VideoItem(
     val id: String,
     val title: String,

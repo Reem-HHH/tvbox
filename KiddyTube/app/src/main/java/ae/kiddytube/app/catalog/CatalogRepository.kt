@@ -37,7 +37,8 @@ data class CatalogSettings(
     val lockedUntilMs: Long = 0L,
     val releaseReady: Boolean = false,
     val lastSyncMs: Long = 0L,
-    val seedVersion: Int = 0
+    val seedVersion: Int = 0,
+    val homeLibraryMode: HomeLibraryMode = HomeLibraryMode.CHANNELS
 )
 
 class CatalogRepository(
@@ -52,6 +53,8 @@ class CatalogRepository(
     @Volatile private var migrationDone = false
     /** Fixed for this process so home grid order is stable until cold start. */
     private val homeChannelShuffleSeed = Random.nextLong()
+    /** Fixed for this process so mix-home video order is stable until cold start. */
+    private val homeVideoShuffleSeed = Random.nextLong()
 
     val settingsFlow: Flow<CatalogSettings> = store.data.map { it.toSettings() }
 
@@ -108,6 +111,9 @@ class CatalogRepository(
 
     fun enabledChannels(settings: CatalogSettings): List<ContentChannel> =
         settings.channels.filter { it.enabled }.shuffled(Random(homeChannelShuffleSeed))
+
+    fun flatHomeVideos(settings: CatalogSettings): List<PlayableVideo> =
+        flattenEnabledVideos(settings.channels, homeVideoShuffleSeed)
 
     fun effectiveApiKey(settings: CatalogSettings): String? =
         ApiKeyResolver.effective(settings.youtubeApiKey)
@@ -483,6 +489,7 @@ class CatalogRepository(
         prefs[Keys.RELEASE_READY] = next.releaseReady && next.pinChangedFromDefault
         prefs[Keys.LAST_SYNC] = next.lastSyncMs
         prefs[Keys.SEED_VERSION] = next.seedVersion
+        prefs[Keys.HOME_LIBRARY_MODE] = next.homeLibraryMode.name
     }
 
     private fun Preferences.toSettings(): CatalogSettings {
@@ -513,7 +520,8 @@ class CatalogRepository(
             lockedUntilMs = this[Keys.LOCKED_UNTIL] ?: 0L,
             releaseReady = this[Keys.RELEASE_READY] ?: false,
             lastSyncMs = this[Keys.LAST_SYNC] ?: 0L,
-            seedVersion = this[Keys.SEED_VERSION] ?: 0
+            seedVersion = this[Keys.SEED_VERSION] ?: 0,
+            homeLibraryMode = HomeLibraryMode.fromStored(this[Keys.HOME_LIBRARY_MODE])
         )
     }
 
@@ -530,5 +538,6 @@ class CatalogRepository(
         val RELEASE_READY = booleanPreferencesKey("release_ready")
         val LAST_SYNC = longPreferencesKey("last_sync")
         val SEED_VERSION = intPreferencesKey("seed_version")
+        val HOME_LIBRARY_MODE = stringPreferencesKey("home_library_mode")
     }
 }

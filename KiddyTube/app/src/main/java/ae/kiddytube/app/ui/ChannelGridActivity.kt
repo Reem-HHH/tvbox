@@ -20,6 +20,8 @@ import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.ApiKeyResolver
 import ae.kiddytube.app.catalog.CatalogSettings
+import ae.kiddytube.app.catalog.HomeLibraryMode
+import ae.kiddytube.app.catalog.PlayableVideo
 import ae.kiddytube.app.catalog.RecentWatchLogic
 import ae.kiddytube.app.catalog.SyncStatus
 import ae.kiddytube.app.catalog.VideoItem
@@ -40,8 +42,10 @@ class ChannelGridActivity : AppCompatActivity() {
     private lateinit var emptyMessage: TextView
     private lateinit var brandTitle: TextView
     private lateinit var syncStatus: TextView
+    private lateinit var homeModeToggle: TextView
     private lateinit var parentSettings: ImageButton
-    private lateinit var adapter: ChannelGridAdapter
+    private lateinit var channelAdapter: ChannelGridAdapter
+    private lateinit var videoAdapter: VideoGridAdapter
     private lateinit var continueAdapter: ContinueWatchAdapter
     private lateinit var pinManager: ParentPinManager
     private lateinit var parentUnlock: ParentUnlockCoordinator
@@ -58,8 +62,11 @@ class ChannelGridActivity : AppCompatActivity() {
         emptyMessage = findViewById(R.id.emptyMessage)
         brandTitle = findViewById(R.id.brandTitle)
         syncStatus = findViewById(R.id.syncStatus)
+        homeModeToggle = findViewById(R.id.homeModeToggle)
         parentSettings = findViewById(R.id.parentSettings)
         brandTitle.text = getString(R.string.app_name)
+        homeModeToggle.visibility = View.VISIBLE
+        homeModeToggle.setOnClickListener { toggleHomeMode() }
 
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)
@@ -79,7 +86,7 @@ class ChannelGridActivity : AppCompatActivity() {
             }
         )
 
-        adapter = ChannelGridAdapter { channel ->
+        channelAdapter = ChannelGridAdapter { channel ->
             if (!OpenDebouncer.tryOpen("channel:${channel.id}")) return@ChannelGridAdapter
             NavFocusMemory.rememberChannel(channel.id)
             startActivity(
@@ -88,7 +95,8 @@ class ChannelGridActivity : AppCompatActivity() {
                     .putExtra(VideoLibraryActivity.EXTRA_CHANNEL_TITLE, channel.title)
             )
         }
-        grid.adapter = adapter
+        videoAdapter = VideoGridAdapter { item -> openMixVideo(item) }
+        grid.adapter = channelAdapter
         grid.layoutManager = GridLayoutManager(this, spanCount())
         grid.clipToPadding = false
         grid.clipChildren = false
@@ -227,12 +235,37 @@ class ChannelGridActivity : AppCompatActivity() {
     private fun spanCount(): Int {
         val isTv = isTelevision()
         val widthDp = resources.configuration.screenWidthDp
+        val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
         return when {
-            // TV: 3 columns so channel thumbs read larger at 10-foot distance.
             isTv -> 3
+            mix && widthDp >= 900 -> 5
+            mix && widthDp >= 600 -> 3
+            mix -> 2
             widthDp >= 900 -> 6
             widthDp >= 600 -> 4
             else -> 2
+        }
+    }
+
+    private fun updateHomeModeChip() {
+        val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
+        homeModeToggle.text = getString(if (mix) R.string.home_mode_mix else R.string.home_mode_shows)
+        homeModeToggle.contentDescription = getString(
+            if (mix) R.string.a11y_home_mode_mix else R.string.a11y_home_mode_shows
+        )
+    }
+
+    private fun toggleHomeMode() {
+        lifecycleScope.launch {
+            val app = application as KiddyTubeApp
+            val next = if (settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS) {
+                HomeLibraryMode.CHANNELS
+            } else {
+                HomeLibraryMode.MIX_VIDEOS
+            }
+            app.catalogRepository.update { it.copy(homeLibraryMode = next) }
+            settings = app.catalogRepository.current()
+            render(focusFirstIfNeeded = true)
         }
     }
 
@@ -241,13 +274,11 @@ class ChannelGridActivity : AppCompatActivity() {
         focusFirstIfNeeded: Boolean = false
     ) {
         val app = application as KiddyTubeApp
-        val channels = app.catalogRepository.enabledChannels(settings)
+        updateHomeModeChip()
+        reflowSpans()
         val liveFocus = GridFocus.capturePosition(grid)
-        val rememberedId = NavFocusMemory.lastChannelId
-        adapter.submit(channels)
-        val rememberedAfter = rememberedId?.let { adapter.indexOfChannelId(it) }
-            ?.takeIf { it >= 0 }
-            ?: RecyclerView.NO_POSITION
+        val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
+
         lifecycleScope.launch {
             val recent = app.recentWatchStore.current()
             val playable = RecentWatchLogic.resolvePlayable(recent, settings)
@@ -257,6 +288,51 @@ class ChannelGridActivity : AppCompatActivity() {
             // Avoid trapping D-pad up when the continue row is gone.
             grid.nextFocusUpId = if (showContinue) R.id.continueWatchingList else View.NO_ID
         }
+
+        if (mix) {
+            if (grid.adapter !== videoAdapter) grid.adapter = videoAdapter
+            val videos = app.catalogRepository.flatHomeVideos(settings)
+            videoAdapter.submit(videos)
+            val rememberedAfter = NavFocusMemory.lastHomeVideoId
+                ?.let { videoAdapter.indexOfVideoId(it) }
+                ?.takeIf { it >= 0 }
+                ?: RecyclerView.NO_POSITION
+            val channels = app.catalogRepository.enabledChannels(settings)
+            when {
+                channels.isEmpty() -> {
+                    emptyMessage.visibility = View.VISIBLE
+                    emptyMessage.text = getString(R.string.empty_channels)
+                }
+                videos.isEmpty() -> {
+                    emptyMessage.visibility = View.VISIBLE
+                    val noKey = ApiKeyResolver.effective(settings.youtubeApiKey).isNullOrBlank()
+                    emptyMessage.text = getString(
+                        if (noKey) R.string.empty_no_api_key else R.string.empty_mix_videos
+                    )
+                }
+                else -> {
+                    emptyMessage.visibility = View.GONE
+                    when {
+                        restoreFocusAt != RecyclerView.NO_POSITION ->
+                            GridFocus.restore(grid, restoreFocusAt)
+                        liveFocus != RecyclerView.NO_POSITION ->
+                            GridFocus.restore(grid, liveFocus)
+                        rememberedAfter != RecyclerView.NO_POSITION ->
+                            GridFocus.restore(grid, rememberedAfter)
+                        focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
+                    }
+                }
+            }
+            return
+        }
+
+        if (grid.adapter !== channelAdapter) grid.adapter = channelAdapter
+        val channels = app.catalogRepository.enabledChannels(settings)
+        channelAdapter.submit(channels)
+        val rememberedAfter = NavFocusMemory.lastChannelId
+            ?.let { channelAdapter.indexOfChannelId(it) }
+            ?.takeIf { it >= 0 }
+            ?: RecyclerView.NO_POSITION
         if (channels.isEmpty()) {
             emptyMessage.visibility = View.VISIBLE
             emptyMessage.text = getString(R.string.empty_channels)
@@ -278,6 +354,22 @@ class ChannelGridActivity : AppCompatActivity() {
                 focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
             }
         }
+    }
+
+    private fun openMixVideo(item: PlayableVideo) {
+        val video = item.video
+        if (!OpenDebouncer.tryOpen("mix:${item.channelId}:${video.id}")) return
+        NavFocusMemory.rememberHomeVideo(video.id)
+        NavFocusMemory.rememberVideo(item.channelId, video.id)
+        startActivity(
+            Intent(this, PlayerActivity::class.java)
+                .putExtra(PlayerActivity.EXTRA_TITLE, video.title)
+                .putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, video.youtubeVideoId)
+                .putExtra(PlayerActivity.EXTRA_DIRECT_URL, video.directUrl)
+                .putExtra(PlayerActivity.EXTRA_ALLOW_SEEK, video.allowSeek)
+                .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, item.channelId)
+                .putExtra(PlayerActivity.EXTRA_VIDEO_ID, video.id)
+        )
     }
 
     private fun openContinueWatch(recent: RecentWatchItem, video: VideoItem) {

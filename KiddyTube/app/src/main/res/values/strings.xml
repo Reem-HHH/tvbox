@@ -3,7 +3,13 @@
     <string name="app_name">KiddyTube</string>
     <string name="empty_channels">No channels yet.\nAsk a parent to turn some on.</string>
     <string name="empty_videos">No videos yet.\nAsk a parent to sync playlists or add links.</string>
+    <string name="empty_mix_videos">No videos yet.\nAsk a parent to sync playlists or turn channels on.</string>
     <string name="empty_no_api_key">Connect to the internet and set a YouTube API key in Parent settings to fill channels.</string>
+    <string name="home_mode_shows">Shows</string>
+    <string name="home_mode_mix">Mix</string>
+    <string name="a11y_home_mode_shows">Home shows channels. Switch to mixed videos.</string>
+    <string name="a11y_home_mode_mix">Home shows mixed videos. Switch to channels.</string>
+    <string name="parent_home_mix_videos">Home: mix all videos</string>
     <string name="sync_updating">Updating channels…</string>
     <string name="sync_updated">Channels updated!</string>
     <string name="sync_partial">Some channels updated — others failed</string>

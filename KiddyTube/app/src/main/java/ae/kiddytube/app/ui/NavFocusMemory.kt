@@ -9,11 +9,20 @@ object NavFocusMemory {
     var lastChannelId: String? = null
         private set
 
+    @Volatile
+    var lastHomeVideoId: String? = null
+        private set
+
     private val lastVideoByChannel = mutableMapOf<String, String>()
 
     fun rememberChannel(channelId: String) {
         if (channelId.isBlank()) return
         lastChannelId = channelId
+    }
+
+    fun rememberHomeVideo(videoId: String) {
+        if (videoId.isBlank()) return
+        lastHomeVideoId = videoId
     }
 
     fun rememberVideo(channelId: String, videoId: String) {

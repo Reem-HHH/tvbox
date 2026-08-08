@@ -17,4 +17,10 @@ class NavFocusMemoryTest {
         assertEquals("vid1", NavFocusMemory.lastVideoId("omar_hana"))
         assertEquals("vid2", NavFocusMemory.lastVideoId("peppa"))
     }
+
+    @Test
+    fun remembersHomeVideoForMixMode() {
+        NavFocusMemory.rememberHomeVideo("home_vid")
+        assertEquals("home_vid", NavFocusMemory.lastHomeVideoId)
+    }
 }

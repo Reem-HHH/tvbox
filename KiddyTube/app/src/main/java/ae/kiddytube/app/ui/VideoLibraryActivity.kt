@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
-import ae.kiddytube.app.catalog.VideoItem
+import ae.kiddytube.app.catalog.PlayableVideo
 import ae.kiddytube.app.catalog.newestFirst
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
@@ -67,7 +67,7 @@ class VideoLibraryActivity : AppCompatActivity() {
         )
         parentSettings.setOnClickListener { parentUnlock.beginParentAccess() }
 
-        adapter = VideoGridAdapter { video -> openPlayer(video) }
+        adapter = VideoGridAdapter { item -> openPlayer(item) }
         grid.adapter = adapter
         grid.layoutManager = GridLayoutManager(this, spanCount())
         grid.clipChildren = false
@@ -155,6 +155,7 @@ class VideoLibraryActivity : AppCompatActivity() {
                 return@launch
             }
             val videos = channel.videos.newestFirst()
+                .map { PlayableVideo(channelId, it) }
             val liveFocus = GridFocus.capturePosition(grid)
             adapter.submit(videos)
             emptyMessage.visibility = if (videos.isEmpty()) View.VISIBLE else View.GONE
@@ -172,16 +173,17 @@ class VideoLibraryActivity : AppCompatActivity() {
         }
     }
 
-    private fun openPlayer(video: VideoItem) {
-        if (!OpenDebouncer.tryOpen("video:${channelId}:${video.id}")) return
-        NavFocusMemory.rememberVideo(channelId, video.id)
+    private fun openPlayer(item: PlayableVideo) {
+        val video = item.video
+        if (!OpenDebouncer.tryOpen("video:${item.channelId}:${video.id}")) return
+        NavFocusMemory.rememberVideo(item.channelId, video.id)
         startActivity(
             Intent(this, PlayerActivity::class.java)
                 .putExtra(PlayerActivity.EXTRA_TITLE, video.title)
                 .putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, video.youtubeVideoId)
                 .putExtra(PlayerActivity.EXTRA_DIRECT_URL, video.directUrl)
                 .putExtra(PlayerActivity.EXTRA_ALLOW_SEEK, video.allowSeek)
-                .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, channelId)
+                .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, item.channelId)
                 .putExtra(PlayerActivity.EXTRA_VIDEO_ID, video.id)
         )
     }

@@ -1,6 +1,6 @@
 package ae.kiddytube.app.ui
 
-import ae.kiddytube.app.catalog.VideoItem
+import ae.kiddytube.app.catalog.PlayableVideo
 import ae.kiddytube.app.catalog.youtubeThumbnail
 import android.view.LayoutInflater
 import android.view.View
@@ -14,13 +14,13 @@ import coil.load
 import coil.transform.RoundedCornersTransformation
 
 class VideoGridAdapter(
-    private val onClick: (VideoItem) -> Unit
+    private val onClick: (PlayableVideo) -> Unit
 ) : RecyclerView.Adapter<VideoGridAdapter.Holder>() {
 
-    private val items = mutableListOf<VideoItem>()
+    private val items = mutableListOf<PlayableVideo>()
 
     /** Synchronous DiffUtil so [GridFocus] restore after submit still sees the new list. */
-    fun submit(list: List<VideoItem>) {
+    fun submit(list: List<PlayableVideo>) {
         val newItems = list.toList()
         val diff = DiffUtil.calculateDiff(VideoDiff(items, newItems))
         items.clear()
@@ -29,7 +29,7 @@ class VideoGridAdapter(
     }
 
     fun indexOfVideoId(videoId: String): Int =
-        items.indexOfFirst { it.id == videoId }
+        items.indexOfFirst { it.video.id == videoId }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val view = LayoutInflater.from(parent.context)
@@ -49,7 +49,8 @@ class VideoGridAdapter(
         private val cornerPx =
             itemView.resources.getDimension(R.dimen.image_corner)
 
-        fun bind(video: VideoItem) {
+        fun bind(item: PlayableVideo) {
+            val video = item.video
             title.text = video.title
             itemView.contentDescription =
                 itemView.context.getString(R.string.a11y_video_tile, video.title)
@@ -64,7 +65,7 @@ class VideoGridAdapter(
             } else {
                 thumb.setImageResource(R.drawable.tile_placeholder)
             }
-            itemView.setOnClickListener { onClick(video) }
+            itemView.setOnClickListener { onClick(item) }
             itemView.setOnFocusChangeListener { v, hasFocus ->
                 TileFocusAnim.apply(v, hasFocus)
             }
@@ -72,13 +73,16 @@ class VideoGridAdapter(
     }
 
     private class VideoDiff(
-        private val old: List<VideoItem>,
-        private val new: List<VideoItem>
+        private val old: List<PlayableVideo>,
+        private val new: List<PlayableVideo>
     ) : DiffUtil.Callback() {
         override fun getOldListSize(): Int = old.size
         override fun getNewListSize(): Int = new.size
-        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-            old[oldItemPosition].id == new[newItemPosition].id
+        override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val a = old[oldItemPosition]
+            val b = new[newItemPosition]
+            return a.channelId == b.channelId && a.video.id == b.video.id
+        }
         override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
             old[oldItemPosition] == new[newItemPosition]
     }

@@ -22,6 +22,7 @@ import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.CatalogSettings
 import ae.kiddytube.app.catalog.ContentChannel
+import ae.kiddytube.app.catalog.HomeLibraryMode
 import ae.kiddytube.app.catalog.SyncPolicy
 import ae.kiddytube.app.catalog.SyncStatus
 import ae.kiddytube.app.launcher.ImmersiveMode
@@ -94,6 +95,21 @@ class ParentActivity : AppCompatActivity() {
 
         addSectionCard {
             addSectionTitle(it, getString(R.string.parent_section_actions))
+            addSwitch(
+                it,
+                getString(R.string.parent_home_mix_videos),
+                settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
+            ) { checked ->
+                update { s ->
+                    s.copy(
+                        homeLibraryMode = if (checked) {
+                            HomeLibraryMode.MIX_VIDEOS
+                        } else {
+                            HomeLibraryMode.CHANNELS
+                        }
+                    )
+                }
+            }
             addButton(it, getString(R.string.parent_set_api_key)) { promptApiKey() }
             addButton(it, getString(R.string.parent_refresh_playlists)) {
                 withActiveSession {

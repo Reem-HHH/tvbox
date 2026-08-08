@@ -64,6 +64,24 @@
             android:textSize="@dimen/sync_chip_text"
             android:visibility="gone" />
 
+        <TextView
+            android:id="@+id/homeModeToggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/parent_settings_bg"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:fontFamily="sans-serif-medium"
+            android:paddingStart="14dp"
+            android:paddingTop="10dp"
+            android:paddingEnd="14dp"
+            android:paddingBottom="10dp"
+            android:text="@string/home_mode_shows"
+            android:textColor="@color/ink_navy"
+            android:textSize="@dimen/sync_chip_text"
+            android:visibility="gone" />
+
         <ImageButton
             android:id="@+id/parentSettings"
             android:layout_width="48dp"
