@@ -1,8 +1,8 @@
 package ae.kiddytube.app.tv
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.net.Uri
 import android.os.Build
 import android.provider.BaseColumns
@@ -12,13 +12,18 @@ import androidx.tvprovider.media.tv.WatchNextProgram
 import ae.kiddytube.app.catalog.RecentWatchItem
 import ae.kiddytube.app.diagnostics.DiagnosticsLogger
 import ae.kiddytube.app.player.PlayerActivity
+import ae.kiddytube.app.ui.TvUi
 import java.net.URLEncoder
 
 /**
  * Publishes continue-watching items to the Android TV / Google TV Watch Next row.
  * No-ops below API 26 and on non-TV devices. Google TV may require partner certification
  * before the Continue watching row surfaces publicly.
+ *
+ * tvprovider marks Watch Next builder APIs as library-restricted; they are the supported
+ * public surface for Watch Next and are safe to call from apps.
  */
+@SuppressLint("RestrictedApi")
 class WatchNextPublisher(context: Context) {
     private val appContext = context.applicationContext
 
@@ -138,8 +143,7 @@ class WatchNextPublisher(context: Context) {
 
     private fun isSupported(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return false
-        val uiMode = appContext.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+        return TvUi.isTelevision(appContext)
     }
 
     private fun launchIntentUri(item: RecentWatchItem): Uri {

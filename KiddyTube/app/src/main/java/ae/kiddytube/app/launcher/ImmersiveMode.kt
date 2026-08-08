@@ -1,7 +1,6 @@
 package ae.kiddytube.app.launcher
 
 import android.app.Activity
-import android.content.res.Configuration
 import android.os.Build
 import android.view.View
 import android.view.WindowInsets
@@ -9,12 +8,12 @@ import android.view.WindowInsetsController
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import ae.kiddytube.app.ui.TvUi
 
 object ImmersiveMode {
     fun apply(activity: Activity, forceImmersive: Boolean = false) {
         val window = activity.window
-        val uiMode = activity.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        val isTv = uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+        val isTv = TvUi.isTelevision(activity)
         val immersive = forceImmersive || isTv
 
         if (!immersive) {

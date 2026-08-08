@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import ae.kiddytube.app.BuildConfig
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import kotlinx.coroutines.launch
@@ -56,7 +57,13 @@ class ParentUnlockCoordinator(
                 activity.lifecycleScope.launch {
                     val repo = (activity.application as KiddyTubeApp).catalogRepository
                     val latest = repo.current()
-                    if (latest.releaseReady && pin == ParentPinManager.DEFAULT_DEV_PIN) {
+                    if (pin == ParentPinManager.DEFAULT_DEV_PIN &&
+                        ReleasePinPolicy.rejectDefaultDevPin(
+                            isDebugBuild = BuildConfig.DEBUG,
+                            releaseReady = latest.releaseReady,
+                            pinChangedFromDefault = latest.pinChangedFromDefault
+                        )
+                    ) {
                         val locked = pinManager.registerFailure(System.currentTimeMillis())
                         repo.update {
                             it.copy(

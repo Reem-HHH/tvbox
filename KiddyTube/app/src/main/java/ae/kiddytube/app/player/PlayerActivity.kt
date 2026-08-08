@@ -1,6 +1,5 @@
 package ae.kiddytube.app.player
 
-import android.content.res.Configuration
 import android.annotation.SuppressLint
 import android.graphics.Color
 import android.media.AudioManager
@@ -35,6 +34,7 @@ import androidx.media3.ui.PlayerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.RecentWatchItem
+import ae.kiddytube.app.catalog.VideoItem
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.parent.ParentUnlockCoordinator
@@ -43,6 +43,7 @@ import ae.kiddytube.app.remote.RemoteKeyHandler
 import ae.kiddytube.app.sources.MediaUrlValidator
 import ae.kiddytube.app.sources.YoutubeUrlParser
 import ae.kiddytube.app.tv.WatchNextPublisher
+import ae.kiddytube.app.ui.TvUi
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 
@@ -54,9 +55,12 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var pinManager: ParentPinManager
     private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
+    private var tapLayer: View? = null
     private var player: ExoPlayer? = null
     private var webView: WebView? = null
     private var playbackReady = false
+    private var endHandled = false
+    private var playbackGeneration = 0
     private var allowSeek = true
     private var startPositionMs = 0L
     private var appliedStartSeek = false
@@ -135,7 +139,7 @@ class PlayerActivity : AppCompatActivity() {
 
         // Transparent touch layer: single tap = play/pause; double-tap L/R = seek
         // (YouTube iframe stays non-clickable via pointer-events + touch intercept).
-        val tapLayer = View(this).apply {
+        tapLayer = View(this).apply {
             isClickable = true
             isFocusable = false
             setOnTouchListener { v, event ->
@@ -328,9 +332,118 @@ class PlayerActivity : AppCompatActivity() {
         return positionMs
     }
 
-    private fun isTelevision(): Boolean {
-        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+    private fun isTelevision(): Boolean = TvUi.isTelevision(this)
+
+    /** When the current item ends, autoplay the next video in the same channel (or finish). */
+    private fun onPlaybackEnded() {
+        if (endHandled || isFinishing || isDestroyed) return
+        endHandled = true
+        val generation = playbackGeneration
+        persistContinueProgress()
+        lifecycleScope.launch {
+            val app = application as KiddyTubeApp
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                if (!isFinishing && !isDestroyed) finish()
+                return@launch
+            }
+            if (isFinishing || isDestroyed || generation != playbackGeneration) return@launch
+            val settings = app.catalogRepository.current()
+            val next = PlaybackAdvance.nextInChannel(
+                channels = settings.channels,
+                channelId = intent.getStringExtra(EXTRA_CHANNEL_ID).orEmpty(),
+                currentVideoId = intent.getStringExtra(EXTRA_VIDEO_ID),
+                currentYoutubeId = intent.getStringExtra(EXTRA_YOUTUBE_ID),
+                currentDirectUrl = intent.getStringExtra(EXTRA_DIRECT_URL)
+            )
+            if (next == null) {
+                finish()
+                return@launch
+            }
+            if (isFinishing || isDestroyed || generation != playbackGeneration) return@launch
+            playNextInPlace(next)
+        }
+    }
+
+    private fun playNextInPlace(video: VideoItem) {
+        playbackGeneration++
+        teardownMedia()
+        startPositionMs = 0L
+        appliedStartSeek = false
+        playbackReady = false
+        endHandled = false
+        allowSeek = video.allowSeek
+
+        intent.putExtra(EXTRA_TITLE, video.title)
+        intent.putExtra(EXTRA_VIDEO_ID, video.id)
+        intent.putExtra(EXTRA_ALLOW_SEEK, video.allowSeek)
+        intent.putExtra(EXTRA_START_POSITION_MS, 0L)
+        val youtubeId = video.youtubeVideoId?.trim()?.takeIf { it.isNotBlank() }
+        val directUrl = video.directUrl?.trim()?.takeIf { it.isNotBlank() }
+        if (youtubeId != null) {
+            intent.putExtra(EXTRA_YOUTUBE_ID, youtubeId)
+        } else {
+            intent.removeExtra(EXTRA_YOUTUBE_ID)
+        }
+        if (directUrl != null) {
+            intent.putExtra(EXTRA_DIRECT_URL, directUrl)
+        } else {
+            intent.removeExtra(EXTRA_DIRECT_URL)
+        }
+
+        if (video.title.isNotBlank()) {
+            titleOverlay.text = video.title
+            titleOverlay.visibility = View.VISIBLE
+            handler.removeCallbacks(hideTitleOverlay)
+            handler.postDelayed(hideTitleOverlay, 3_000)
+        } else {
+            titleOverlay.visibility = View.GONE
+        }
+
+        when {
+            !youtubeId.isNullOrBlank() && YoutubeUrlParser.isValidVideoId(youtubeId) -> {
+                playYoutube(youtubeId)
+            }
+            MediaUrlValidator.isDirectMediaUrl(directUrl) -> {
+                playDirect(directUrl!!.trim())
+            }
+            else -> {
+                finish()
+                return
+            }
+        }
+        playbackReady = true
+        lifecycleScope.launch { recordContinueWatching(positionMs = 0L) }
+        scheduleProgressPersist()
+        container.requestFocus()
+        if (isTelevision()) {
+            teasePlayerBackChip()
+        }
+    }
+
+    private fun teardownMedia() {
+        handler.removeCallbacks(persistProgressRunnable)
+        player?.release()
+        player = null
+        webView?.apply {
+            loadUrl("about:blank")
+            stopLoading()
+            destroy()
+        }
+        webView = null
+        val keep = tapLayer
+        container.removeAllViews()
+        if (keep != null) {
+            (keep.parent as? ViewGroup)?.removeView(keep)
+            container.addView(
+                keep,
+                FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            )
+        }
     }
 
     /** Briefly land focus on Back so TV kids discover the chrome without keeping it there. */
@@ -445,7 +558,7 @@ class PlayerActivity : AppCompatActivity() {
             }
             addJavascriptInterface(
                 YoutubePlayerBridge(
-                    onEndedOnMain = { runOnUiThread { finish() } },
+                    onEndedOnMain = { runOnUiThread { onPlaybackEnded() } },
                     onErrorOnMain = { runOnUiThread { failPlayback() } }
                 ),
                 "KiddyNative"
@@ -615,7 +728,7 @@ class PlayerActivity : AppCompatActivity() {
                     }
                     exo.seekTo(target)
                 }
-                if (playbackState == Player.STATE_ENDED) finish()
+                if (playbackState == Player.STATE_ENDED) onPlaybackEnded()
             }
 
             override fun onPlayerError(error: PlaybackException) {

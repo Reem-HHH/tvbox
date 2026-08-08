@@ -10,11 +10,13 @@ import android.view.View
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import ae.kiddytube.app.BuildConfig
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.ApiKeyResolver
@@ -28,6 +30,7 @@ import ae.kiddytube.app.catalog.RecentWatchItem
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.parent.ParentUnlockCoordinator
+import ae.kiddytube.app.parent.ReleasePinPolicy
 import ae.kiddytube.app.player.PlayerActivity
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
@@ -89,6 +92,7 @@ class ChannelGridActivity : AppCompatActivity() {
         )
 
         channelAdapter = ChannelGridAdapter { channel ->
+            if (!ensureKidPlaybackAllowed()) return@ChannelGridAdapter
             if (!OpenDebouncer.tryOpen("channel:${channel.id}")) return@ChannelGridAdapter
             NavFocusMemory.rememberChannel(channel.id)
             startActivity(
@@ -132,8 +136,34 @@ class ChannelGridActivity : AppCompatActivity() {
                 consumeBack = true
             )
             render(focusFirstIfNeeded = true)
+            maybeShowReleasePinChip()
             runLaunchSync()
         }
+    }
+
+    /** Release APKs block kid playback until the factory PIN is replaced. Debug is unchanged. */
+    private fun ensureKidPlaybackAllowed(): Boolean {
+        if (!ReleasePinPolicy.requirePinChangeForKidPlayback(
+                BuildConfig.DEBUG,
+                settings.pinChangedFromDefault
+            )
+        ) {
+            return true
+        }
+        Toast.makeText(this, R.string.parent_release_pin_required, Toast.LENGTH_LONG).show()
+        maybeShowReleasePinChip()
+        return false
+    }
+
+    private fun maybeShowReleasePinChip() {
+        if (!ReleasePinPolicy.requirePinChangeForKidPlayback(
+                BuildConfig.DEBUG,
+                settings.pinChangedFromDefault
+            )
+        ) {
+            return
+        }
+        showSyncChip(getString(R.string.parent_release_pin_required))
     }
 
     private suspend fun runLaunchSync() {
@@ -190,6 +220,14 @@ class ChannelGridActivity : AppCompatActivity() {
             }
         val stickyPartial = result.status == SyncStatus.UPDATED &&
             !result.message.isNullOrBlank()
+        if (ReleasePinPolicy.requirePinChangeForKidPlayback(
+                BuildConfig.DEBUG,
+                settings.pinChangedFromDefault
+            )
+        ) {
+            maybeShowReleasePinChip()
+            return
+        }
         showSyncChip(message)
         if (!stickyNoKey && !stickyFollow && !stickyPartial) {
             delay(2800)
@@ -396,6 +434,7 @@ class ChannelGridActivity : AppCompatActivity() {
     }
 
     private fun openMixVideo(item: PlayableVideo) {
+        if (!ensureKidPlaybackAllowed()) return
         val video = item.video
         if (!OpenDebouncer.tryOpen("mix:${item.channelId}:${video.id}")) return
         NavFocusMemory.rememberHomeVideo(video.id)
@@ -412,6 +451,7 @@ class ChannelGridActivity : AppCompatActivity() {
     }
 
     private fun openContinueWatch(recent: RecentWatchItem, video: VideoItem) {
+        if (!ensureKidPlaybackAllowed()) return
         if (!OpenDebouncer.tryOpen("continue:${video.id}")) return
         NavFocusMemory.rememberVideo(recent.channelId, video.id)
         val resumeMs = recent.positionMs.takeIf { it >= 5_000L } ?: 0L
@@ -470,6 +510,15 @@ class ChannelGridActivity : AppCompatActivity() {
             } else {
                 // Keep Mix/Shows scroll + focus; only refresh Continue Watching / focus wiring.
                 refreshContinueRow()
+            }
+            if (ReleasePinPolicy.requirePinChangeForKidPlayback(
+                    BuildConfig.DEBUG,
+                    settings.pinChangedFromDefault
+                )
+            ) {
+                maybeShowReleasePinChip()
+            } else if (syncStatus.text == getString(R.string.parent_release_pin_required)) {
+                syncStatus.visibility = View.GONE
             }
             app.syncWatchNext()
         }
