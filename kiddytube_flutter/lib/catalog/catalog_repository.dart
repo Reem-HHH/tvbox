@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../parent/parent_pin.dart';
+import '../parent/release_pin_policy.dart';
 import 'models.dart';
 import 'recent_watch.dart';
 import 'seed.dart';
@@ -17,6 +18,8 @@ class CatalogSettings {
     this.youtubeApiKey,
     this.pinSalt,
     this.pinHash,
+    this.pinChangedFromDefault = false,
+    this.releaseReady = false,
     this.failCount = 0,
     this.lockedUntilMs = 0,
   }) : channels = channels ?? DefaultChannels.seed();
@@ -27,6 +30,8 @@ class CatalogSettings {
   final String? youtubeApiKey;
   final String? pinSalt;
   final String? pinHash;
+  final bool pinChangedFromDefault;
+  final bool releaseReady;
   final int failCount;
   final int lockedUntilMs;
 
@@ -38,6 +43,8 @@ class CatalogSettings {
     bool clearApiKey = false,
     String? pinSalt,
     String? pinHash,
+    bool? pinChangedFromDefault,
+    bool? releaseReady,
     int? failCount,
     int? lockedUntilMs,
   }) {
@@ -48,6 +55,9 @@ class CatalogSettings {
       youtubeApiKey: clearApiKey ? null : (youtubeApiKey ?? this.youtubeApiKey),
       pinSalt: pinSalt ?? this.pinSalt,
       pinHash: pinHash ?? this.pinHash,
+      pinChangedFromDefault:
+          pinChangedFromDefault ?? this.pinChangedFromDefault,
+      releaseReady: releaseReady ?? this.releaseReady,
       failCount: failCount ?? this.failCount,
       lockedUntilMs: lockedUntilMs ?? this.lockedUntilMs,
     );
@@ -155,6 +165,8 @@ class CatalogRepository {
   static const _catalogKey = 'catalog_channels_v1';
   static const _failCountKey = 'pin_fail_count';
   static const _lockedUntilKey = 'pin_locked_until_ms';
+  static const _pinChangedKey = 'pin_changed_from_default';
+  static const _releaseReadyKey = 'release_ready';
 
   Future<void> _ensurePrefs() async {
     _prefs ??= await SharedPreferences.getInstance();
@@ -195,6 +207,19 @@ class CatalogRepository {
       await _prefs!.setInt(_seedKey, DefaultChannels.seedVersion);
     }
 
+    final sanitized = ReleasePinPolicy.sanitizePinFlags(
+      pinSalt: pinSalt,
+      pinHash: pinHash,
+      pinChangedFromDefault: _prefs!.getBool(_pinChangedKey) ?? false,
+      releaseReady: _prefs!.getBool(_releaseReadyKey) ?? false,
+    );
+    if (sanitized.pinChangedFromDefault !=
+            (_prefs!.getBool(_pinChangedKey) ?? false) ||
+        sanitized.releaseReady != (_prefs!.getBool(_releaseReadyKey) ?? false)) {
+      await _prefs!.setBool(_pinChangedKey, sanitized.pinChangedFromDefault);
+      await _prefs!.setBool(_releaseReadyKey, sanitized.releaseReady);
+    }
+
     final settings = CatalogSettings(
       channels: channels,
       homeLibraryMode: mode,
@@ -202,6 +227,8 @@ class CatalogRepository {
       youtubeApiKey: apiKey,
       pinSalt: pinSalt,
       pinHash: pinHash,
+      pinChangedFromDefault: sanitized.pinChangedFromDefault,
+      releaseReady: sanitized.releaseReady,
       failCount: _prefs!.getInt(_failCountKey) ?? 0,
       lockedUntilMs: _prefs!.getInt(_lockedUntilKey) ?? 0,
     );
@@ -242,12 +269,24 @@ class CatalogRepository {
     CatalogSettings Function(CatalogSettings) transform,
   ) async {
     final current = _cached ?? await load();
-    final next = transform(current);
+    var next = transform(current);
+    final sanitized = ReleasePinPolicy.sanitizePinFlags(
+      pinSalt: next.pinSalt,
+      pinHash: next.pinHash,
+      pinChangedFromDefault: next.pinChangedFromDefault,
+      releaseReady: next.releaseReady,
+    );
+    next = next.copyWith(
+      pinChangedFromDefault: sanitized.pinChangedFromDefault,
+      releaseReady: sanitized.releaseReady,
+    );
     await _persistChannels(next.channels);
     await _ensurePrefs();
     await _prefs!.setString(_modeKey, next.homeLibraryMode.storageName);
     await _prefs!.setInt(_seedKey, next.seedVersion);
     await _persistLockout(next.failCount, next.lockedUntilMs);
+    await _prefs!.setBool(_pinChangedKey, next.pinChangedFromDefault);
+    await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
     if (next.youtubeApiKey != current.youtubeApiKey) {
       await _secrets.writeApiKey(next.youtubeApiKey);
     }
@@ -280,6 +319,21 @@ class CatalogRepository {
     });
   }
 
+  Future<void> setChannelAllowSeek(String channelId, bool allowSeek) async {
+    await update((s) {
+      final channels = s.channels.map((c) {
+        if (c.id != channelId) return c;
+        return c.copyWith(
+          defaultAllowSeek: allowSeek,
+          videos: [
+            for (final v in c.videos) v.copyWith(allowSeek: allowSeek),
+          ],
+        );
+      }).toList();
+      return s.copyWith(channels: channels);
+    });
+  }
+
   Future<void> changePin(String newPin) async {
     if (!ParentPinManager.isValidPinFormat(newPin)) {
       throw ArgumentError('PIN must be 4–8 digits');
@@ -292,7 +346,22 @@ class CatalogRepository {
     if (hash == null) {
       throw StateError('Failed to hash PIN');
     }
-    await update((s) => s.copyWith(pinSalt: salt, pinHash: hash));
+    await update(
+      (s) => s.copyWith(
+        pinSalt: salt,
+        pinHash: hash,
+        pinChangedFromDefault: true,
+      ),
+    );
+  }
+
+  Future<void> setReleaseReady(bool ready) async {
+    await update((s) {
+      if (ready && !s.pinChangedFromDefault) {
+        throw StateError('Change the default PIN first');
+      }
+      return s.copyWith(releaseReady: ready);
+    });
   }
 
   Future<void> recordPinFailure(ParentPinManager pinManager) async {
@@ -350,9 +419,18 @@ class CatalogRepository {
           skipped++;
           continue;
         }
-        // Keep manual entries, replace synced YouTube list.
+        // Keep manual entries; preserve allowSeek for matching synced ids.
+        final seekById = {
+          for (final v in ch.videos) v.id: v.allowSeek,
+        };
+        final synced = [
+          for (final v in videos)
+            v.copyWith(
+              allowSeek: seekById[v.id] ?? ch.defaultAllowSeek,
+            ),
+        ];
         final manuals = ch.videos.where((v) => v.manual).toList();
-        channels[i] = ch.copyWith(videos: [...videos, ...manuals]);
+        channels[i] = ch.copyWith(videos: [...synced, ...manuals]);
         updated++;
       } catch (e) {
         errors.add('${ch.title}: $e');

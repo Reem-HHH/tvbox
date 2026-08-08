@@ -1,5 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -9,6 +12,7 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import '../catalog/catalog_repository.dart';
 import '../catalog/models.dart';
+import '../catalog/recent_watch.dart';
 import 'youtube_iframe.dart';
 
 /// Fullscreen-ish player with YouTube iframe (kid chrome) or direct HTTPS media.
@@ -37,8 +41,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   VideoPlayerController? _videoController;
   String? _error;
   bool _loading = true;
+  Timer? _progressTimer;
+  String? _seekHint;
 
   PlayableVideo get _current => widget.queue[_index];
+  bool get _allowSeek => _current.video.allowSeek;
 
   @override
   void initState() {
@@ -56,6 +63,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    _progressTimer?.cancel();
+    unawaited(_persistProgress());
     _disposePlayers();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations(const [
@@ -68,17 +77,67 @@ class _PlayerScreenState extends State<PlayerScreen> {
   }
 
   void _disposePlayers() {
+    _progressTimer?.cancel();
+    _progressTimer = null;
     _webController = null;
     _videoController?.removeListener(_onVideoTick);
     _videoController?.dispose();
     _videoController = null;
   }
 
+  void _startProgressTimer() {
+    _progressTimer?.cancel();
+    _progressTimer = Timer.periodic(
+      const Duration(seconds: 12),
+      (_) => unawaited(_persistProgress()),
+    );
+  }
+
+  Future<void> _persistProgress() async {
+    final snap = await _progressSnapshot();
+    if (snap == null) return;
+    final item = _current;
+    await widget.repository.recentWatch.record(
+      channelId: item.channelId,
+      video: item.video,
+      positionMs: clampedResumePosition(snap.pos, snap.dur),
+    );
+  }
+
+  Future<({int pos, int dur})?> _progressSnapshot() async {
+    final video = _videoController;
+    if (video != null && video.value.isInitialized) {
+      return (
+        pos: video.value.position.inMilliseconds,
+        dur: video.value.duration.inMilliseconds,
+      );
+    }
+    final web = _webController;
+    if (web == null) return null;
+    try {
+      final raw = await web.runJavaScriptReturningResult('progressSnapshot()');
+      var text = raw.toString().trim();
+      if (text.startsWith('"') && text.endsWith('"')) {
+        text = text.substring(1, text.length - 1);
+      }
+      text = text.replaceAll(r'\"', '"');
+      final map = jsonDecode(text) as Map<String, dynamic>;
+      return (
+        pos: (map['pos'] as num?)?.toInt() ?? 0,
+        dur: (map['dur'] as num?)?.toInt() ?? 0,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _loadCurrent({int startMs = 0}) async {
+    await _persistProgress();
     _disposePlayers();
     setState(() {
       _loading = true;
       _error = null;
+      _seekHint = null;
     });
 
     final item = _current;
@@ -165,6 +224,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       _webController = controller;
       _loading = false;
     });
+    _startProgressTimer();
   }
 
   Future<void> _playDirect(String url, {int startMs = 0}) async {
@@ -184,6 +244,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _videoController = controller;
         _loading = false;
       });
+      _startProgressTimer();
     } catch (e) {
       await controller.dispose();
       if (!mounted) return;
@@ -205,13 +266,54 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  void _onEnded() {
+  Future<void> _onEnded() async {
+    await _persistProgress();
     if (!mounted) return;
     if (_index + 1 < widget.queue.length) {
       setState(() => _index += 1);
-      _loadCurrent();
+      await _loadCurrent();
     } else {
       Navigator.of(context).maybePop();
+    }
+  }
+
+  Future<void> _seekBy(int deltaMs) async {
+    if (!_allowSeek) {
+      setState(() => _seekHint = 'Seek disabled for this video');
+      Future<void>.delayed(const Duration(seconds: 2), () {
+        if (mounted) setState(() => _seekHint = null);
+      });
+      return;
+    }
+    final video = _videoController;
+    if (video != null && video.value.isInitialized) {
+      final next = video.value.position + Duration(milliseconds: deltaMs);
+      final clamped = next < Duration.zero
+          ? Duration.zero
+          : (next > video.value.duration ? video.value.duration : next);
+      await video.seekTo(clamped);
+      return;
+    }
+    final web = _webController;
+    if (web != null) {
+      final sec = deltaMs / 1000.0;
+      await web.runJavaScript('seekBy($sec)');
+    }
+  }
+
+  Future<void> _togglePlayPause() async {
+    final video = _videoController;
+    if (video != null && video.value.isInitialized) {
+      if (video.value.isPlaying) {
+        await video.pause();
+      } else {
+        await video.play();
+      }
+      return;
+    }
+    final web = _webController;
+    if (web != null) {
+      await web.runJavaScript('togglePlayPause()');
     }
   }
 
@@ -234,67 +336,137 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   Widget build(BuildContext context) {
     final title = _current.video.title;
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: SafeArea(
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (_webController != null)
-              WebViewWidget(controller: _webController!)
-            else if (_videoController != null &&
-                _videoController!.value.isInitialized)
-              Center(
-                child: AspectRatio(
-                  aspectRatio: _videoController!.value.aspectRatio == 0
-                      ? 16 / 9
-                      : _videoController!.value.aspectRatio,
-                  child: VideoPlayer(_videoController!),
-                ),
-              )
-            else
-              const ColoredBox(color: Colors.black),
-            if (_loading)
-              const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              ),
-            if (_error != null)
-              Center(
-                child: Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
-                ),
-              ),
-            Positioned(
-              top: 8,
-              left: 8,
-              child: Focus(
-                autofocus: Platform.isAndroid,
-                child: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 32),
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  tooltip: 'Back',
-                ),
+    return Shortcuts(
+      shortcuts: <LogicalKeySet, Intent>{
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft): const _SeekIntent(-10000),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight): const _SeekIntent(10000),
+        LogicalKeySet(LogicalKeyboardKey.select): const _ToggleIntent(),
+        LogicalKeySet(LogicalKeyboardKey.enter): const _ToggleIntent(),
+        LogicalKeySet(LogicalKeyboardKey.space): const _ToggleIntent(),
+        LogicalKeySet(LogicalKeyboardKey.mediaPlayPause): const _ToggleIntent(),
+        LogicalKeySet(LogicalKeyboardKey.mediaFastForward):
+            const _SeekIntent(10000),
+        LogicalKeySet(LogicalKeyboardKey.mediaRewind): const _SeekIntent(-10000),
+      },
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          _SeekIntent: CallbackAction<_SeekIntent>(
+            onInvoke: (intent) {
+              unawaited(_seekBy(intent.deltaMs));
+              return null;
+            },
+          ),
+          _ToggleIntent: CallbackAction<_ToggleIntent>(
+            onInvoke: (_) {
+              unawaited(_togglePlayPause());
+              return null;
+            },
+          ),
+        },
+        child: Focus(
+          autofocus: true,
+          child: Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (_webController != null)
+                    WebViewWidget(controller: _webController!)
+                  else if (_videoController != null &&
+                      _videoController!.value.isInitialized)
+                    Center(
+                      child: AspectRatio(
+                        aspectRatio: _videoController!.value.aspectRatio == 0
+                            ? 16 / 9
+                            : _videoController!.value.aspectRatio,
+                        child: VideoPlayer(_videoController!),
+                      ),
+                    )
+                  else
+                    const ColoredBox(color: Colors.black),
+                  if (_loading)
+                    const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  if (_error != null)
+                    Center(
+                      child: Text(
+                        _error!,
+                        style:
+                            const TextStyle(color: Colors.white, fontSize: 18),
+                      ),
+                    ),
+                  if (_seekHint != null)
+                    Center(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            _seekHint!,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    top: 8,
+                    left: 8,
+                    child: Focus(
+                      autofocus: !kIsWeb && Platform.isAndroid,
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                        onPressed: () async {
+                          await _persistProgress();
+                          if (context.mounted) {
+                            Navigator.of(context).maybePop();
+                          }
+                        },
+                        tooltip: 'Back',
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
+
+class _SeekIntent extends Intent {
+  const _SeekIntent(this.deltaMs);
+  final int deltaMs;
+}
+
+class _ToggleIntent extends Intent {
+  const _ToggleIntent();
 }

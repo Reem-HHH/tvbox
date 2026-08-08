@@ -26,6 +26,35 @@ String youtubeIframeHtml({
     var h=window.innerHeight||document.documentElement.clientHeight||180;
     return {w:w,h:h};
   }
+  function progressSnapshot(){
+    try{
+      if(!player||!player.getCurrentTime) return JSON.stringify({pos:0,dur:0});
+      var pos=Math.floor((player.getCurrentTime()||0)*1000);
+      var dur=Math.floor((player.getDuration()||0)*1000);
+      return JSON.stringify({pos:pos,dur:dur});
+    }catch(e){
+      return JSON.stringify({pos:0,dur:0});
+    }
+  }
+  function seekBy(deltaSec){
+    try{
+      if(!player||!player.getCurrentTime||!player.seekTo) return;
+      var t=(player.getCurrentTime()||0)+deltaSec;
+      if(t<0) t=0;
+      player.seekTo(t,true);
+    }catch(e){}
+  }
+  function pausePlayback(){
+    try{ if(player&&player.pauseVideo) player.pauseVideo(); }catch(e){}
+  }
+  function togglePlayPause(){
+    try{
+      if(!player||!player.getPlayerState) return;
+      var s=player.getPlayerState();
+      if(s===1) player.pauseVideo();
+      else player.playVideo();
+    }catch(e){}
+  }
   function onYouTubeIframeAPIReady(){
     var sz=size();
     player=new YT.Player('p',{

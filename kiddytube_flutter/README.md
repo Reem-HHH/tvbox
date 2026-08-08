@@ -13,9 +13,11 @@ Cross-platform kids browser for:
 - Catalog seed parity with Kotlin `SEED_VERSION` **16**
 - Home **Shows** vs **Mix** (Mix/Shows toggle gated behind parent PIN)
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel)
-- Parent PIN dashboard MVP (change PIN, API key, enable channels, refresh playlists, clear continue watching, export catalog)
-- Continue watching row
-- Android TV Leanback launcher + focus tiles
+- Continue watching with **periodic resume progress** (and clamp near start/end)
+- Parent PIN dashboard (change PIN, API key, enable channels, seek toggles, release ready, refresh playlists, clear continue watching, export catalog)
+- Release builds block kid playback until the factory PIN is changed
+- Channel tiles use YouTube preview thumbs when available
+- Android TV Leanback launcher + focus tiles; D-pad seek when allowSeek is on
 
 ## Setup
 

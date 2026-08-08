@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../catalog/catalog_repository.dart';
 import 'parent_pin.dart';
 import 'parent_session.dart';
+import 'release_pin_policy.dart';
 
 /// Shows PIN dialog (or uses active session). Returns true if unlocked.
 Future<bool> ensureParentUnlocked(
@@ -38,6 +40,11 @@ Future<bool> ensureParentUnlocked(
       pinManager: pinManager,
       pinSalt: settings.pinSalt,
       pinHash: settings.pinHash,
+      rejectDefaultDevPin: ReleasePinPolicy.rejectDefaultDevPin(
+        isDebugBuild: !kReleaseMode,
+        releaseReady: settings.releaseReady,
+        pinChangedFromDefault: settings.pinChangedFromDefault,
+      ),
     ),
   );
   if (ok == true && grantSession) {
@@ -52,12 +59,14 @@ class _PinDialog extends StatefulWidget {
     required this.pinManager,
     required this.pinSalt,
     required this.pinHash,
+    required this.rejectDefaultDevPin,
   });
 
   final CatalogRepository repository;
   final ParentPinManager pinManager;
   final String? pinSalt;
   final String? pinHash;
+  final bool rejectDefaultDevPin;
 
   @override
   State<_PinDialog> createState() => _PinDialogState();
@@ -89,7 +98,11 @@ class _PinDialogState extends State<_PinDialog> {
       return;
     }
 
-    if (manager.verifyPin(pin, widget.pinSalt, widget.pinHash)) {
+    final matchesHash =
+        manager.verifyPin(pin, widget.pinSalt, widget.pinHash);
+    final blockedDefault = widget.rejectDefaultDevPin &&
+        pin == ParentPinManager.defaultDevPin;
+    if (matchesHash && !blockedDefault) {
       manager.registerSuccess();
       await widget.repository.clearPinFailures();
       if (mounted) Navigator.of(context).pop(true);
@@ -105,7 +118,9 @@ class _PinDialogState extends State<_PinDialog> {
     }
     setState(() {
       _busy = false;
-      _error = 'Wrong PIN';
+      _error = blockedDefault
+          ? 'Default PIN disabled. Use your new PIN.'
+          : 'Wrong PIN';
       _controller.clear();
     });
   }

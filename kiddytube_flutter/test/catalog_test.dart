@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kiddytube/catalog/home_library.dart';
 import 'package:kiddytube/catalog/models.dart';
+import 'package:kiddytube/catalog/recent_watch.dart';
 import 'package:kiddytube/catalog/seed.dart';
 import 'package:kiddytube/parent/parent_pin.dart';
+import 'package:kiddytube/parent/release_pin_policy.dart';
 
 void main() {
   test('HomeLibraryMode defaults unknown storage to channels', () {
@@ -70,7 +72,11 @@ void main() {
         title: 'Omar & Hana',
         sourceType: SourceType.youtubePlaylist,
         videos: const [
-          VideoItem(id: 'T6ggVnk1JZg', title: 'Song', youtubeVideoId: 'T6ggVnk1JZg'),
+          VideoItem(
+            id: 'T6ggVnk1JZg',
+            title: 'Song',
+            youtubeVideoId: 'T6ggVnk1JZg',
+          ),
         ],
       ),
     ];
@@ -96,5 +102,49 @@ void main() {
     }
     expect(manager.registerFailure(now), isTrue);
     expect(manager.isLockedOut(now), isTrue);
+  });
+
+  test('clampedResumePosition clears near start and near end', () {
+    expect(clampedResumePosition(1000, 60_000), 0);
+    expect(clampedResumePosition(10_000, 60_000), 10_000);
+    expect(clampedResumePosition(56_000, 60_000), 0);
+  });
+
+  test('ReleasePinPolicy blocks kid playback on release until PIN changed', () {
+    expect(
+      ReleasePinPolicy.requirePinChangeForKidPlayback(
+        isDebugBuild: true,
+        pinChangedFromDefault: false,
+      ),
+      isFalse,
+    );
+    expect(
+      ReleasePinPolicy.requirePinChangeForKidPlayback(
+        isDebugBuild: false,
+        pinChangedFromDefault: false,
+      ),
+      isTrue,
+    );
+    expect(
+      ReleasePinPolicy.requirePinChangeForKidPlayback(
+        isDebugBuild: false,
+        pinChangedFromDefault: true,
+      ),
+      isFalse,
+    );
+  });
+
+  test('ReleasePinPolicy sanitize clears flags when hash still default', () {
+    final salt = ParentPinManager.newSaltHex();
+    final hash =
+        ParentPinManager.hashPin(ParentPinManager.defaultDevPin, salt)!;
+    final sanitized = ReleasePinPolicy.sanitizePinFlags(
+      pinSalt: salt,
+      pinHash: hash,
+      pinChangedFromDefault: true,
+      releaseReady: true,
+    );
+    expect(sanitized.pinChangedFromDefault, isFalse);
+    expect(sanitized.releaseReady, isFalse);
   });
 }
