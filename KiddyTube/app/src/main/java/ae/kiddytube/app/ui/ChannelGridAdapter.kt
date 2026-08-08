@@ -29,6 +29,9 @@ class ChannelGridAdapter(
         diff.dispatchUpdatesTo(this)
     }
 
+    fun indexOfChannelId(channelId: String): Int =
+        items.indexOfFirst { it.id == channelId }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
         val view = LayoutInflater.from(parent.context)
             .inflate(R.layout.item_channel_tile, parent, false)
@@ -67,14 +70,7 @@ class ChannelGridAdapter(
             }
             itemView.setOnClickListener { onClick(channel) }
             itemView.setOnFocusChangeListener { v, hasFocus ->
-                val scale = if (hasFocus) 1.02f else 1f
-                val ty = if (hasFocus) -3f else 0f
-                v.animate()
-                    .scaleX(scale)
-                    .scaleY(scale)
-                    .translationY(ty)
-                    .setDuration(150)
-                    .start()
+                TileFocusAnim.apply(v, hasFocus)
             }
         }
     }

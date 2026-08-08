@@ -80,6 +80,8 @@ class ChannelGridActivity : AppCompatActivity() {
         )
 
         adapter = ChannelGridAdapter { channel ->
+            if (!OpenDebouncer.tryOpen("channel:${channel.id}")) return@ChannelGridAdapter
+            NavFocusMemory.rememberChannel(channel.id)
             startActivity(
                 Intent(this, VideoLibraryActivity::class.java)
                     .putExtra(VideoLibraryActivity.EXTRA_CHANNEL_ID, channel.id)
@@ -240,12 +242,12 @@ class ChannelGridActivity : AppCompatActivity() {
     ) {
         val app = application as KiddyTubeApp
         val channels = app.catalogRepository.enabledChannels(settings)
-        val focused = if (restoreFocusAt != RecyclerView.NO_POSITION) {
-            restoreFocusAt
-        } else {
-            GridFocus.capturePosition(grid)
-        }
+        val liveFocus = GridFocus.capturePosition(grid)
+        val rememberedId = NavFocusMemory.lastChannelId
         adapter.submit(channels)
+        val rememberedAfter = rememberedId?.let { adapter.indexOfChannelId(it) }
+            ?.takeIf { it >= 0 }
+            ?: RecyclerView.NO_POSITION
         lifecycleScope.launch {
             val recent = app.recentWatchStore.current()
             val playable = RecentWatchLogic.resolvePlayable(recent, settings)
@@ -267,13 +269,20 @@ class ChannelGridActivity : AppCompatActivity() {
                 emptyMessage.text = getString(R.string.empty_no_api_key)
             }
             when {
-                focused != RecyclerView.NO_POSITION -> GridFocus.restore(grid, focused)
+                restoreFocusAt != RecyclerView.NO_POSITION ->
+                    GridFocus.restore(grid, restoreFocusAt)
+                liveFocus != RecyclerView.NO_POSITION ->
+                    GridFocus.restore(grid, liveFocus)
+                rememberedAfter != RecyclerView.NO_POSITION ->
+                    GridFocus.restore(grid, rememberedAfter)
                 focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
             }
         }
     }
 
     private fun openContinueWatch(recent: RecentWatchItem, video: VideoItem) {
+        if (!OpenDebouncer.tryOpen("continue:${video.id}")) return
+        NavFocusMemory.rememberVideo(recent.channelId, video.id)
         startActivity(
             Intent(this, PlayerActivity::class.java)
                 .putExtra(PlayerActivity.EXTRA_TITLE, video.title)

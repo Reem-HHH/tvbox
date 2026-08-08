@@ -81,7 +81,11 @@ class PlayerActivity : AppCompatActivity() {
         container = findViewById(R.id.playerContainer)
         titleOverlay = findViewById(R.id.titleOverlay)
         seekFeedback = findViewById(R.id.seekFeedback)
-        findViewById<TextView>(R.id.navBack).setOnClickListener { finish() }
+        val navBack = findViewById<TextView>(R.id.navBack)
+        navBack.setOnClickListener { finish() }
+        // Touch can tap Back; TV focus stays on the player until D-pad Down.
+        navBack.isFocusable = false
+        navBack.isFocusableInTouchMode = false
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)
         remote = RemoteKeyHandler(
@@ -133,8 +137,6 @@ class PlayerActivity : AppCompatActivity() {
                 ViewGroup.LayoutParams.MATCH_PARENT
             )
         )
-        // Keep D-pad seeks from fighting focus navigation on Back.
-        findViewById<TextView>(R.id.navBack).isFocusable = true
         container.isFocusable = true
         container.isFocusableInTouchMode = true
         container.requestFocus()
@@ -515,6 +517,21 @@ class PlayerActivity : AppCompatActivity() {
         })
     }
 
+    private fun focusPlayerChromeBack(): Boolean {
+        val navBack = findViewById<TextView>(R.id.navBack)
+        navBack.isFocusable = true
+        return navBack.requestFocus()
+    }
+
+    private fun releasePlayerChromeBackFocus() {
+        val navBack = findViewById<TextView>(R.id.navBack)
+        if (currentFocus?.id == R.id.navBack) {
+            navBack.clearFocus()
+        }
+        navBack.isFocusable = false
+        container.requestFocus()
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP) {
             if (remote.handleKeyUp(event.keyCode) is RemoteAction.ParentTriggered) {
@@ -527,6 +544,23 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
+
+        // Down reveals / focuses Back chip; Up from Back returns focus to the player.
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_DPAD_DOWN -> {
+                if (currentFocus?.id != R.id.navBack) {
+                    focusPlayerChromeBack()
+                    return true
+                }
+            }
+            KeyEvent.KEYCODE_DPAD_UP -> {
+                if (currentFocus?.id == R.id.navBack) {
+                    releasePlayerChromeBackFocus()
+                    return true
+                }
+            }
+        }
+
         val action = remote.handleKeyDown(event.keyCode, event) ?: return super.dispatchKeyEvent(event)
         return when (action) {
             RemoteAction.ParentTriggered -> {

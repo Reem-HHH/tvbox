@@ -155,18 +155,26 @@ class VideoLibraryActivity : AppCompatActivity() {
                 return@launch
             }
             val videos = channel.videos.newestFirst()
-            val focused = GridFocus.capturePosition(grid)
+            val liveFocus = GridFocus.capturePosition(grid)
             adapter.submit(videos)
             emptyMessage.visibility = if (videos.isEmpty()) View.VISIBLE else View.GONE
             emptyMessage.text = getString(R.string.empty_videos)
+            val rememberedId = NavFocusMemory.lastVideoId(channelId)
+            val rememberedIndex = rememberedId?.let { adapter.indexOfVideoId(it) }
+                ?.takeIf { it >= 0 }
+                ?: RecyclerView.NO_POSITION
             when {
-                focused != RecyclerView.NO_POSITION -> GridFocus.restore(grid, focused)
+                liveFocus != RecyclerView.NO_POSITION -> GridFocus.restore(grid, liveFocus)
+                rememberedIndex != RecyclerView.NO_POSITION ->
+                    GridFocus.restore(grid, rememberedIndex)
                 focusFirst && videos.isNotEmpty() -> GridFocus.requestGridDefault(grid)
             }
         }
     }
 
     private fun openPlayer(video: VideoItem) {
+        if (!OpenDebouncer.tryOpen("video:${channelId}:${video.id}")) return
+        NavFocusMemory.rememberVideo(channelId, video.id)
         startActivity(
             Intent(this, PlayerActivity::class.java)
                 .putExtra(PlayerActivity.EXTRA_TITLE, video.title)

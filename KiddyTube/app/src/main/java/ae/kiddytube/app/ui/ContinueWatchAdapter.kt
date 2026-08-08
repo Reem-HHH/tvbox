@@ -63,14 +63,7 @@ class ContinueWatchAdapter(
             }
             itemView.setOnClickListener { onClick(recent, video) }
             itemView.setOnFocusChangeListener { v, hasFocus ->
-                val scale = if (hasFocus) 1.02f else 1f
-                val ty = if (hasFocus) -3f else 0f
-                v.animate()
-                    .scaleX(scale)
-                    .scaleY(scale)
-                    .translationY(ty)
-                    .setDuration(150)
-                    .start()
+                TileFocusAnim.apply(v, hasFocus)
             }
         }
     }
