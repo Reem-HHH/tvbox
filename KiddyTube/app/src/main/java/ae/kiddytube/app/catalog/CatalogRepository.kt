@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.random.Random
 
 private val Context.catalogStore: DataStore<Preferences> by preferencesDataStore(name = "kids_catalog")
 
@@ -49,6 +50,8 @@ class CatalogRepository(
     private val writeMutex = Mutex()
     private var bootstrap: CatalogBootstrap? = null
     @Volatile private var migrationDone = false
+    /** Fixed for this process so home grid order is stable until cold start. */
+    private val homeChannelShuffleSeed = Random.nextLong()
 
     val settingsFlow: Flow<CatalogSettings> = store.data.map { it.toSettings() }
 
@@ -104,7 +107,7 @@ class CatalogRepository(
     }
 
     fun enabledChannels(settings: CatalogSettings): List<ContentChannel> =
-        settings.channels.filter { it.enabled }.sortedBy { it.sortOrder }
+        settings.channels.filter { it.enabled }.shuffled(Random(homeChannelShuffleSeed))
 
     fun effectiveApiKey(settings: CatalogSettings): String? =
         ApiKeyResolver.effective(settings.youtubeApiKey)
