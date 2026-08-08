@@ -1,40 +1,59 @@
 # KiddyTube (Flutter)
 
-Cross-platform kids browser aimed at **one UI** on:
+Cross-platform kids browser for:
 
-- Android phones / tablets  
-- Android TV (Leanback launcher + D-pad focus)  
-- iOS phones / tablets  
+- **Android phones / tablets**
+- **Android TV** (Leanback launcher + D-pad focus)
+- **iPad / iOS**
 
-**Apple TV (tvOS)** is intentionally later. The production Kotlin app in [`../KiddyTube`](../KiddyTube) stays shipping until Flutter catches up.
+**Apple TV (tvOS)** is intentionally out of scope. The production Kotlin app in [`../KiddyTube`](../KiddyTube) remains the shipping Android build until Flutter fully replaces it; this Flutter app is a **working** Android + iPad build, not a stub.
 
-## Phase 1 (this folder)
+## Features (current)
 
-- Catalog models + scaffold seed (verified YouTube starter IDs)
-- Home **Shows** vs **Mix** (persisted)
-- Shared focus tiles (touch + remote)
-- Android TV manifest hooks (`LEANBACK_LAUNCHER`, optional leanback)
-
-Not in Phase 1: YouTube player, parent PIN dashboard, playlist sync API, Watch Next.
+- Catalog seed parity with Kotlin `SEED_VERSION` **16**
+- Home **Shows** vs **Mix** (Mix/Shows toggle gated behind parent PIN)
+- YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel)
+- Parent PIN dashboard MVP (change PIN, API key, enable channels, refresh playlists, clear continue watching, export catalog)
+- Continue watching row
+- Android TV Leanback launcher + focus tiles
 
 ## Setup
 
-Flutter SDK was bootstrapped under `../.tools/flutter` if needed:
+Flutter SDK may be bootstrapped under `../.tools/flutter`:
 
 ```bash
 export PATH="$PWD/../.tools/flutter/bin:$PATH"
 cd kiddytube_flutter
 flutter pub get
 flutter test
-flutter run                 # phone / simulator
-flutter run -d <android-tv> # Android TV emulator / device
+flutter analyze
 ```
+
+### Run
+
+```bash
+# iPad simulator
+flutter devices
+flutter run -d <ipad-simulator-id>
+
+# Android phone / emulator
+flutter run -d <android-device>
+
+# Android TV emulator / device (Leanback)
+flutter run -d <android-tv>
+```
+
+Default parent PIN for development: **2580**.
+
+Playlist sync needs a YouTube Data API key (set in Parent settings → stored in secure storage).
 
 ## Layout
 
 ```
 lib/
-  catalog/   models, seed, shuffle/flatten, repository
+  catalog/   models, seed v16, repository, sync, continue watching
+  parent/    PIN, session, settings screen
+  player/    YouTube iframe + video_player
   ui/        home + focus tiles
   main.dart
 ```

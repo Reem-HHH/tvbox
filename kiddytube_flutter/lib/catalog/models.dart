@@ -1,7 +1,14 @@
 enum SourceType {
   youtubePlaylist,
   youtubeVideoList,
-  directUrl,
+  directUrl;
+
+  static SourceType fromName(String? raw) {
+    for (final value in SourceType.values) {
+      if (value.name == raw) return value;
+    }
+    return SourceType.youtubeVideoList;
+  }
 }
 
 /// Kids home: channel tiles vs a flat shuffled video mix.
@@ -46,9 +53,52 @@ class VideoItem {
   /// YouTube hqdefault thumbnail when an id is present.
   String? get youtubeThumbnail {
     final id = youtubeVideoId;
-    if (id == null || id.isEmpty) return null;
-    return 'https://i.ytimg.com/vi/$id/hqdefault.jpg';
+    if (id == null || id.isEmpty) return thumbnailUrl;
+    return thumbnailUrl ?? 'https://i.ytimg.com/vi/$id/hqdefault.jpg';
   }
+
+  VideoItem copyWith({
+    String? title,
+    String? thumbnailUrl,
+    String? youtubeVideoId,
+    String? directUrl,
+    int? publishedAtMs,
+    bool? manual,
+    bool? allowSeek,
+  }) {
+    return VideoItem(
+      id: id,
+      title: title ?? this.title,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      youtubeVideoId: youtubeVideoId ?? this.youtubeVideoId,
+      directUrl: directUrl ?? this.directUrl,
+      publishedAtMs: publishedAtMs ?? this.publishedAtMs,
+      manual: manual ?? this.manual,
+      allowSeek: allowSeek ?? this.allowSeek,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        if (thumbnailUrl != null) 'thumbnailUrl': thumbnailUrl,
+        if (youtubeVideoId != null) 'youtubeVideoId': youtubeVideoId,
+        if (directUrl != null) 'directUrl': directUrl,
+        if (publishedAtMs != null) 'publishedAtMs': publishedAtMs,
+        'manual': manual,
+        'allowSeek': allowSeek,
+      };
+
+  factory VideoItem.fromJson(Map<String, dynamic> json) => VideoItem(
+        id: json['id'] as String,
+        title: json['title'] as String? ?? 'Video',
+        thumbnailUrl: json['thumbnailUrl'] as String?,
+        youtubeVideoId: json['youtubeVideoId'] as String?,
+        directUrl: json['directUrl'] as String?,
+        publishedAtMs: (json['publishedAtMs'] as num?)?.toInt(),
+        manual: json['manual'] as bool? ?? false,
+        allowSeek: json['allowSeek'] as bool? ?? true,
+      );
 }
 
 class ContentChannel {
@@ -62,6 +112,7 @@ class ContentChannel {
     this.sortOrder = 0,
     this.followUploads = false,
     this.color = 0xFF42A5F5,
+    this.playlistManagedByParent = false,
   });
 
   final String id;
@@ -74,24 +125,64 @@ class ContentChannel {
   final bool followUploads;
   /// ARGB seed tile color until artwork assets are ported.
   final int color;
+  final bool playlistManagedByParent;
 
   ContentChannel copyWith({
+    String? title,
+    SourceType? sourceType,
     bool? enabled,
+    String? youtubePlaylistId,
+    bool clearPlaylist = false,
     List<VideoItem>? videos,
+    int? sortOrder,
     bool? followUploads,
+    int? color,
+    bool? playlistManagedByParent,
   }) {
     return ContentChannel(
       id: id,
-      title: title,
-      sourceType: sourceType,
+      title: title ?? this.title,
+      sourceType: sourceType ?? this.sourceType,
       enabled: enabled ?? this.enabled,
-      youtubePlaylistId: youtubePlaylistId,
+      youtubePlaylistId:
+          clearPlaylist ? null : (youtubePlaylistId ?? this.youtubePlaylistId),
       videos: videos ?? this.videos,
-      sortOrder: sortOrder,
+      sortOrder: sortOrder ?? this.sortOrder,
       followUploads: followUploads ?? this.followUploads,
-      color: color,
+      color: color ?? this.color,
+      playlistManagedByParent:
+          playlistManagedByParent ?? this.playlistManagedByParent,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'sourceType': sourceType.name,
+        'enabled': enabled,
+        if (youtubePlaylistId != null) 'youtubePlaylistId': youtubePlaylistId,
+        'videos': videos.map((v) => v.toJson()).toList(),
+        'sortOrder': sortOrder,
+        'followUploads': followUploads,
+        'color': color,
+        'playlistManagedByParent': playlistManagedByParent,
+      };
+
+  factory ContentChannel.fromJson(Map<String, dynamic> json) => ContentChannel(
+        id: json['id'] as String,
+        title: json['title'] as String? ?? json['id'] as String,
+        sourceType: SourceType.fromName(json['sourceType'] as String?),
+        enabled: json['enabled'] as bool? ?? true,
+        youtubePlaylistId: json['youtubePlaylistId'] as String?,
+        videos: (json['videos'] as List<dynamic>? ?? const [])
+            .map((e) => VideoItem.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList(),
+        sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+        followUploads: json['followUploads'] as bool? ?? false,
+        color: (json['color'] as num?)?.toInt() ?? 0xFF42A5F5,
+        playlistManagedByParent:
+            json['playlistManagedByParent'] as bool? ?? false,
+      );
 }
 
 /// Video tile bound to its owning channel.
