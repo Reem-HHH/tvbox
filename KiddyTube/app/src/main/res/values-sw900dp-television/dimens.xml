@@ -2,10 +2,13 @@
 <resources>
     <!-- Overrides values-sw900dp on television (sw beats uiMode alone). -->
     <dimen name="grid_padding">36dp</dimen>
-    <dimen name="tile_margin">6dp</dimen>
-    <dimen name="tile_inner_padding">8dp</dimen>
+    <dimen name="tile_margin">4dp</dimen>
+    <dimen name="tile_inner_padding">3dp</dimen>
+    <dimen name="tile_title_padding">8dp</dimen>
+    <dimen name="tile_title_gap">6dp</dimen>
     <dimen name="header_padding_h">36dp</dimen>
     <dimen name="header_padding_v">28dp</dimen>
-    <dimen name="continue_watch_tile_width">220dp</dimen>
+    <dimen name="header_padding_bottom">10dp</dimen>
+    <dimen name="continue_watch_tile_width">280dp</dimen>
     <dimen name="player_safe_inset">36dp</dimen>
 </resources>

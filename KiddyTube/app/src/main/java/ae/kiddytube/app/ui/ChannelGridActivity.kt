@@ -228,8 +228,8 @@ class ChannelGridActivity : AppCompatActivity() {
         val isTv = isTelevision()
         val widthDp = resources.configuration.screenWidthDp
         return when {
-            // TV: fewer columns so channel thumbs read at 10-foot distance.
-            isTv -> 4
+            // TV: 3 columns so channel thumbs read larger at 10-foot distance.
+            isTv -> 3
             widthDp >= 900 -> 6
             widthDp >= 600 -> 4
             else -> 2

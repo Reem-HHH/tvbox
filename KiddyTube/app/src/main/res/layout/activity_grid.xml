@@ -13,7 +13,7 @@
         android:paddingStart="@dimen/header_padding_h"
         android:paddingTop="@dimen/header_padding_v"
         android:paddingEnd="@dimen/header_padding_h"
-        android:paddingBottom="12dp">
+        android:paddingBottom="@dimen/header_padding_bottom">
 
         <TextView
             android:id="@+id/navBack"
