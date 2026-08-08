@@ -113,6 +113,7 @@ class ContentChannel {
     this.followUploads = false,
     this.color = 0xFF42A5F5,
     this.playlistManagedByParent = false,
+    this.defaultAllowSeek = true,
   });
 
   final String id;
@@ -126,6 +127,16 @@ class ContentChannel {
   /// ARGB seed tile color until artwork assets are ported.
   final int color;
   final bool playlistManagedByParent;
+  final bool defaultAllowSeek;
+
+  /// Preview thumb from the first YouTube video when available.
+  String? get previewThumbnail {
+    for (final v in videos) {
+      final t = v.youtubeThumbnail;
+      if (t != null && t.isNotEmpty) return t;
+    }
+    return null;
+  }
 
   ContentChannel copyWith({
     String? title,
@@ -138,6 +149,7 @@ class ContentChannel {
     bool? followUploads,
     int? color,
     bool? playlistManagedByParent,
+    bool? defaultAllowSeek,
   }) {
     return ContentChannel(
       id: id,
@@ -152,6 +164,7 @@ class ContentChannel {
       color: color ?? this.color,
       playlistManagedByParent:
           playlistManagedByParent ?? this.playlistManagedByParent,
+      defaultAllowSeek: defaultAllowSeek ?? this.defaultAllowSeek,
     );
   }
 
@@ -166,6 +179,7 @@ class ContentChannel {
         'followUploads': followUploads,
         'color': color,
         'playlistManagedByParent': playlistManagedByParent,
+        'defaultAllowSeek': defaultAllowSeek,
       };
 
   factory ContentChannel.fromJson(Map<String, dynamic> json) => ContentChannel(
@@ -182,6 +196,7 @@ class ContentChannel {
         color: (json['color'] as num?)?.toInt() ?? 0xFF42A5F5,
         playlistManagedByParent:
             json['playlistManagedByParent'] as bool? ?? false,
+        defaultAllowSeek: json['defaultAllowSeek'] as bool? ?? true,
       );
 }
 

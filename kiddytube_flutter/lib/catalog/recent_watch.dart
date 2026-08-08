@@ -111,3 +111,12 @@ class RecentWatchStore {
     await _prefs!.remove(_key);
   }
 }
+
+/// Clamp resume position like Kotlin [PlayerActivity.clampedResumePosition].
+int clampedResumePosition(int positionMs, int durationMs) {
+  if (positionMs < 5000) return 0;
+  if (durationMs > 0 && positionMs >= (durationMs * 0.92).floor()) {
+    return 0;
+  }
+  return positionMs;
+}

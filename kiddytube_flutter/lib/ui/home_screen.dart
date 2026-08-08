@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../catalog/catalog_repository.dart';
@@ -6,6 +7,7 @@ import '../catalog/models.dart';
 import '../catalog/recent_watch.dart';
 import '../parent/parent_settings_screen.dart';
 import '../parent/pin_gate.dart';
+import '../parent/release_pin_policy.dart';
 import '../player/player_screen.dart';
 import 'focus_tile.dart';
 
@@ -69,6 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _openChannel(ContentChannel channel) {
+    if (!_ensureKidPlaybackAllowed()) return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => LibraryScreen(
@@ -80,10 +83,30 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  bool _ensureKidPlaybackAllowed() {
+    final settings = _settings;
+    if (settings == null) return false;
+    if (!ReleasePinPolicy.requirePinChangeForKidPlayback(
+      isDebugBuild: !kReleaseMode,
+      pinChangedFromDefault: settings.pinChangedFromDefault,
+    )) {
+      return true;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Change the default parent PIN before kids can watch (release build).',
+        ),
+      ),
+    );
+    return false;
+  }
+
   Future<void> _openVideo(
     PlayableVideo item, {
     int startPositionMs = 0,
   }) async {
+    if (!_ensureKidPlaybackAllowed()) return;
     final settings = _settings;
     if (settings == null) return;
     ContentChannel? channel;
@@ -303,6 +326,7 @@ class _ChannelGrid extends StatelessWidget {
             color: Color(channel.color),
             title: channel.title,
             subtitle: '${channel.videos.length} videos',
+            imageUrl: channel.previewThumbnail,
           ),
         );
       },
@@ -442,10 +466,27 @@ class LibraryScreen extends StatelessWidget {
   final Future<void> Function()? onPlayed;
 
   Future<void> _play(BuildContext context, int index) async {
+    final settings = await repository.load();
+    if (ReleasePinPolicy.requirePinChangeForKidPlayback(
+      isDebugBuild: !kReleaseMode,
+      pinChangedFromDefault: settings.pinChangedFromDefault,
+    )) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Change the default parent PIN before kids can watch (release build).',
+            ),
+          ),
+        );
+      }
+      return;
+    }
     final queue = [
       for (final v in channel.videos)
         PlayableVideo(channelId: channel.id, video: v),
     ];
+    if (!context.mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PlayerScreen(

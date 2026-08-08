@@ -163,6 +163,26 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
     await _reload();
   }
 
+  Future<void> _toggleSeek(ContentChannel channel) async {
+    if (!_sessionOk()) return;
+    await widget.repository
+        .setChannelAllowSeek(channel.id, !channel.defaultAllowSeek);
+    await _reload();
+  }
+
+  Future<void> _toggleReleaseReady(bool value) async {
+    if (!_sessionOk()) return;
+    try {
+      await widget.repository.setReleaseReady(value);
+      await _reload();
+      if (!mounted) return;
+      setState(() => _status = value ? 'Release ready on' : 'Release ready off');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _status = '$e');
+    }
+  }
+
   Future<void> _setHomeMode(HomeLibraryMode mode) async {
     if (!_sessionOk()) return;
     await widget.repository.setHomeLibraryMode(mode);
@@ -197,9 +217,25 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
                   ),
                 ListTile(
                   title: const Text('Change PIN'),
-                  subtitle: const Text('Default dev PIN is 2580 until changed'),
+                  subtitle: Text(
+                    settings.pinChangedFromDefault
+                        ? 'Custom PIN set'
+                        : 'Default dev PIN is 2580 until changed',
+                  ),
                   trailing: const Icon(Icons.chevron_right),
                   onTap: _changePin,
+                ),
+                SwitchListTile(
+                  title: const Text('Release ready'),
+                  subtitle: Text(
+                    settings.pinChangedFromDefault
+                        ? 'Reject factory PIN after unlock'
+                        : 'Change PIN first',
+                  ),
+                  value: settings.releaseReady,
+                  onChanged: settings.pinChangedFromDefault
+                      ? _toggleReleaseReady
+                      : null,
                 ),
                 ListTile(
                   title: const Text('YouTube API key'),
@@ -262,14 +298,24 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
                 ),
                 const SizedBox(height: 8),
                 ...settings.channels.map(
-                  (ch) => SwitchListTile(
-                    title: Text(ch.title),
-                    subtitle: Text(
-                      '${ch.enabled ? 'ON' : 'OFF'} · ${ch.videos.length} videos'
-                      '${ch.youtubePlaylistId != null ? ' · playlist' : ''}',
-                    ),
-                    value: ch.enabled,
-                    onChanged: (_) => _toggleChannel(ch),
+                  (ch) => Column(
+                    children: [
+                      SwitchListTile(
+                        title: Text(ch.title),
+                        subtitle: Text(
+                          '${ch.enabled ? 'ON' : 'OFF'} · ${ch.videos.length} videos'
+                          '${ch.youtubePlaylistId != null ? ' · playlist' : ''}',
+                        ),
+                        value: ch.enabled,
+                        onChanged: (_) => _toggleChannel(ch),
+                      ),
+                      SwitchListTile(
+                        dense: true,
+                        title: const Text('Allow seek (FF/RW)'),
+                        value: ch.defaultAllowSeek,
+                        onChanged: ch.enabled ? (_) => _toggleSeek(ch) : null,
+                      ),
+                    ],
                   ),
                 ),
               ],
