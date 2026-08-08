@@ -46,8 +46,16 @@ void main() {
     );
   });
 
+  test('seed v17 has Twirlywoos episode expansion', () {
+    expect(DefaultChannels.seedVersion, 17);
+    final twirly =
+        DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
+    expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
+    expect(twirly.videos.length, greaterThanOrEqualTo(9));
+  });
+
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 16);
+    expect(DefaultChannels.seedVersion, 17);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();

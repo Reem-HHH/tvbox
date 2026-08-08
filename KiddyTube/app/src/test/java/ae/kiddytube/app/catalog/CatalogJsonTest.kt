@@ -89,8 +89,17 @@ class CatalogJsonTest {
     }
 
     @Test
+    fun seedVersionSeventeenAddsTwirlywoosEpisodes() {
+        assertEquals(17, DefaultChannels.SEED_VERSION)
+        val twirly = DefaultChannels.seed().first { it.id == "twirlywoos" }
+        assertTrue(twirly.videos.any { it.id == "wAFiVXz1NNw" })
+        assertTrue(twirly.videos.any { it.id == "Wg0JkKmQY6A" })
+        assertTrue(twirly.videos.size >= 9)
+    }
+
+    @Test
     fun seedVersionSixteenConsolidatesDawoodAndAddsKidsMusic() {
-        assertEquals(16, DefaultChannels.SEED_VERSION)
+        assertEquals(17, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->

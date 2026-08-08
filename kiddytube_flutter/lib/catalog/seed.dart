@@ -1,8 +1,8 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 16.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 17.
 class DefaultChannels {
-  static const seedVersion = 16;
+  static const seedVersion = 17;
 
   static const _spacetoonUploadsPlaylist = 'UUuQKih3Ac3NABADQKQdeV6A';
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
@@ -238,6 +238,11 @@ class DefaultChannels {
             _yt('lRVTYTWPUhU', 'This way, that way — Twirlywoos'),
             _yt('phqqLsmOxic', 'Joining Up! — Twirlywoos'),
             _yt('Ya45-PIVjhA', 'Sneaking in the Kitchen — Twirlywoos'),
+            _yt('wAFiVXz1NNw', 'Full — Twirlywoos'),
+            _yt('Wg0JkKmQY6A', 'Connecting — Twirlywoos'),
+            _yt('8MUQW96Nsks', 'Turning — Twirlywoos'),
+            _yt('iagHmqt-Hio', 'Going Over — Twirlywoos'),
+            _yt('7JXSOIOebW4', 'Full (Kid Movies) — Twirlywoos'),
           ],
         ),
         _channel(

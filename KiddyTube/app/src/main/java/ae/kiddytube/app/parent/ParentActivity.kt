@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
-import android.widget.Switch
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -95,17 +94,21 @@ class ParentActivity : AppCompatActivity() {
 
         addSectionCard {
             addSectionTitle(it, getString(R.string.parent_section_actions))
-            addSwitch(
+            val mixOn = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
+            addToggle(
                 it,
-                getString(R.string.parent_home_mix_videos),
-                settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
-            ) { checked ->
+                if (mixOn) {
+                    getString(R.string.parent_home_mix_on)
+                } else {
+                    getString(R.string.parent_home_mix_off)
+                }
+            ) {
                 update { s ->
                     s.copy(
-                        homeLibraryMode = if (checked) {
-                            HomeLibraryMode.MIX_VIDEOS
-                        } else {
+                        homeLibraryMode = if (s.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS) {
                             HomeLibraryMode.CHANNELS
+                        } else {
+                            HomeLibraryMode.MIX_VIDEOS
                         }
                     )
                 }
@@ -166,17 +169,23 @@ class ParentActivity : AppCompatActivity() {
         addSectionCard {
             addSectionTitle(it, getString(R.string.parent_section_security))
             addButton(it, getString(R.string.parent_change_pin)) { promptChangePin() }
-            addSwitch(
+            val releaseOn = settings.releaseReady && settings.pinChangedFromDefault
+            addToggle(
                 it,
-                getString(R.string.parent_release_ready),
-                settings.releaseReady && settings.pinChangedFromDefault
-            ) { checked ->
-                if (checked && !settings.pinChangedFromDefault) {
+                if (releaseOn) {
+                    getString(R.string.parent_release_ready_on)
+                } else {
+                    getString(R.string.parent_release_ready_off)
+                }
+            ) {
+                if (!releaseOn && !settings.pinChangedFromDefault) {
                     toast(getString(R.string.parent_change_pin_first))
                     lifecycleScope.launch { reload() }
-                    return@addSwitch
+                    return@addToggle
                 }
-                update { s -> s.copy(releaseReady = checked && s.pinChangedFromDefault) }
+                update { s ->
+                    s.copy(releaseReady = !releaseOn && s.pinChangedFromDefault)
+                }
             }
             addButton(it, "Reset all settings") {
                 AlertDialog.Builder(this)
@@ -230,14 +239,17 @@ class ParentActivity : AppCompatActivity() {
             "Playlist" to { promptPlaylist(channel) }
         )
         if (!channel.youtubePlaylistId.isNullOrBlank()) {
-            addSwitch(
+            addToggle(
                 actions,
-                getString(R.string.parent_follow_uploads),
-                channel.followUploads
-            ) { checked ->
+                if (channel.followUploads) {
+                    getString(R.string.parent_follow_uploads_on)
+                } else {
+                    getString(R.string.parent_follow_uploads_off)
+                }
+            ) {
                 withActiveSession {
                     (application as KiddyTubeApp).catalogRepository
-                        .setFollowUploads(channel.id, checked)
+                        .setFollowUploads(channel.id, !channel.followUploads)
                     reload()
                 }
             }
@@ -277,14 +289,17 @@ class ParentActivity : AppCompatActivity() {
         } else {
             channel.videos.all { it.allowSeek }
         }
-        addSwitch(
+        addToggle(
             actions,
-            getString(R.string.parent_seek_enabled),
-            seekOn
-        ) { checked ->
+            if (seekOn) {
+                getString(R.string.parent_seek_on)
+            } else {
+                getString(R.string.parent_seek_off)
+            }
+        ) {
             withActiveSession {
                 (application as KiddyTubeApp).catalogRepository
-                    .setChannelAllowSeek(channel.id, checked)
+                    .setChannelAllowSeek(channel.id, !seekOn)
                 reload()
             }
         }
@@ -602,24 +617,15 @@ class ParentActivity : AppCompatActivity() {
             setOnClickListener { onClick() }
         }
 
-    private fun addSwitch(
-        parent: ViewGroup,
-        label: String,
-        checked: Boolean,
-        onChange: (Boolean) -> Unit
-    ) {
-        parent.addView(Switch(this).apply {
-            text = label
-            isChecked = checked
-            isFocusable = true
-            setTextColor(inkNavy())
-            setPadding(0, dp(10), 0, dp(4))
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).also { it.topMargin = dp(4) }
-            setOnCheckedChangeListener { _, isChecked -> onChange(isChecked) }
-        })
+    private fun addToggle(parent: ViewGroup, label: String, onClick: () -> Unit) {
+        parent.addView(
+            btn(label, onClick).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).also { it.topMargin = dp(4) }
+            }
+        )
     }
 
     private fun padded(view: android.view.View): LinearLayout =

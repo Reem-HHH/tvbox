@@ -12,6 +12,8 @@
     <string name="a11y_home_mode_shows">الرئيسية تعرض القنوات. اطلب من أحد الوالدين التبديل إلى مزيج الفيديوهات.</string>
     <string name="a11y_home_mode_mix">الرئيسية تعرض مزيج الفيديوهات. اطلب من أحد الوالدين التبديل إلى القنوات.</string>
     <string name="parent_home_mix_videos">الرئيسية: مزج كل الفيديوهات</string>
+    <string name="parent_home_mix_on">مزج الرئيسية: تشغيل</string>
+    <string name="parent_home_mix_off">مزج الرئيسية: إيقاف</string>
     <string name="home_mode_pin_required">اطلب من أحد الوالدين فتح القفل لتغيير شكل الرئيسية</string>
     <string name="sync_updating">جاري تحديث القنوات…</string>
     <string name="sync_updated">تم تحديث القنوات!</string>
@@ -32,7 +34,11 @@
     <string name="parent_session_expired">انتهت جلسة الوالدين. افتح القفل مرة أخرى.</string>
     <string name="parent_video_count">%1$d فيديو في الكتالوج</string>
     <string name="parent_follow_uploads">متابعة رفعات القائمة عند المزامنة/التحديث</string>
+    <string name="parent_follow_uploads_on">متابعة الرفعات: تشغيل</string>
+    <string name="parent_follow_uploads_off">متابعة الرفعات: إيقاف</string>
     <string name="parent_seek_enabled">التقديم/الترجيع مفعّل لهذه القناة</string>
+    <string name="parent_seek_on">التقديم/الترجيع: تشغيل</string>
+    <string name="parent_seek_off">التقديم/الترجيع: إيقاف</string>
     <string name="parent_manage_videos">إدارة الفيديوهات</string>
     <string name="parent_no_videos">لا توجد فيديوهات في هذه القناة</string>
     <string name="parent_remove_video_title">إزالة الفيديو؟</string>
@@ -59,6 +65,8 @@
     <string name="parent_change_pin_first">غيّر رمز PIN الافتراضي أولاً</string>
     <string name="parent_release_pin_required">اطلب من أحد الوالدين فتح القفل وتغيير رمز PIN الافتراضي (2580) قبل المشاهدة.</string>
     <string name="parent_release_ready">جاهز للإصدار</string>
+    <string name="parent_release_ready_on">جاهز للإصدار: تشغيل</string>
+    <string name="parent_release_ready_off">جاهز للإصدار: إيقاف</string>
     <string name="parent_signing_sha1">بصمة SHA-1 للتطبيق (لمفاتيح Android المقيّدة):\n%1$s</string>
     <string name="parent_signing_sha1_unavailable">بصمة SHA-1 غير متاحة على هذا الجهاز</string>
     <string name="parent_set_api_key">تعيين مفتاح YouTube API</string>

@@ -10,11 +10,8 @@ CBeebies / Ragdoll preschool series: four curious bird-like characters, gentle s
 ## What’s in the app
 
 - Uploads playlist: official Twirlywoos - WildBrain (`UC6-m1hdh8xEu-XBJK3v1TPg` → `UU…`)
-- Starters:
-  - Soft — Twirlywoos
-  - This way, that way — Twirlywoos
-  - Joining Up! — Twirlywoos
-  - Sneaking in the Kitchen — Twirlywoos
+- Seed starters include Soft, This way that way, Joining Up, Sneaking in the Kitchen, Full, Connecting, Turning, Going Over, and Full (Kid Movies)
+- Turn on **Follow uploads** in Parent settings (remote-friendly ON/OFF button) to pull more episodes on sync
 
 ## Audience
 

@@ -90,7 +90,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 16
+    const val SEED_VERSION = 17
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -335,7 +335,12 @@ object DefaultChannels {
                 yt("yS4vFgys9-U", "Soft — Twirlywoos"),
                 yt("lRVTYTWPUhU", "This way, that way — Twirlywoos"),
                 yt("phqqLsmOxic", "Joining Up! — Twirlywoos"),
-                yt("Ya45-PIVjhA", "Sneaking in the Kitchen — Twirlywoos")
+                yt("Ya45-PIVjhA", "Sneaking in the Kitchen — Twirlywoos"),
+                yt("wAFiVXz1NNw", "Full — Twirlywoos"),
+                yt("Wg0JkKmQY6A", "Connecting — Twirlywoos"),
+                yt("8MUQW96Nsks", "Turning — Twirlywoos"),
+                yt("iagHmqt-Hio", "Going Over — Twirlywoos"),
+                yt("7JXSOIOebW4", "Full (Kid Movies) — Twirlywoos")
             )
         ),
         ContentChannel(
