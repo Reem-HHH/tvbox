@@ -55,8 +55,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     SystemChrome.setPreferredOrientations(const [
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
     ]);
     _loadCurrent(startMs: widget.startPositionMs);
   }
@@ -367,93 +365,100 @@ class _PlayerScreenState extends State<PlayerScreen> {
           autofocus: true,
           child: Scaffold(
             backgroundColor: Colors.black,
-            body: SafeArea(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (_webController != null)
-                    WebViewWidget(controller: _webController!)
-                  else if (_videoController != null &&
-                      _videoController!.value.isInitialized)
-                    Center(
-                      child: AspectRatio(
-                        aspectRatio: _videoController!.value.aspectRatio == 0
-                            ? 16 / 9
-                            : _videoController!.value.aspectRatio,
-                        child: VideoPlayer(_videoController!),
-                      ),
-                    )
-                  else
-                    const ColoredBox(color: Colors.black),
-                  if (_loading)
-                    const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (_webController != null)
+                  WebViewWidget(controller: _webController!)
+                else if (_videoController != null &&
+                    _videoController!.value.isInitialized)
+                  FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _videoController!.value.size.width == 0
+                          ? 16
+                          : _videoController!.value.size.width,
+                      height: _videoController!.value.size.height == 0
+                          ? 9
+                          : _videoController!.value.size.height,
+                      child: VideoPlayer(_videoController!),
                     ),
-                  if (_error != null)
-                    Center(
-                      child: Text(
-                        _error!,
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 18),
-                      ),
-                    ),
-                  if (_seekHint != null)
-                    Center(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: Colors.black54,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          child: Text(
-                            _seekHint!,
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ),
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Focus(
-                      autofocus: !kIsWeb && Platform.isAndroid,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                        onPressed: () async {
-                          await _persistProgress();
-                          if (context.mounted) {
-                            Navigator.of(context).maybePop();
-                          }
-                        },
-                        tooltip: 'Back',
-                      ),
-                    ),
+                  )
+                else
+                  const ColoredBox(color: Colors.black),
+                if (_loading)
+                  const Center(
+                    child: CircularProgressIndicator(color: Colors.white),
                   ),
-                  Positioned(
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
+                if (_error != null)
+                  Center(
                     child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
+                      _error!,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  ),
+                if (_seekHint != null)
+                  Center(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        child: Text(
+                          _seekHint!,
+                          style: const TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                SafeArea(
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 4,
+                        left: 4,
+                        child: Focus(
+                          autofocus: !kIsWeb && Platform.isAndroid,
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                              size: 32,
+                            ),
+                            onPressed: () async {
+                              await _persistProgress();
+                              if (context.mounted) {
+                                Navigator.of(context).maybePop();
+                              }
+                            },
+                            tooltip: 'Back',
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 16,
+                        right: 16,
+                        bottom: 8,
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ),
