@@ -27,3 +27,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/kiddytube_logo.png
+    - assets/kiddytube_logo_full.png
