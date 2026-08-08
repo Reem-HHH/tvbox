@@ -43,6 +43,7 @@ class KiddyTubeApp : Application() {
                     catalogBootstrap.run {
                         catalogRepository.migrateSensitiveSecretsIfNeeded()
                         ensureDefaultPin()
+                        catalogRepository.reconcilePinFlagsIfNeeded()
                         catalogRepository.applySeedUpgradeIfNeeded()
                     }
                     syncWatchNext()

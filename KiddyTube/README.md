@@ -7,7 +7,7 @@ A simple Android phone / tablet / TV kids app: browse channel thumbnails, open a
 
 ## Screens
 
-1. **Channels** — soft blue grid (column count adapts for phone / tablet / TV)
+1. **Channels** — soft blue grid (phone fewer columns, tablet denser, TV fixed at 3 for overscan/focus)
 2. **Library** — video thumbnails + titles for that channel
 3. **Player** — YouTube clean IFrame *or* Media3 for direct MP4/HLS URLs (tap to pause/play)
 
@@ -60,6 +60,8 @@ Parent-saved keys override the build-time key.
 - **TV remote (also):** `↑ ↑ ↓ ↓ ← → ← → OK` or long-press Back (≥5s) on channels, library, or player
 
 Default development PIN: `2580` — change it before enabling Release ready. Unlock grants a short in-memory parent session (~5 minutes).
+
+**Release builds:** kid playback stays blocked until the factory PIN is replaced. After that change, `2580` is rejected. Debug builds keep `2580` until Release ready is enabled.
 
 Parent can:
 - Set YouTube Data API key

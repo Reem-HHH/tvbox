@@ -6,12 +6,27 @@ import android.content.res.Configuration
 
 /** Shared Android TV / Leanback detection for layout and chrome. */
 object TvUi {
-    @Suppress("DEPRECATION")
     fun isTelevision(context: Context): Boolean {
         val uiMode = context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        if (uiMode == Configuration.UI_MODE_TYPE_TELEVISION) return true
         val pm = context.packageManager
-        return pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) ||
-            pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+        @Suppress("DEPRECATION")
+        return isTelevision(
+            uiModeType = uiMode,
+            hasLeanback = pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK),
+            hasTelevisionFeature = pm.hasSystemFeature(PackageManager.FEATURE_TELEVISION)
+        )
+    }
+
+    /**
+     * Pure helper for tests and shared call sites.
+     * True when UI mode is television, or the device advertises Leanback / television features.
+     */
+    fun isTelevision(
+        uiModeType: Int,
+        hasLeanback: Boolean,
+        hasTelevisionFeature: Boolean
+    ): Boolean {
+        if (uiModeType == Configuration.UI_MODE_TYPE_TELEVISION) return true
+        return hasLeanback || hasTelevisionFeature
     }
 }

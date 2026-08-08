@@ -9,9 +9,11 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageButton
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import ae.kiddytube.app.BuildConfig
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.PlayableVideo
@@ -19,6 +21,7 @@ import ae.kiddytube.app.catalog.newestFirst
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.parent.ParentUnlockCoordinator
+import ae.kiddytube.app.parent.ReleasePinPolicy
 import ae.kiddytube.app.player.PlayerActivity
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
@@ -37,6 +40,7 @@ class VideoLibraryActivity : AppCompatActivity() {
     private var channelId: String = ""
     private var lastLibraryFingerprint: String? = null
     private var libraryReady = false
+    private var pinChangedFromDefault = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,6 +95,7 @@ class VideoLibraryActivity : AppCompatActivity() {
             }
             brandTitle.text = channel.title.ifBlank { channelTitle.ifBlank { getString(R.string.app_name) } }
             val settings = app.catalogRepository.current()
+            pinChangedFromDefault = settings.pinChangedFromDefault
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
             remote = RemoteKeyHandler(
@@ -148,6 +153,8 @@ class VideoLibraryActivity : AppCompatActivity() {
             } catch (_: Exception) {
                 // continue with available catalog
             }
+            val settings = app.catalogRepository.current()
+            pinChangedFromDefault = settings.pinChangedFromDefault
             val channel = app.catalogRepository.channelById(channelId)
             if (channel == null || !channel.enabled) {
                 finish()
@@ -183,6 +190,7 @@ class VideoLibraryActivity : AppCompatActivity() {
     }
 
     private fun openPlayer(item: PlayableVideo) {
+        if (!ensureKidPlaybackAllowed()) return
         val video = item.video
         if (!OpenDebouncer.tryOpen("video:${item.channelId}:${video.id}")) return
         NavFocusMemory.rememberVideo(item.channelId, video.id)
@@ -195,6 +203,18 @@ class VideoLibraryActivity : AppCompatActivity() {
                 .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, item.channelId)
                 .putExtra(PlayerActivity.EXTRA_VIDEO_ID, video.id)
         )
+    }
+
+    private fun ensureKidPlaybackAllowed(): Boolean {
+        if (!ReleasePinPolicy.requirePinChangeForKidPlayback(
+                BuildConfig.DEBUG,
+                pinChangedFromDefault
+            )
+        ) {
+            return true
+        }
+        Toast.makeText(this, R.string.parent_release_pin_required, Toast.LENGTH_LONG).show()
+        return false
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {

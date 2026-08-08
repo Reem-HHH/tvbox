@@ -10,6 +10,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import ae.kiddytube.app.parent.ReleasePinPolicy
 import ae.kiddytube.app.security.EncryptedSensitiveSecretsStore
 import ae.kiddytube.app.security.SensitiveSecrets
 import ae.kiddytube.app.security.SensitiveSecretsMigrator
@@ -136,10 +137,15 @@ class CatalogRepository(
     suspend fun update(transform: (CatalogSettings) -> CatalogSettings) {
         writeMutex.withLock {
             store.edit { prefs ->
-                val next = transform(prefs.toSettings())
+                val next = sanitizePinFlags(transform(prefs.toSettings()))
                 writeSettings(prefs, next)
             }
         }
+    }
+
+    /** Clear release-ready / changed flags when the stored hash is still the factory PIN. */
+    suspend fun reconcilePinFlagsIfNeeded() {
+        update { it }
     }
 
     /** One-time merge of newer hardcoded playlist seeds into existing catalogs. */
@@ -464,8 +470,27 @@ class CatalogRepository(
 
     suspend fun exportJson(): String = CatalogJson.encode(current().channels)
 
+    private fun sanitizePinFlags(settings: CatalogSettings): CatalogSettings {
+        val sanitized = ReleasePinPolicy.sanitizePinFlags(
+            pinSalt = settings.pinSalt,
+            pinHash = settings.pinHash,
+            pinChangedFromDefault = settings.pinChangedFromDefault,
+            releaseReady = settings.releaseReady
+        )
+        if (sanitized.pinChangedFromDefault == settings.pinChangedFromDefault &&
+            sanitized.releaseReady == settings.releaseReady
+        ) {
+            return settings
+        }
+        return settings.copy(
+            pinChangedFromDefault = sanitized.pinChangedFromDefault,
+            releaseReady = sanitized.releaseReady
+        )
+    }
+
     private fun writeSettings(prefs: MutablePreferences, next: CatalogSettings) {
-        val encoded = CatalogJson.encode(next.channels)
+        val safe = sanitizePinFlags(next)
+        val encoded = CatalogJson.encode(safe.channels)
         prefs[Keys.CHANNELS_JSON] = encoded
         // Only promote last-good when the payload round-trips — never mirror corrupt writes.
         if (CatalogJson.decodeOrNull(encoded) != null) {
@@ -473,23 +498,23 @@ class CatalogRepository(
         }
         secretsStore.write(
             SensitiveSecrets(
-                youtubeApiKey = next.youtubeApiKey,
-                pinSalt = next.pinSalt,
-                pinHash = next.pinHash
+                youtubeApiKey = safe.youtubeApiKey,
+                pinSalt = safe.pinSalt,
+                pinHash = safe.pinHash
             )
         )
         // Never leave sensitive values in plaintext DataStore after a write.
         prefs.remove(Keys.YOUTUBE_API_KEY)
         prefs.remove(Keys.PIN_SALT)
         prefs.remove(Keys.PIN_HASH)
-        prefs[Keys.PIN_CHANGED] = next.pinChangedFromDefault
-        prefs[Keys.FAIL_COUNT] = next.failCount
-        prefs[Keys.LOCKED_UNTIL] = next.lockedUntilMs
+        prefs[Keys.PIN_CHANGED] = safe.pinChangedFromDefault
+        prefs[Keys.FAIL_COUNT] = safe.failCount
+        prefs[Keys.LOCKED_UNTIL] = safe.lockedUntilMs
         // Never mark release-ready while still on the factory default PIN.
-        prefs[Keys.RELEASE_READY] = next.releaseReady && next.pinChangedFromDefault
-        prefs[Keys.LAST_SYNC] = next.lastSyncMs
-        prefs[Keys.SEED_VERSION] = next.seedVersion
-        prefs[Keys.HOME_LIBRARY_MODE] = next.homeLibraryMode.name
+        prefs[Keys.RELEASE_READY] = safe.releaseReady && safe.pinChangedFromDefault
+        prefs[Keys.LAST_SYNC] = safe.lastSyncMs
+        prefs[Keys.SEED_VERSION] = safe.seedVersion
+        prefs[Keys.HOME_LIBRARY_MODE] = safe.homeLibraryMode.name
     }
 
     private fun Preferences.toSettings(): CatalogSettings {
