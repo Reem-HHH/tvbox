@@ -33,7 +33,12 @@ class KiddyTubeApp : Application() {
         catalogRepository.bindBootstrap(catalogBootstrap)
         recentWatchStore = RecentWatchStore(this)
         watchNextPublisher = WatchNextPublisher(this)
+        // Async: do not block process start on diagnostics disk I/O.
         DiagnosticsLogger.get(this).logStartup()
+        // Warm EncryptedSharedPreferences / MasterKey before bootstrap hits it.
+        appScope.launch(Dispatchers.IO) {
+            catalogRepository.prefetchSecrets()
+        }
         // Application.onCreate runs before Activity; sync/UI must await this gate.
         // Retry with backoff so a failed run does not leave awaiters permanently wedged.
         appScope.launch {
@@ -44,6 +49,7 @@ class KiddyTubeApp : Application() {
                         catalogRepository.migrateSensitiveSecretsIfNeeded()
                         ensureDefaultPin()
                         catalogRepository.reconcilePinFlagsIfNeeded()
+                        // Only blocks first paint when a seed merge is actually required.
                         catalogRepository.applySeedUpgradeIfNeeded()
                     }
                     syncWatchNext()

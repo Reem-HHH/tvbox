@@ -70,6 +70,12 @@ class CatalogRepository(
         bootstrap?.await()
     }
 
+    /** Touch EncryptedSharedPreferences / MasterKey on a background thread before bootstrap. */
+    fun prefetchSecrets() {
+        (secretsStore as? EncryptedSensitiveSecretsStore)?.prefetch()
+            ?: secretsStore.read()
+    }
+
     /**
      * Moves API key / PIN material from plaintext DataStore (and any legacy plain SharedPreferences)
      * into [secretsStore], then clears the plain copies. Idempotent; safe before PIN bootstrap.
@@ -145,15 +151,23 @@ class CatalogRepository(
 
     /** Clear release-ready / changed flags when the stored hash is still the factory PIN. */
     suspend fun reconcilePinFlagsIfNeeded() {
-        update { it }
+        val current = current()
+        val sanitized = sanitizePinFlags(current)
+        if (sanitized.pinChangedFromDefault == current.pinChangedFromDefault &&
+            sanitized.releaseReady == current.releaseReady
+        ) {
+            return
+        }
+        update { sanitizePinFlags(it) }
     }
 
     /** One-time merge of newer hardcoded playlist seeds into existing catalogs. */
     suspend fun applySeedUpgradeIfNeeded() {
-        update { current ->
-            if (current.seedVersion >= DefaultChannels.SEED_VERSION) current
-            else current.copy(
-                channels = DefaultChannels.mergeSeedUpdates(current.channels),
+        val current = current()
+        if (current.seedVersion >= DefaultChannels.SEED_VERSION) return
+        update {
+            it.copy(
+                channels = DefaultChannels.mergeSeedUpdates(it.channels),
                 seedVersion = DefaultChannels.SEED_VERSION
             )
         }
@@ -496,13 +510,15 @@ class CatalogRepository(
         if (CatalogJson.decodeOrNull(encoded) != null) {
             prefs[Keys.CHANNELS_JSON_LAST_GOOD] = encoded
         }
-        secretsStore.write(
-            SensitiveSecrets(
-                youtubeApiKey = safe.youtubeApiKey,
-                pinSalt = safe.pinSalt,
-                pinHash = safe.pinHash
-            )
+        val nextSecrets = SensitiveSecrets(
+            youtubeApiKey = safe.youtubeApiKey,
+            pinSalt = safe.pinSalt,
+            pinHash = safe.pinHash
         )
+        // Skip EncryptedPrefs write when secrets are unchanged (common on seed/sync updates).
+        if (secretsStore.read() != nextSecrets) {
+            secretsStore.write(nextSecrets)
+        }
         // Never leave sensitive values in plaintext DataStore after a write.
         prefs.remove(Keys.YOUTUBE_API_KEY)
         prefs.remove(Keys.PIN_SALT)

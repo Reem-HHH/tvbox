@@ -8,15 +8,19 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.concurrent.Executors
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 class DiagnosticsLogger(context: Context) {
     private val appContext = context.applicationContext
     private val lock = ReentrantLock()
-    private val logDir = File(appContext.filesDir, "diagnostics").apply { mkdirs() }
+    private val logDir = File(appContext.filesDir, "diagnostics")
     private val logFile = File(logDir, "kids_tv.log")
     private val maxBytes = 512 * 1024L
+    private val io = Executors.newSingleThreadExecutor { r ->
+        Thread(r, "kids-diagnostics").apply { isDaemon = true }
+    }
 
     fun log(event: String, details: String = "") {
         val stamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
@@ -30,9 +34,13 @@ class DiagnosticsLogger(context: Context) {
             }
             append('\n')
         }
-        lock.withLock {
-            rotateIfNeeded()
-            logFile.appendText(line)
+        // Never block the main thread on mkdirs / append during cold start.
+        io.execute {
+            lock.withLock {
+                if (!logDir.exists()) logDir.mkdirs()
+                rotateIfNeeded()
+                logFile.appendText(line)
+            }
         }
     }
 
@@ -44,24 +52,41 @@ class DiagnosticsLogger(context: Context) {
         )
     }
 
-    fun readTail(maxChars: Int = 12_000): String = lock.withLock {
-        if (!logFile.exists()) return@withLock ""
-        val text = logFile.readText()
-        if (text.length <= maxChars) text else text.takeLast(maxChars)
+    fun readTail(maxChars: Int = 12_000): String {
+        flushPending()
+        return lock.withLock {
+            if (!logFile.exists()) return@withLock ""
+            val text = logFile.readText()
+            if (text.length <= maxChars) text else text.takeLast(maxChars)
+        }
     }
 
-    fun createShareIntent(): Intent? = lock.withLock {
-        if (!logFile.exists() || logFile.length() == 0L) return@withLock null
-        val uri = FileProvider.getUriForFile(
-            appContext,
-            "${appContext.packageName}.fileprovider",
-            logFile
-        )
-        Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_STREAM, uri)
-            putExtra(Intent.EXTRA_SUBJECT, "KiddyTube diagnostics")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    fun createShareIntent(): Intent? {
+        flushPending()
+        return lock.withLock {
+            if (!logFile.exists() || logFile.length() == 0L) return@withLock null
+            val uri = FileProvider.getUriForFile(
+                appContext,
+                "${appContext.packageName}.fileprovider",
+                logFile
+            )
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                putExtra(Intent.EXTRA_SUBJECT, "KiddyTube diagnostics")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        }
+    }
+
+    /** Drain the writer queue so share/read see the latest lines. */
+    private fun flushPending() {
+        val done = java.util.concurrent.CountDownLatch(1)
+        io.execute { done.countDown() }
+        try {
+            done.await(2, java.util.concurrent.TimeUnit.SECONDS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
         }
     }
 

@@ -5,7 +5,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * Gates first-launch sync until default PIN setup and seed upgrade finish.
+ * Gates first-launch sync until secrets migrate + default PIN setup finish.
+ * Seed upgrade only runs (and blocks) when [DefaultChannels.SEED_VERSION] is behind.
  * Safe for concurrent awaiters. Successful [run] is idempotent; a failed [run]
  * does not mark ready and may be retried. Failed attempts complete the current
  * gate exceptionally so awaiters can fall back instead of hanging forever.

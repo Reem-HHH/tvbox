@@ -139,7 +139,7 @@ class YoutubeCatalogSource(
             VideoItem(
                 id = id,
                 title = "Video $id",
-                thumbnailUrl = "https://img.youtube.com/vi/$id/hqdefault.jpg",
+                thumbnailUrl = YoutubeUrlParser.defaultThumbnail(id),
                 youtubeVideoId = id
             )
         }

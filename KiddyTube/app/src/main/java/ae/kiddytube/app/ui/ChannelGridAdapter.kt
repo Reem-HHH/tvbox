@@ -1,7 +1,7 @@
 package ae.kiddytube.app.ui
 
 import ae.kiddytube.app.catalog.ContentChannel
-import ae.kiddytube.app.catalog.newestFirst
+import ae.kiddytube.app.catalog.newestOrNull
 import ae.kiddytube.app.catalog.youtubeThumbnail
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +11,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.R
-import coil.load
-import coil.transform.RoundedCornersTransformation
 
 class ChannelGridAdapter(
     private val onClick: (ContentChannel) -> Unit
@@ -59,18 +57,11 @@ class ChannelGridAdapter(
             itemView.contentDescription =
                 itemView.context.getString(R.string.a11y_channel_tile, channel.title)
             val iconRes = channel.resolvedIconRes()
-            val preview = channel.videos.newestFirst().firstOrNull()?.youtubeThumbnail()
+            val preview = channel.videos.newestOrNull()?.youtubeThumbnail()
             if (preview != null) {
-                icon.load(preview) {
-                    crossfade(true)
-                    placeholder(iconRes)
-                    error(iconRes)
-                    transformations(RoundedCornersTransformation(cornerPx))
-                }
+                TileImageLoad.loadUrl(icon, preview, iconRes)
             } else {
-                icon.load(iconRes) {
-                    transformations(RoundedCornersTransformation(cornerPx))
-                }
+                TileImageLoad.loadRes(icon, iconRes)
             }
             itemView.setOnClickListener { onClick(channel) }
             itemView.setOnFocusChangeListener { v, hasFocus ->
@@ -87,7 +78,18 @@ class ChannelGridAdapter(
         override fun getNewListSize(): Int = new.size
         override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
             old[oldItemPosition].id == new[newItemPosition].id
-        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-            old[oldItemPosition] == new[newItemPosition]
+
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val a = old[oldItemPosition]
+            val b = new[newItemPosition]
+            // Display fields only — ignore full videos list so playlist sync does not rebind every tile.
+            return a.title == b.title &&
+                a.iconRes == b.iconRes &&
+                a.enabled == b.enabled &&
+                previewVideoId(a) == previewVideoId(b)
+        }
+
+        private fun previewVideoId(channel: ContentChannel): String? =
+            channel.videos.newestOrNull()?.let { it.youtubeVideoId ?: it.id }
     }
 }

@@ -100,4 +100,20 @@ class YoutubeUrlParserTest {
         val ids = YoutubeUrlParser.parseVideoIdsCsv("dQw4w9WgXcQ, abcdefghijk")
         assertEquals(2, ids.size)
     }
+
+    @Test
+    fun defaultThumbnailUsesMqDefault() {
+        assertEquals(
+            "https://img.youtube.com/vi/dQw4w9WgXcQ/mqdefault.jpg",
+            YoutubeUrlParser.defaultThumbnail("dQw4w9WgXcQ")
+        )
+    }
+
+    @Test
+    fun hqThumbnailUsesHqDefault() {
+        assertEquals(
+            "https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg",
+            YoutubeUrlParser.hqThumbnail("dQw4w9WgXcQ")
+        )
+    }
 }

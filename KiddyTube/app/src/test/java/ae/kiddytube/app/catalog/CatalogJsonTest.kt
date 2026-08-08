@@ -3,6 +3,7 @@ package ae.kiddytube.app.catalog
 import ae.kiddytube.app.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -353,6 +354,16 @@ class CatalogJsonTest {
         val c = VideoItem("c", "Unknown", youtubeVideoId = "c", publishedAtMs = null)
         val sorted = listOf(a, c, b).newestFirst()
         assertEquals(listOf("b", "a", "c"), sorted.map { it.id })
+    }
+
+    @Test
+    fun newestOrNullMatchesNewestFirstHead() {
+        val a = VideoItem("a", "Old", youtubeVideoId = "a", publishedAtMs = 1_000L)
+        val b = VideoItem("b", "New", youtubeVideoId = "b", publishedAtMs = 9_000L)
+        val c = VideoItem("c", "Unknown", youtubeVideoId = "c", publishedAtMs = null)
+        val list = listOf(a, c, b)
+        assertEquals(list.newestFirst().firstOrNull()?.id, list.newestOrNull()?.id)
+        assertNull(emptyList<VideoItem>().newestOrNull())
     }
 
     @Test

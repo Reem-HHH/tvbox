@@ -706,3 +706,15 @@ fun List<VideoItem>.newestFirst(): List<VideoItem> =
                 .thenBy { it.first }
         )
         .map { it.second }
+
+/**
+ * Single-pass pick of the newest video (same ordering as [newestFirst].firstOrNull).
+ * Prefer this in RecyclerView binds to avoid sorting the full list.
+ */
+fun List<VideoItem>.newestOrNull(): VideoItem? =
+    withIndex().maxWithOrNull(
+        compareBy(
+            { it.value.publishedAtMs ?: Long.MIN_VALUE },
+            { -it.index }
+        )
+    )?.value

@@ -10,8 +10,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.R
-import coil.load
-import coil.transform.RoundedCornersTransformation
 
 class VideoGridAdapter(
     private val onClick: (PlayableVideo) -> Unit
@@ -60,14 +58,9 @@ class VideoGridAdapter(
                 itemView.context.getString(R.string.a11y_video_tile, video.title)
             val url = video.youtubeThumbnail() ?: video.thumbnailUrl
             if (url != null) {
-                thumb.load(url) {
-                    crossfade(true)
-                    placeholder(R.drawable.tile_placeholder)
-                    error(R.drawable.tile_placeholder)
-                    transformations(RoundedCornersTransformation(cornerPx))
-                }
+                TileImageLoad.loadUrl(thumb, url, R.drawable.tile_placeholder)
             } else {
-                thumb.setImageResource(R.drawable.tile_placeholder)
+                TileImageLoad.clear(thumb)
             }
             itemView.setOnClickListener { onClick(item) }
             itemView.setOnFocusChangeListener { v, hasFocus ->
@@ -87,7 +80,12 @@ class VideoGridAdapter(
             val b = new[newItemPosition]
             return a.channelId == b.channelId && a.video.id == b.video.id
         }
-        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
-            old[oldItemPosition] == new[newItemPosition]
+        override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+            val a = old[oldItemPosition].video
+            val b = new[newItemPosition].video
+            return a.title == b.title &&
+                a.thumbnailUrl == b.thumbnailUrl &&
+                a.youtubeVideoId == b.youtubeVideoId
+        }
     }
 }
