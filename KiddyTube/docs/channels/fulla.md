@@ -9,8 +9,8 @@ Fulla is the Middle East–market doll / kids brand associated with Spacetoon-er
 
 ## What’s in the app
 
-- Official **uploads playlist** synced when online.
-- No hand-picked starter video list in seed (library comes from playlist sync).
+- Hand-picked **starters** from قناة فلة (songs, prayer-set craft, storytelling episodes).
+- Official **uploads playlist** linked with Follow uploads **off** by default (toy marketing can appear on the full feed).
 
 ## Audience
 

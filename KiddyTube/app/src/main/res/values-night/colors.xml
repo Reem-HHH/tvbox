@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="sky_top">#0F1B2D</color>
-    <color name="sky_mid">#152538</color>
-    <color name="sky_bottom">#1A2D45</color>
-    <color name="ink_navy">#E8F1FA</color>
-    <color name="ink_muted">#A8BDD4</color>
-    <color name="card_white">#1E3148</color>
-    <color name="card_border">#2E4660</color>
-    <color name="focus_sky">#6EC1FF</color>
-    <color name="chip_frost">#CC243A54</color>
-    <color name="chip_border">#3D5A75</color>
-    <color name="chip_pressed">#2A415C</color>
-    <color name="empty_text">#E8F1FA</color>
-    <color name="player_chip_bg">#CC1E3148</color>
-    <color name="player_chip_text">#E8F1FA</color>
+    <!-- YouTube-like charcoal dark surfaces (system night); light mode stays sky-themed. -->
+    <color name="sky_top">#0F0F0F</color>
+    <color name="sky_mid">#121212</color>
+    <color name="sky_bottom">#181818</color>
+    <color name="ink_navy">#F1F1F1</color>
+    <color name="ink_muted">#AAAAAA</color>
+    <color name="card_white">#212121</color>
+    <color name="card_border">#303030</color>
+    <color name="focus_sky">#FFFFFF</color>
+    <color name="chip_frost">#CC212121</color>
+    <color name="chip_border">#3F3F3F</color>
+    <color name="chip_pressed">#272727</color>
+    <color name="empty_text">#F1F1F1</color>
+    <color name="player_chip_bg">#CC212121</color>
+    <color name="player_chip_text">#F1F1F1</color>
     <color name="ink_black">@color/ink_navy</color>
     <color name="focus_yellow">@color/focus_sky</color>
     <color name="chip_bg">@color/chip_frost</color>

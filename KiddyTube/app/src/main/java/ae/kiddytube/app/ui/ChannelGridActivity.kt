@@ -1,38 +1,52 @@
 package ae.kiddytube.app.ui
 
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.media.AudioManager
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import android.widget.ImageButton
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import ae.kiddytube.app.KiddyTubeApp
 import ae.kiddytube.app.R
 import ae.kiddytube.app.catalog.ApiKeyResolver
 import ae.kiddytube.app.catalog.CatalogSettings
+import ae.kiddytube.app.catalog.HomeLibraryMode
+import ae.kiddytube.app.catalog.PlayableVideo
+import ae.kiddytube.app.catalog.RecentWatchLogic
 import ae.kiddytube.app.catalog.SyncStatus
+import ae.kiddytube.app.catalog.VideoItem
+import ae.kiddytube.app.catalog.RecentWatchItem
 import ae.kiddytube.app.launcher.ImmersiveMode
 import ae.kiddytube.app.parent.ParentPinManager
 import ae.kiddytube.app.parent.ParentUnlockCoordinator
+import ae.kiddytube.app.player.PlayerActivity
 import ae.kiddytube.app.remote.RemoteAction
 import ae.kiddytube.app.remote.RemoteKeyHandler
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ChannelGridActivity : AppCompatActivity() {
     private lateinit var grid: RecyclerView
+    private lateinit var continueSection: LinearLayout
+    private lateinit var continueList: RecyclerView
     private lateinit var emptyMessage: TextView
     private lateinit var brandTitle: TextView
     private lateinit var syncStatus: TextView
+    private lateinit var homeModeToggle: TextView
     private lateinit var parentSettings: ImageButton
-    private lateinit var adapter: ChannelGridAdapter
+    private lateinit var channelAdapter: ChannelGridAdapter
+    private lateinit var videoAdapter: VideoGridAdapter
+    private lateinit var continueAdapter: ContinueWatchAdapter
     private lateinit var pinManager: ParentPinManager
     private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
@@ -40,13 +54,19 @@ class ChannelGridActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyPreferredOrientation()
         setContentView(R.layout.activity_grid)
         grid = findViewById(R.id.grid)
+        continueSection = findViewById(R.id.continueWatchingSection)
+        continueList = findViewById(R.id.continueWatchingList)
         emptyMessage = findViewById(R.id.emptyMessage)
         brandTitle = findViewById(R.id.brandTitle)
         syncStatus = findViewById(R.id.syncStatus)
+        homeModeToggle = findViewById(R.id.homeModeToggle)
         parentSettings = findViewById(R.id.parentSettings)
         brandTitle.text = getString(R.string.app_name)
+        homeModeToggle.visibility = View.VISIBLE
+        homeModeToggle.setOnClickListener { toggleHomeMode() }
 
         pinManager = ParentPinManager()
         parentUnlock = ParentUnlockCoordinator(this, pinManager)
@@ -57,21 +77,50 @@ class ChannelGridActivity : AppCompatActivity() {
         )
         parentSettings.setOnClickListener { parentUnlock.beginParentAccess() }
 
-        adapter = ChannelGridAdapter { channel ->
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    moveTaskToBack(true)
+                }
+            }
+        )
+
+        channelAdapter = ChannelGridAdapter { channel ->
+            if (!OpenDebouncer.tryOpen("channel:${channel.id}")) return@ChannelGridAdapter
+            NavFocusMemory.rememberChannel(channel.id)
             startActivity(
                 Intent(this, VideoLibraryActivity::class.java)
                     .putExtra(VideoLibraryActivity.EXTRA_CHANNEL_ID, channel.id)
                     .putExtra(VideoLibraryActivity.EXTRA_CHANNEL_TITLE, channel.title)
             )
         }
-        grid.adapter = adapter
+        videoAdapter = VideoGridAdapter { item -> openMixVideo(item) }
+        grid.adapter = channelAdapter
         grid.layoutManager = GridLayoutManager(this, spanCount())
         grid.clipToPadding = false
         grid.clipChildren = false
+        grid.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        grid.isFocusable = true
+
+        continueAdapter = ContinueWatchAdapter { recent, video -> openContinueWatch(recent, video) }
+        continueList.adapter = continueAdapter
+        continueList.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        continueList.clipToPadding = false
+        continueList.clipChildren = false
+        continueList.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+        continueList.isFocusable = true
 
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
-            settings = (application as KiddyTubeApp).catalogRepository.settingsFlow.first()
+            val app = application as KiddyTubeApp
+            // Wait for default PIN + seed upgrade before first paint / launch sync.
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                // Continue with best-effort catalog if bootstrap failed.
+            }
+            settings = app.catalogRepository.current()
             pinManager = ParentPinManager(settings.failCount, settings.lockedUntilMs)
             parentUnlock.updatePinManager(pinManager)
             remote = RemoteKeyHandler(
@@ -79,7 +128,7 @@ class ChannelGridActivity : AppCompatActivity() {
                 getSystemService(AUDIO_SERVICE) as AudioManager,
                 consumeBack = true
             )
-            render()
+            render(focusFirstIfNeeded = true)
             runLaunchSync()
         }
     }
@@ -87,21 +136,59 @@ class ChannelGridActivity : AppCompatActivity() {
     private suspend fun runLaunchSync() {
         showSyncChip(getString(R.string.sync_updating))
         val repo = (application as KiddyTubeApp).catalogRepository
+        val focused = GridFocus.capturePosition(grid)
         val result = repo.refreshAllPlaylists()
         settings = repo.current()
-        render()
+        render(restoreFocusAt = focused)
 
         val message = when (result.status) {
-            SyncStatus.UPDATED -> getString(R.string.sync_updated)
+            SyncStatus.UPDATED -> {
+                val detail = result.message?.trim().orEmpty()
+                if (detail.isNotEmpty()) {
+                    getString(R.string.sync_partial) + " — " + detail.take(80)
+                } else {
+                    getString(R.string.sync_updated)
+                }
+            }
             SyncStatus.SKIPPED_OFFLINE -> getString(R.string.sync_offline)
             SyncStatus.SKIPPED_NO_KEY -> getString(R.string.sync_no_key)
-            SyncStatus.FAILED -> getString(R.string.sync_failed)
-            SyncStatus.SKIPPED_TTL -> getString(R.string.sync_skipped)
+            SyncStatus.FAILED -> {
+                val detail = result.message?.substringAfter(": ")?.trim().orEmpty()
+                if (detail.isNotEmpty()) {
+                    getString(R.string.sync_failed) + " — " + detail.take(80)
+                } else {
+                    getString(R.string.sync_failed)
+                }
+            }
+            SyncStatus.SKIPPED_TTL -> {
+                val needsFollow = settings.channels.any {
+                    it.enabled &&
+                        !it.youtubePlaylistId.isNullOrBlank() &&
+                        it.videos.isEmpty() &&
+                        !it.followUploads
+                }
+                if (needsFollow) {
+                    getString(R.string.sync_enable_follow_uploads)
+                } else {
+                    result.message?.takeIf { it.contains("Follow uploads", ignoreCase = true) }
+                        ?.let { getString(R.string.sync_enable_follow_uploads) }
+                        ?: getString(R.string.sync_skipped)
+                }
+            }
         }
         val stickyNoKey = result.status == SyncStatus.SKIPPED_NO_KEY &&
             settings.channels.any { it.enabled && it.videos.isEmpty() }
+        val stickyFollow = result.status == SyncStatus.SKIPPED_TTL &&
+            settings.channels.any {
+                it.enabled &&
+                    !it.youtubePlaylistId.isNullOrBlank() &&
+                    it.videos.isEmpty() &&
+                    !it.followUploads
+            }
+        val stickyPartial = result.status == SyncStatus.UPDATED &&
+            !result.message.isNullOrBlank()
         showSyncChip(message)
-        if (!stickyNoKey) {
+        if (!stickyNoKey && !stickyFollow && !stickyPartial) {
             delay(2800)
             if (syncStatus.text == message) {
                 syncStatus.visibility = View.GONE
@@ -116,24 +203,136 @@ class ChannelGridActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        grid.layoutManager = GridLayoutManager(this, spanCount())
+        val focused = GridFocus.capturePosition(grid)
+        reflowSpans()
+        GridFocus.restore(grid, focused)
+    }
+
+    private fun applyPreferredOrientation() {
+        // TV stays landscape; phones/tablets follow user rotation (fullUser).
+        requestedOrientation = if (isTelevision()) {
+            ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        } else {
+            ActivityInfo.SCREEN_ORIENTATION_FULL_USER
+        }
+    }
+
+    private fun reflowSpans() {
+        val spans = spanCount()
+        val lm = grid.layoutManager as? GridLayoutManager
+        if (lm != null) {
+            if (lm.spanCount != spans) lm.spanCount = spans
+        } else {
+            grid.layoutManager = GridLayoutManager(this, spans)
+        }
+    }
+
+    private fun isTelevision(): Boolean {
+        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
+        return uiMode == Configuration.UI_MODE_TYPE_TELEVISION
     }
 
     private fun spanCount(): Int {
-        val uiMode = resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK
-        val isTv = uiMode == Configuration.UI_MODE_TYPE_TELEVISION
+        val isTv = isTelevision()
         val widthDp = resources.configuration.screenWidthDp
+        val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
         return when {
-            isTv || widthDp >= 900 -> 6
+            isTv -> 3
+            mix && widthDp >= 900 -> 5
+            mix && widthDp >= 600 -> 3
+            mix -> 2
+            widthDp >= 900 -> 6
             widthDp >= 600 -> 4
             else -> 2
         }
     }
 
-    private fun render() {
-        val repo = (application as KiddyTubeApp).catalogRepository
-        val channels = repo.enabledChannels(settings)
-        adapter.submit(channels)
+    private fun updateHomeModeChip() {
+        val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
+        homeModeToggle.text = getString(if (mix) R.string.home_mode_mix else R.string.home_mode_shows)
+        homeModeToggle.contentDescription = getString(
+            if (mix) R.string.a11y_home_mode_mix else R.string.a11y_home_mode_shows
+        )
+    }
+
+    private fun toggleHomeMode() {
+        lifecycleScope.launch {
+            val app = application as KiddyTubeApp
+            val next = if (settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS) {
+                HomeLibraryMode.CHANNELS
+            } else {
+                HomeLibraryMode.MIX_VIDEOS
+            }
+            app.catalogRepository.update { it.copy(homeLibraryMode = next) }
+            settings = app.catalogRepository.current()
+            render(focusFirstIfNeeded = true)
+        }
+    }
+
+    private fun render(
+        restoreFocusAt: Int = RecyclerView.NO_POSITION,
+        focusFirstIfNeeded: Boolean = false
+    ) {
+        val app = application as KiddyTubeApp
+        updateHomeModeChip()
+        reflowSpans()
+        val liveFocus = GridFocus.capturePosition(grid)
+        val mix = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
+
+        lifecycleScope.launch {
+            val recent = app.recentWatchStore.current()
+            val playable = RecentWatchLogic.resolvePlayable(recent, settings)
+            continueAdapter.submit(playable)
+            val showContinue = playable.isNotEmpty()
+            continueSection.visibility = if (showContinue) View.VISIBLE else View.GONE
+            // Avoid trapping D-pad up when the continue row is gone.
+            grid.nextFocusUpId = if (showContinue) R.id.continueWatchingList else View.NO_ID
+        }
+
+        if (mix) {
+            if (grid.adapter !== videoAdapter) grid.adapter = videoAdapter
+            val videos = app.catalogRepository.flatHomeVideos(settings)
+            videoAdapter.submit(videos)
+            val rememberedAfter = NavFocusMemory.lastHomeVideoId
+                ?.let { videoAdapter.indexOfVideoId(it) }
+                ?.takeIf { it >= 0 }
+                ?: RecyclerView.NO_POSITION
+            val channels = app.catalogRepository.enabledChannels(settings)
+            when {
+                channels.isEmpty() -> {
+                    emptyMessage.visibility = View.VISIBLE
+                    emptyMessage.text = getString(R.string.empty_channels)
+                }
+                videos.isEmpty() -> {
+                    emptyMessage.visibility = View.VISIBLE
+                    val noKey = ApiKeyResolver.effective(settings.youtubeApiKey).isNullOrBlank()
+                    emptyMessage.text = getString(
+                        if (noKey) R.string.empty_no_api_key else R.string.empty_mix_videos
+                    )
+                }
+                else -> {
+                    emptyMessage.visibility = View.GONE
+                    when {
+                        restoreFocusAt != RecyclerView.NO_POSITION ->
+                            GridFocus.restore(grid, restoreFocusAt)
+                        liveFocus != RecyclerView.NO_POSITION ->
+                            GridFocus.restore(grid, liveFocus)
+                        rememberedAfter != RecyclerView.NO_POSITION ->
+                            GridFocus.restore(grid, rememberedAfter)
+                        focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
+                    }
+                }
+            }
+            return
+        }
+
+        if (grid.adapter !== channelAdapter) grid.adapter = channelAdapter
+        val channels = app.catalogRepository.enabledChannels(settings)
+        channelAdapter.submit(channels)
+        val rememberedAfter = NavFocusMemory.lastChannelId
+            ?.let { channelAdapter.indexOfChannelId(it) }
+            ?.takeIf { it >= 0 }
+            ?: RecyclerView.NO_POSITION
         if (channels.isEmpty()) {
             emptyMessage.visibility = View.VISIBLE
             emptyMessage.text = getString(R.string.empty_channels)
@@ -145,13 +344,56 @@ class ChannelGridActivity : AppCompatActivity() {
                 emptyMessage.visibility = View.VISIBLE
                 emptyMessage.text = getString(R.string.empty_no_api_key)
             }
+            when {
+                restoreFocusAt != RecyclerView.NO_POSITION ->
+                    GridFocus.restore(grid, restoreFocusAt)
+                liveFocus != RecyclerView.NO_POSITION ->
+                    GridFocus.restore(grid, liveFocus)
+                rememberedAfter != RecyclerView.NO_POSITION ->
+                    GridFocus.restore(grid, rememberedAfter)
+                focusFirstIfNeeded -> GridFocus.requestGridDefault(grid)
+            }
         }
+    }
+
+    private fun openMixVideo(item: PlayableVideo) {
+        val video = item.video
+        if (!OpenDebouncer.tryOpen("mix:${item.channelId}:${video.id}")) return
+        NavFocusMemory.rememberHomeVideo(video.id)
+        NavFocusMemory.rememberVideo(item.channelId, video.id)
+        startActivity(
+            Intent(this, PlayerActivity::class.java)
+                .putExtra(PlayerActivity.EXTRA_TITLE, video.title)
+                .putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, video.youtubeVideoId)
+                .putExtra(PlayerActivity.EXTRA_DIRECT_URL, video.directUrl)
+                .putExtra(PlayerActivity.EXTRA_ALLOW_SEEK, video.allowSeek)
+                .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, item.channelId)
+                .putExtra(PlayerActivity.EXTRA_VIDEO_ID, video.id)
+        )
+    }
+
+    private fun openContinueWatch(recent: RecentWatchItem, video: VideoItem) {
+        if (!OpenDebouncer.tryOpen("continue:${video.id}")) return
+        NavFocusMemory.rememberVideo(recent.channelId, video.id)
+        startActivity(
+            Intent(this, PlayerActivity::class.java)
+                .putExtra(PlayerActivity.EXTRA_TITLE, video.title)
+                .putExtra(PlayerActivity.EXTRA_YOUTUBE_ID, video.youtubeVideoId)
+                .putExtra(PlayerActivity.EXTRA_DIRECT_URL, video.directUrl)
+                .putExtra(PlayerActivity.EXTRA_ALLOW_SEEK, video.allowSeek)
+                .putExtra(PlayerActivity.EXTRA_CHANNEL_ID, recent.channelId)
+                .putExtra(PlayerActivity.EXTRA_VIDEO_ID, video.id)
+        )
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action == KeyEvent.ACTION_UP) {
             if (remote.handleKeyUp(event.keyCode) is RemoteAction.ParentTriggered) {
                 parentUnlock.beginParentAccess()
+                return true
+            }
+            if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                moveTaskToBack(true)
                 return true
             }
         }
@@ -165,6 +407,7 @@ class ChannelGridActivity : AppCompatActivity() {
                 true
             }
             RemoteAction.Consume -> true
+            RemoteAction.VolumeUp, RemoteAction.VolumeDown -> true
             else -> super.dispatchKeyEvent(event)
         }
     }
@@ -173,8 +416,15 @@ class ChannelGridActivity : AppCompatActivity() {
         super.onResume()
         ImmersiveMode.apply(this)
         lifecycleScope.launch {
-            settings = (application as KiddyTubeApp).catalogRepository.current()
-            render()
+            val app = application as KiddyTubeApp
+            try {
+                app.awaitCatalogReady()
+            } catch (_: Exception) {
+                // continue
+            }
+            settings = app.catalogRepository.current()
+            render(focusFirstIfNeeded = false)
+            app.syncWatchNext()
         }
     }
 }

@@ -26,7 +26,8 @@
             android:name=".ui.ChannelGridActivity"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|smallestScreenSize|uiMode"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:screenOrientation="fullUser">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -39,17 +40,28 @@
             android:name=".ui.VideoLibraryActivity"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|smallestScreenSize|uiMode"
             android:exported="false"
-            android:parentActivityName=".ui.ChannelGridActivity" />
+            android:parentActivityName=".ui.ChannelGridActivity"
+            android:screenOrientation="fullUser" />
 
         <activity
             android:name=".player.PlayerActivity"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|smallestScreenSize|uiMode"
-            android:exported="false"
-            android:screenOrientation="sensorLandscape" />
+            android:exported="true"
+            android:screenOrientation="sensorLandscape">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="play"
+                    android:scheme="kiddytube" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".parent.ParentActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:screenOrientation="fullUser" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

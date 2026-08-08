@@ -67,6 +67,8 @@ Parent can:
 
 ## Build
 
+Open the `KiddyTube` folder in Android Studio (Quail 3+). Project Gradle settings force Configuration Cache **off** so Studio sync tooling does not fail. After a sync failure, run `./gradlew --stop`, set Gradle JDK to Embedded JDK, then Sync again.
+
 ```bash
 cd KiddyTube
 ./gradlew clean test lintDebug assembleDebug
