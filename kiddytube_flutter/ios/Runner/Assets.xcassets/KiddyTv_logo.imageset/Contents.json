@@ -1,17 +1,17 @@
 {
   "images" : [
     {
-      "filename" : "KiddyTv_logo.png",
+      "filename" : "KiddyTube_AppIcon_1024_transparent.png",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "KiddyTv_logo@2x.png",
+      "filename" : "KiddyTube_AppIcon_1024_transparent 1.png",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "KiddyTv_logo@3x.png",
+      "filename" : "KiddyTube_AppIcon_1024_transparent 2.png",
       "idiom" : "universal",
       "scale" : "3x"
     }
