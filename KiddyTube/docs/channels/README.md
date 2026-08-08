@@ -2,7 +2,7 @@
 
 KiddyTube’s home grid is **one channel = one named show**. Generic mixes (Arabic Cartoons, Learn Arabic, Playtime, Islamic Kids) were retired in seed v6.
 
-Seed **v13** reorders the home grid (Islamic / Arabic first), adds curated starters for Barney / Dora / Peppa / Fulla from official channels, gives learn/play channels distinct tile colors, and **defaults Tabarak + Juz 26–28 off** for preschool installs (parent can re-enable).
+Seed **v14** adds a preschool batch: طيور بيبي (allowlist), Pingu, Daniel Tiger, Hey Duggee, Numberblocks (S1), and Pocoyo—each with verified embeddable starters and Follow uploads **off**.
 
 Each file below describes what ships in the app, audience fit (~ages 3–5), and parent-facing clean / conservative notes. These docs are **not** packaged in the APK; edit the live catalog in the parent dashboard.
 
@@ -41,6 +41,12 @@ Each file below describes what ships in the app, audience fit (~ages 3–5), and
 | [play_doh](play_doh.md) | Play-Doh | High | Medium–High | Sensory craft play |
 | [toy_kitchen](toy_kitchen.md) | Toy Kitchen | High | Medium–High | Playset unboxings |
 | [dancing_fruit](dancing_fruit.md) | Dancing Fruit | High | Medium–High | Black-screen sensory fruit dance |
+| [toyor_baby](toyor_baby.md) | طيور بيبي | High | High | Songs allowlist — no UU Follow |
+| [pingu](pingu.md) | Pingu | High | High | Official nonverbal shorts |
+| [daniel_tiger](daniel_tiger.md) | Daniel Tiger | High | Medium–High | Social-emotional preschool |
+| [hey_duggee](hey_duggee.md) | Hey Duggee | High | High | Badge episodes |
+| [numberblocks](numberblocks.md) | Numberblocks | High | High | Series 1 counting starters |
+| [pocoyo](pocoyo.md) | Pocoyo | High | High | Official English episodes feed |
 | [dawood_tabarak](dawood_tabarak.md) | داوود — جزء تبارك | High | High | Default **off** — older kids / parent |
 | [dawood_tabarak_plain](dawood_tabarak_plain.md) | داوود — تبارك بدون تكرار | High | High | Default **off** |
 | [dawood_tabarak_memorize](dawood_tabarak_memorize.md) | داوود — حفظ تبارك | High | High | Default **off** |

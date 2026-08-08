@@ -63,7 +63,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 13
+    const val SEED_VERSION = 14
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -447,12 +447,109 @@ object DefaultChannels {
                 yt("xOUdk2LdXrs", "Let's Dance! — Avocadosaurus and Party Strawberries")
             )
         ),
+        // Seed v14 preschool batch — curated starters; Follow uploads stays off.
+        ContentChannel(
+            id = "toyor_baby",
+            title = "طيور بيبي",
+            iconRes = R.drawable.tile_toyor_baby,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 33,
+            videos = listOf(
+                yt("_tN--Xk4kaE", "دعاء النوم — سند مقداد | طيور بيبي"),
+                yt("9hmZtWndznM", "دعاء قبل الطعام وبعده — سند مقداد | طيور بيبي"),
+                yt("UA6sLNgWRtI", "شمّام (بدون ايقاع) — طيور بيبي"),
+                yt("42oNUPf_SsM", "دعسوقة (بدون إيقاع) — طيور بيبي"),
+                yt("OHM8yH2QRC8", "شاكر والببغاء الشاطر — العشرة المبشرون بالجنة"),
+                yt("-l5_ao_oxmg", "شاكر والببغاء الشاطر — الصلوات"),
+                yt("iSuhEcI1HOQ", "شاكر والببغاء الشاطر — المدينة المنورة"),
+                yt("QhAc8NS8J_M", "شمّام — طيور بيبي")
+            )
+        ),
+        ContentChannel(
+            id = "pingu",
+            title = "Pingu",
+            iconRes = R.drawable.tile_pingu,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCM88mtSE0zRTn5ae4EbYcuw"),
+            sortOrder = 34,
+            videos = listOf(
+                yt("fWb-pNyPzdo", "The Flying Pingu! — Official Channel"),
+                yt("e3egZ7tLXV4", "A Helping Pingu! — Official Channel"),
+                yt("67zm4V1F0Z0", "Painting Pingu! — Official Channel"),
+                yt("cXmY4mlM6OI", "Like Father Like Pingu! — Official Channel"),
+                yt("PpwYRAWTD8c", "Pingu the Doctor — Official Channel"),
+                yt("m3KuDiBEtgU", "Pingu and the Broken Vase — Official Channel")
+            )
+        ),
+        ContentChannel(
+            id = "daniel_tiger",
+            title = "Daniel Tiger",
+            iconRes = R.drawable.tile_daniel_tiger,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCDqgSnRMGVx3dP4sn3ATZMA"),
+            sortOrder = 35,
+            videos = listOf(
+                yt("OrNlkDVk_PA", "Daniel's Big Emotions — Daniel Tiger"),
+                yt("N4cTNBbDTdw", "Daniel Learns Good Manners — Daniel Tiger"),
+                yt("R6nF76uDWDA", "Daniel Eats Healthy — Daniel Tiger"),
+                yt("9AfD-N9HK8s", "Bath Time with Daniel Tiger — Full Episodes"),
+                yt("oloZANav_g8", "Potty Training! — Daniel Tiger"),
+                yt("IGM-r8baTN4", "Daniel Learns to Swing — Daniel Tiger")
+            )
+        ),
+        ContentChannel(
+            id = "hey_duggee",
+            title = "Hey Duggee",
+            iconRes = R.drawable.tile_hey_duggee,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCj_mFUb-47d9QNiJ5556LjQ"),
+            sortOrder = 36,
+            videos = listOf(
+                yt("W4oqUjPj-pI", "The Drawing Badge — Hey Duggee"),
+                yt("_zJJVO4XXZs", "The Colour Badge — Hey Duggee"),
+                yt("RhMecZiUEiY", "The Decorating Badge — Hey Duggee"),
+                yt("VVMjTvc8qbQ", "The Key Badge — Hey Duggee"),
+                yt("6bxOoxBheb0", "Feel-Good Happy Days With Duggee")
+            )
+        ),
+        ContentChannel(
+            id = "numberblocks",
+            title = "Numberblocks",
+            iconRes = R.drawable.tile_numberblocks,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCPlwvN0w4qFSP1FllALB92w"),
+            sortOrder = 37,
+            videos = listOf(
+                yt("jVeYnCehEFE", "One — Numberblocks S1 E1"),
+                yt("bz2oWyDjgbc", "Another One — Numberblocks S1 E2"),
+                yt("aJzaNIpbUZo", "Two — Numberblocks S1 E3"),
+                yt("6-duQqX5ECs", "Three — Numberblocks S1 E4"),
+                yt("IqkSbJqplpg", "One, Two, Three — Numberblocks S1 E5"),
+                yt("yKAttOvgWJc", "Three Little Pigs — Numberblocks S1 E8")
+            )
+        ),
+        ContentChannel(
+            id = "pocoyo",
+            title = "Pocoyo",
+            iconRes = R.drawable.tile_pocoyo,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UChT6ex4rsEDXjJKW7wJAb8w"),
+            sortOrder = 38,
+            videos = listOf(
+                yt("CwL_mEsASGY", "Pato's Bedtime — Pocoyo"),
+                yt("_-UEJip10hE", "Elly's Market — Pocoyo"),
+                yt("_g_QHiaKuEs", "Cooking with Elly — Pocoyo"),
+                yt("eDu9RdFhcg4", "Magician Pocoyo — Pocoyo"),
+                yt("_b2U6PLIc_E", "Giving Loula a Bath — Pocoyo"),
+                yt("jO-AiyofVEI", "Pocoyo's New Toys — Pocoyo")
+            )
+        ),
         // Later ajza — default off for preschool installs; parent can enable.
         playlistChannel(
             id = "dawood_tabarak",
             title = "داوود — جزء تبارك",
             icon = R.drawable.tile_dawood,
-            order = 33,
+            order = 39,
             playlistId = "PLKhm8Z5pXdOXqBC9Gmh2MVTEVQj6x_4or",
             enabled = false
         ),
@@ -460,7 +557,7 @@ object DefaultChannels {
             id = "dawood_tabarak_plain",
             title = "داوود — جزء تبارك بدون تكرار",
             icon = R.drawable.tile_dawood,
-            order = 34,
+            order = 40,
             playlistId = "PLKhm8Z5pXdOWcPJqYwIEy3cySbyATyyLE",
             enabled = false
         ),
@@ -468,7 +565,7 @@ object DefaultChannels {
             id = "dawood_tabarak_memorize",
             title = "داوود — حفظ جزء تبارك",
             icon = R.drawable.tile_dawood,
-            order = 35,
+            order = 41,
             playlistId = "PLKhm8Z5pXdOXR75WBeBFDve5gSR_wfA1o",
             enabled = false
         ),
@@ -476,7 +573,7 @@ object DefaultChannels {
             id = "dawood_juz_28",
             title = "داوود — جزء ٢٨",
             icon = R.drawable.tile_dawood,
-            order = 36,
+            order = 42,
             playlistId = "PLKhm8Z5pXdOWx9JleIpX8EakeXcwLFTvm",
             enabled = false
         ),
@@ -484,7 +581,7 @@ object DefaultChannels {
             id = "dawood_juz_27",
             title = "داوود — جزء ٢٧",
             icon = R.drawable.tile_dawood,
-            order = 37,
+            order = 43,
             playlistId = "PLKhm8Z5pXdOUiE1L6BBQAYIn-phTTHNpT",
             enabled = false
         ),
@@ -492,7 +589,7 @@ object DefaultChannels {
             id = "dawood_juz_26",
             title = "داوود — جزء ٢٦",
             icon = R.drawable.tile_dawood,
-            order = 38,
+            order = 44,
             playlistId = "PLJBjyx9DErqk", // verified short YouTube playlist id for Juz 26
             enabled = false
         )

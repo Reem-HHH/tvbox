@@ -48,6 +48,12 @@ class CatalogJsonTest {
         "play_doh",
         "toy_kitchen",
         "dancing_fruit",
+        "toyor_baby",
+        "pingu",
+        "daniel_tiger",
+        "hey_duggee",
+        "numberblocks",
+        "pocoyo",
         "dawood_tabarak",
         "dawood_tabarak_plain",
         "dawood_tabarak_memorize",
@@ -76,8 +82,8 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionThirteenReorderAndWesternStarters() {
-        assertEquals(13, DefaultChannels.SEED_VERSION)
+    fun seedVersionFourteenAddsPreschoolBatch() {
+        assertEquals(14, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -138,6 +144,37 @@ class CatalogJsonTest {
         assertTrue(fruit.videos.any { it.id == "7mR81x2Fk7g" })
         assertTrue(fruit.videos.any { it.id == "kAxdvigZtw8" })
         assertEquals(6, fruit.videos.size)
+
+        val toyor = seed.first { it.id == "toyor_baby" }
+        assertEquals("طيور بيبي", toyor.title)
+        assertTrue(toyor.youtubePlaylistId.isNullOrBlank())
+        assertFalse(toyor.followUploads)
+        assertTrue(toyor.videos.any { it.id == "_tN--Xk4kaE" })
+        assertTrue(toyor.videos.any { it.id == "UA6sLNgWRtI" })
+        assertEquals(R.drawable.tile_toyor_baby, toyor.iconRes)
+
+        val pingu = seed.first { it.id == "pingu" }
+        assertEquals("UUM88mtSE0zRTn5ae4EbYcuw", pingu.youtubePlaylistId)
+        assertTrue(pingu.videos.any { it.id == "fWb-pNyPzdo" })
+        assertFalse(pingu.followUploads)
+
+        val daniel = seed.first { it.id == "daniel_tiger" }
+        assertEquals("UUDqgSnRMGVx3dP4sn3ATZMA", daniel.youtubePlaylistId)
+        assertTrue(daniel.videos.any { it.id == "OrNlkDVk_PA" })
+
+        val duggee = seed.first { it.id == "hey_duggee" }
+        assertEquals("UUj_mFUb-47d9QNiJ5556LjQ", duggee.youtubePlaylistId)
+        assertTrue(duggee.videos.any { it.id == "W4oqUjPj-pI" })
+
+        val numbers = seed.first { it.id == "numberblocks" }
+        assertEquals("UUPlwvN0w4qFSP1FllALB92w", numbers.youtubePlaylistId)
+        assertTrue(numbers.videos.any { it.id == "jVeYnCehEFE" })
+        assertTrue(numbers.videos.any { it.id == "aJzaNIpbUZo" })
+
+        val pocoyo = seed.first { it.id == "pocoyo" }
+        assertEquals("UUhT6ex4rsEDXjJKW7wJAb8w", pocoyo.youtubePlaylistId)
+        assertTrue(pocoyo.videos.any { it.id == "CwL_mEsASGY" })
+        assertTrue(pocoyo.videos.any { it.id == "eDu9RdFhcg4" })
 
         assertEquals(R.drawable.tile_zakaria, seed.first { it.id == "zakaria" }.iconRes)
         assertEquals(R.drawable.tile_kiki, seed.first { it.id == "kiki_nadoush" }.iconRes)
