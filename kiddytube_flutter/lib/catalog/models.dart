@@ -52,22 +52,17 @@ class VideoItem {
 
   /// YouTube thumbnail for this video. Always derived from the video id so
   /// kids see the correct episode art when catalog content changes.
+  /// Uses mqdefault (320×180) for faster decode/scroll than sd/hq.
   String? get youtubeThumbnail {
     final id = youtubeVideoId;
     if (id != null && id.isNotEmpty) {
-      return 'https://i.ytimg.com/vi/$id/hqdefault.jpg';
+      return 'https://i.ytimg.com/vi/$id/mqdefault.jpg';
     }
     return thumbnailUrl;
   }
 
-  /// Higher-res YouTube still for large kid tiles (falls back via image error).
-  String? get youtubeThumbnailLarge {
-    final id = youtubeVideoId;
-    if (id != null && id.isNotEmpty) {
-      return 'https://i.ytimg.com/vi/$id/sddefault.jpg';
-    }
-    return youtubeThumbnail;
-  }
+  /// Same as [youtubeThumbnail] — kept for call sites; avoid heavier sddefault.
+  String? get youtubeThumbnailLarge => youtubeThumbnail;
 
   VideoItem copyWith({
     String? title,

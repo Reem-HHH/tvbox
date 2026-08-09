@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../catalog/catalog_repository.dart';
 import '../catalog/home_library.dart';
@@ -29,10 +30,21 @@ class _HomeScreenState extends State<HomeScreen> {
   List<RecentWatchItem> _recent = const [];
   Object? _error;
 
+  List<ContentChannel> _shuffledChannels = const [];
+  List<PlayableVideo> _shuffledVideos = const [];
+  int? _shuffleToken;
+  Timer? _dailySyncTimer;
+
   @override
   void initState() {
     super.initState();
     _reload();
+  }
+
+  @override
+  void dispose() {
+    _dailySyncTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _reload() async {
@@ -44,12 +56,40 @@ class _HomeScreenState extends State<HomeScreen> {
         _settings = settings;
         _recent = recent;
         _error = null;
+        _refreshShuffled(settings);
       });
-      unawaited(_maybeDailySync());
+      // Let first frame paint before network sync (avoids hitchy startup).
+      _dailySyncTimer?.cancel();
+      _dailySyncTimer = Timer(const Duration(milliseconds: 1600), () {
+        if (mounted) unawaited(_maybeDailySync());
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e);
     }
+  }
+
+  void _refreshShuffled(CatalogSettings settings) {
+    final token = Object.hash(
+      widget.repository.channelShuffleSeed,
+      widget.repository.videoShuffleSeed,
+      settings.homeLibraryMode,
+      Object.hashAll(
+        settings.channels.map(
+          (c) => Object.hash(c.id, c.enabled, c.videos.length, c.previewVideoId),
+        ),
+      ),
+    );
+    if (_shuffleToken == token) return;
+    _shuffleToken = token;
+    _shuffledChannels = shuffleEnabledChannels(
+      settings.channels,
+      widget.repository.channelShuffleSeed,
+    );
+    _shuffledVideos = flattenEnabledVideos(
+      settings.channels,
+      widget.repository.videoShuffleSeed,
+    );
   }
 
   Future<void> _maybeDailySync() async {
@@ -68,6 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _settings = settings;
         _recent = recent;
+        _refreshShuffled(settings);
       });
     } catch (_) {}
   }
@@ -177,15 +218,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final layout = LayoutMetrics.of(context);
     final isMix = settings.homeLibraryMode == HomeLibraryMode.mixVideos;
-    final channels = shuffleEnabledChannels(
-      settings.channels,
-      widget.repository.channelShuffleSeed,
-    );
-    final videos = flattenEnabledVideos(
-      settings.channels,
-      widget.repository.videoShuffleSeed,
-    );
+    _refreshShuffled(settings);
+    final channels = _shuffledChannels;
+    final videos = _shuffledVideos;
     final crossAxisCount = layout.gridColumns(isMix: isMix);
+    final tileCacheWidth = _tileMemCacheWidth(context, crossAxisCount);
     final accent = isDark ? scheme.primary : const Color(0xFF0D47A1);
     final chipBg = scheme.surfaceContainerHighest.withValues(alpha: 0.85);
 
@@ -209,6 +246,7 @@ class _HomeScreenState extends State<HomeScreen> {
               constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
               child: CustomScrollView(
                 primary: true,
+                scrollCacheExtent: const ScrollCacheExtent.pixels(500),
                 slivers: [
                   SliverToBoxAdapter(
                     child: Padding(
@@ -227,7 +265,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               height: layout.logoSize,
                               width: layout.logoSize,
                               fit: BoxFit.contain,
-                              filterQuality: FilterQuality.high,
+                              filterQuality: FilterQuality.medium,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -304,6 +342,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             horizontal: layout.pagePadding - 4,
                           ),
                           scrollDirection: Axis.horizontal,
+                          scrollCacheExtent: const ScrollCacheExtent.pixels(400),
                           itemCount: _recent.length,
                           separatorBuilder: (_, _) =>
                               const SizedBox(width: 12),
@@ -323,9 +362,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   subtitle: 'Continue',
                                   imageUrl: item.youtubeVideoId == null
                                       ? null
-                                      : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/sddefault.jpg',
+                                      : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/mqdefault.jpg',
                                   contentKey:
                                       item.youtubeVideoId ?? item.videoId,
+                                  memCacheWidth: tileCacheWidth,
                                 ),
                               ),
                             );
@@ -357,6 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _VideoGridSliver(
                       items: videos,
                       crossAxisCount: crossAxisCount,
+                      memCacheWidth: tileCacheWidth,
                       onOpen: _openVideo,
                       autofocusFirst: _recent.isEmpty,
                     )
@@ -364,6 +405,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _ChannelGridSliver(
                       channels: channels,
                       crossAxisCount: crossAxisCount,
+                      memCacheWidth: tileCacheWidth,
                       onOpen: _openChannel,
                       autofocusFirst: _recent.isEmpty,
                     ),
@@ -376,18 +418,27 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  static int _tileMemCacheWidth(BuildContext context, int crossAxisCount) {
+    final mq = MediaQuery.of(context);
+    final cols = crossAxisCount.clamp(1, 8);
+    final tileLogical = mq.size.width / cols;
+    return (tileLogical * mq.devicePixelRatio).clamp(160.0, 480.0).round();
+  }
 }
 
 class _ChannelGridSliver extends StatelessWidget {
   const _ChannelGridSliver({
     required this.channels,
     required this.crossAxisCount,
+    required this.memCacheWidth,
     required this.onOpen,
     this.autofocusFirst = true,
   });
 
   final List<ContentChannel> channels;
   final int crossAxisCount;
+  final int memCacheWidth;
   final ValueChanged<ContentChannel> onOpen;
   final bool autofocusFirst;
 
@@ -421,10 +472,12 @@ class _ChannelGridSliver extends StatelessWidget {
                 subtitle: '${channel.videos.length} videos',
                 imageUrl: channel.previewThumbnail,
                 contentKey: channel.previewVideoId ?? channel.id,
+                memCacheWidth: memCacheWidth,
               ),
             );
           },
           childCount: channels.length,
+          addAutomaticKeepAlives: false,
         ),
       ),
     );
@@ -435,12 +488,14 @@ class _VideoGridSliver extends StatelessWidget {
   const _VideoGridSliver({
     required this.items,
     required this.crossAxisCount,
+    required this.memCacheWidth,
     required this.onOpen,
     this.autofocusFirst = true,
   });
 
   final List<PlayableVideo> items;
   final int crossAxisCount;
+  final int memCacheWidth;
   final ValueChanged<PlayableVideo> onOpen;
   final bool autofocusFirst;
 
@@ -478,12 +533,14 @@ class _VideoGridSliver extends StatelessWidget {
                 color: const Color(0xFF5C6BC0),
                 title: video.title,
                 subtitle: item.channelId,
-                imageUrl: video.youtubeThumbnailLarge ?? video.youtubeThumbnail,
+                imageUrl: video.youtubeThumbnail,
                 contentKey: video.youtubeVideoId ?? video.id,
+                memCacheWidth: memCacheWidth,
               ),
             );
           },
           childCount: items.length,
+          addAutomaticKeepAlives: false,
         ),
       ),
     );
@@ -497,6 +554,7 @@ class _ColoredCard extends StatelessWidget {
     required this.subtitle,
     this.imageUrl,
     this.contentKey,
+    this.memCacheWidth,
   });
 
   final Color color;
@@ -504,35 +562,39 @@ class _ColoredCard extends StatelessWidget {
   final String subtitle;
   final String? imageUrl;
   final String? contentKey;
+  final int? memCacheWidth;
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-    final memWidth = (width * MediaQuery.devicePixelRatioOf(context))
-        .clamp(480.0, 1280.0)
-        .round();
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final memWidth = memCacheWidth ??
+        (MediaQuery.sizeOf(context).width / 3 * dpr).clamp(160.0, 480.0).round();
     return Stack(
       fit: StackFit.expand,
       children: [
         if (imageUrl != null)
           CachedNetworkImage(
             key: ValueKey('thumb-${contentKey ?? imageUrl}'),
-            cacheKey: contentKey == null ? imageUrl : 'yt-$contentKey',
+            cacheKey: contentKey == null ? imageUrl : 'yt-mq-$contentKey',
             imageUrl: imageUrl!,
             fit: BoxFit.cover,
-            fadeInDuration: const Duration(milliseconds: 180),
+            fadeInDuration: Duration.zero,
+            fadeOutDuration: Duration.zero,
+            filterQuality: FilterQuality.low,
             memCacheWidth: memWidth,
             placeholder: (_, _) => ColoredBox(color: color),
             errorWidget: (_, url, _) {
               final id = contentKey;
               if (id != null &&
                   id.length == 11 &&
-                  url.contains('sddefault')) {
+                  !url.contains('hqdefault')) {
                 return CachedNetworkImage(
                   key: ValueKey('thumb-hq-$id'),
                   cacheKey: 'yt-hq-$id',
                   imageUrl: 'https://i.ytimg.com/vi/$id/hqdefault.jpg',
                   fit: BoxFit.cover,
+                  fadeInDuration: Duration.zero,
+                  filterQuality: FilterQuality.low,
                   memCacheWidth: memWidth,
                   placeholder: (_, _) => ColoredBox(color: color),
                   errorWidget: (_, _, _) => ColoredBox(color: color),
@@ -640,6 +702,11 @@ class LibraryScreen extends StatelessWidget {
     final layout = LayoutMetrics.of(context);
     final scheme = Theme.of(context).colorScheme;
     final crossAxisCount = layout.libraryColumns();
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final memCacheWidth =
+        (MediaQuery.sizeOf(context).width / crossAxisCount * dpr)
+            .clamp(160.0, 480.0)
+            .round();
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -660,6 +727,8 @@ class LibraryScreen extends StatelessWidget {
               ? const Center(child: Text('No videos yet.'))
               : GridView.builder(
                   padding: EdgeInsets.all(layout.pagePadding),
+                  scrollCacheExtent: const ScrollCacheExtent.pixels(500),
+                  addAutomaticKeepAlives: false,
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
                     mainAxisSpacing: 14,
@@ -677,9 +746,9 @@ class LibraryScreen extends StatelessWidget {
                         color: Color(channel.color),
                         title: video.title,
                         subtitle: channel.title,
-                        imageUrl: video.youtubeThumbnailLarge ??
-                            video.youtubeThumbnail,
+                        imageUrl: video.youtubeThumbnail,
                         contentKey: video.youtubeVideoId ?? video.id,
+                        memCacheWidth: memCacheWidth,
                       ),
                     );
                   },
