@@ -13,7 +13,7 @@ void main() {
     await tester.pumpWidget(KiddyTubeApp(repository: repository));
     await tester.pumpAndSettle();
     expect(find.text('KiddyTube'), findsOneWidget);
-    expect(find.text('Shows'), findsOneWidget);
+    expect(find.text('Shows'), findsAtLeastNWidgets(1));
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,7 @@ import '../parent/pin_gate.dart';
 import '../parent/release_pin_policy.dart';
 import '../player/player_screen.dart';
 import 'focus_tile.dart';
+import 'layout_metrics.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.repository});
@@ -43,7 +45,6 @@ class _HomeScreenState extends State<HomeScreen> {
         _recent = recent;
         _error = null;
       });
-      // Daily playlist sync (same 24h TTL as native TV launch sync).
       unawaited(_maybeDailySync());
     } catch (e) {
       if (!mounted) return;
@@ -68,9 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _settings = settings;
         _recent = recent;
       });
-    } catch (_) {
-      // Keep the already-painted catalog if a post-sync reload fails.
-    }
+    } catch (_) {}
   }
 
   Future<void> _toggleMode() async {
@@ -174,6 +173,9 @@ class _HomeScreenState extends State<HomeScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final layout = LayoutMetrics.of(context);
     final isMix = settings.homeLibraryMode == HomeLibraryMode.mixVideos;
     final channels = shuffleEnabledChannels(
       settings.channels,
@@ -183,175 +185,188 @@ class _HomeScreenState extends State<HomeScreen> {
       settings.channels,
       widget.repository.videoShuffleSeed,
     );
-
-    final size = MediaQuery.sizeOf(context);
-    final width = size.width;
-    final height = size.height;
-    final shortest = size.shortestSide;
-    final isLandscape = width > height;
-    final isTablet = shortest >= 600;
-    final isTvWide = shortest >= 900 || width >= 1100;
-    final crossAxisCount = _gridColumns(
-      isMix: isMix,
-      isTablet: isTablet,
-      isTvWide: isTvWide,
-      isLandscape: isLandscape,
-    );
-    final maxContentWidth = isTvWide ? 1600.0 : (isTablet ? 1100.0 : double.infinity);
-    final logoSize = isTablet ? 56.0 : 44.0;
-    final titleSize = isTablet ? 34.0 : 28.0;
-    final continueHeight = isTablet ? (isLandscape ? 220.0 : 200.0) : 148.0;
-    final continueWidth = isTablet ? (isLandscape ? 340.0 : 300.0) : 240.0;
+    final crossAxisCount = layout.gridColumns(isMix: isMix);
+    final accent = isDark ? scheme.primary : const Color(0xFF0D47A1);
+    final chipBg = scheme.surfaceContainerHighest.withValues(alpha: 0.85);
 
     return Scaffold(
       body: DecoratedBox(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
+            colors: isDark
+                ? [
+                    scheme.surface,
+                    Color.lerp(scheme.surface, scheme.primary, 0.18)!,
+                  ]
+                : const [Color(0xFFE3F2FD), Color(0xFFBBDEFB)],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxContentWidth),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      isTablet ? 28 : 20,
-                      isTablet ? 16 : 12,
-                      isTablet ? 28 : 20,
-                      8,
-                    ),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            'assets/kiddytube_logo.png',
-                            height: logoSize,
-                            width: logoSize,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'KiddyTube',
-                            style: TextStyle(
-                              fontSize: titleSize,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0D47A1),
+              constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
+              child: CustomScrollView(
+                primary: true,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        layout.pagePadding,
+                        layout.isTablet || layout.isTvLike ? 16 : 12,
+                        layout.pagePadding,
+                        8,
+                      ),
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              'assets/kiddytube_logo.png',
+                              height: layout.logoSize,
+                              width: layout.logoSize,
+                              fit: BoxFit.cover,
                             ),
                           ),
-                        ),
-                        FocusTile(
-                          onActivated: _toggleMode,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xCCFFFFFF),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
+                          const SizedBox(width: 12),
+                          Expanded(
                             child: Text(
-                              isMix ? 'Mix' : 'Shows',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF0D47A1),
+                              'KiddyTube',
+                              style: TextStyle(
+                                fontSize: layout.titleSize,
+                                fontWeight: FontWeight.w700,
+                                color: accent,
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        FocusTile(
-                          onActivated: _openParent,
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xCCFFFFFF),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.lock_outline,
-                              color: Color(0xFF0D47A1),
+                          FocusTile(
+                            onActivated: _toggleMode,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: chipBg,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                isMix ? 'Mix' : 'Shows',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: accent,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 8),
+                          FocusTile(
+                            onActivated: _openParent,
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: chipBg,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(Icons.lock_outline, color: accent),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  if (_recent.isNotEmpty && !isMix) ...[
-                    Padding(
+                  if (_recent.isNotEmpty) ...[
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          layout.pagePadding,
+                          4,
+                          layout.pagePadding,
+                          8,
+                        ),
+                        child: Text(
+                          'Continue watching',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: layout.sectionTitleSize,
+                            color: accent,
+                          ),
+                        ),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: SizedBox(
+                        height: layout.continueHeight,
+                        child: ListView.separated(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: layout.pagePadding - 4,
+                          ),
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _recent.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (context, index) {
+                            final item = _recent[index];
+                            return SizedBox(
+                              width: layout.continueWidth,
+                              child: FocusTile(
+                                autofocus: index == 0,
+                                onActivated: () => _openVideo(
+                                  item.toPlayable(),
+                                  startPositionMs: item.positionMs,
+                                ),
+                                child: _ColoredCard(
+                                  color: const Color(0xFF5C6BC0),
+                                  title: item.title,
+                                  subtitle: 'Continue',
+                                  imageUrl: item.youtubeVideoId == null
+                                      ? null
+                                      : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/sddefault.jpg',
+                                  contentKey:
+                                      item.youtubeVideoId ?? item.videoId,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  ],
+                  SliverToBoxAdapter(
+                    child: Padding(
                       padding: EdgeInsets.fromLTRB(
-                        isTablet ? 28 : 20,
+                        layout.pagePadding,
                         0,
-                        isTablet ? 28 : 20,
-                        4,
+                        layout.pagePadding,
+                        8,
                       ),
                       child: Text(
-                        'Continue watching',
+                        isMix ? 'All videos' : 'Shows',
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          fontSize: isTablet ? 18 : 15,
-                          color: const Color(0xFF0D47A1),
+                          fontSize: layout.sectionTitleSize,
+                          color: accent,
                         ),
                       ),
                     ),
-                    SizedBox(
-                      height: continueHeight,
-                      child: ListView.separated(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isTablet ? 24 : 16,
-                        ),
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _recent.length,
-                        separatorBuilder: (_, _) => const SizedBox(width: 12),
-                        itemBuilder: (context, index) {
-                          final item = _recent[index];
-                          return SizedBox(
-                            width: continueWidth,
-                            child: FocusTile(
-                              autofocus: index == 0,
-                              onActivated: () => _openVideo(
-                                item.toPlayable(),
-                                startPositionMs: item.positionMs,
-                              ),
-                              child: _ColoredCard(
-                                color: const Color(0xFF5C6BC0),
-                                title: item.title,
-                                subtitle: 'Continue',
-                                imageUrl: item.youtubeVideoId == null
-                                    ? null
-                                    : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/sddefault.jpg',
-                                contentKey: item.youtubeVideoId ?? item.videoId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                  ],
-                  Expanded(
-                    child: isMix
-                        ? _VideoGrid(
-                            items: videos,
-                            crossAxisCount: crossAxisCount,
-                            onOpen: _openVideo,
-                          )
-                        : _ChannelGrid(
-                            channels: channels,
-                            crossAxisCount: crossAxisCount,
-                            onOpen: _openChannel,
-                            autofocusFirst: _recent.isEmpty,
-                          ),
                   ),
+                  if (isMix)
+                    _VideoGridSliver(
+                      items: videos,
+                      crossAxisCount: crossAxisCount,
+                      onOpen: _openVideo,
+                      autofocusFirst: _recent.isEmpty,
+                    )
+                  else
+                    _ChannelGridSliver(
+                      channels: channels,
+                      crossAxisCount: crossAxisCount,
+                      onOpen: _openChannel,
+                      autofocusFirst: _recent.isEmpty,
+                    ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 32)),
                 ],
               ),
             ),
@@ -360,26 +375,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  static int _gridColumns({
-    required bool isMix,
-    required bool isTablet,
-    required bool isTvWide,
-    required bool isLandscape,
-  }) {
-    // Fewer columns = larger image tiles (kids pick by artwork).
-    if (!isTablet) return isMix ? 2 : 1;
-    if (isTvWide) {
-      if (isMix) return isLandscape ? 3 : 2;
-      return isLandscape ? 3 : 2;
-    }
-    if (isMix) return isLandscape ? 3 : 2;
-    return isLandscape ? 3 : 2;
-  }
 }
 
-class _ChannelGrid extends StatelessWidget {
-  const _ChannelGrid({
+class _ChannelGridSliver extends StatelessWidget {
+  const _ChannelGridSliver({
     required this.channels,
     required this.crossAxisCount,
     required this.onOpen,
@@ -394,82 +393,98 @@ class _ChannelGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (channels.isEmpty) {
-      return const Center(child: Text('No channels yet.'));
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(child: Text('No channels yet.')),
+      );
     }
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 18,
-        crossAxisSpacing: 18,
-        childAspectRatio: 16 / 11,
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: 16 / 11,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final channel = channels[index];
+            return FocusTile(
+              key: ValueKey('channel-${channel.id}-${channel.previewVideoId}'),
+              autofocus: autofocusFirst && index == 0,
+              onActivated: () => onOpen(channel),
+              child: _ColoredCard(
+                color: Color(channel.color),
+                title: channel.title,
+                subtitle: '${channel.videos.length} videos',
+                imageUrl: channel.previewThumbnail,
+                contentKey: channel.previewVideoId ?? channel.id,
+              ),
+            );
+          },
+          childCount: channels.length,
+        ),
       ),
-      itemCount: channels.length,
-      itemBuilder: (context, index) {
-        final channel = channels[index];
-        return FocusTile(
-          key: ValueKey('channel-${channel.id}-${channel.previewVideoId}'),
-          autofocus: autofocusFirst && index == 0,
-          onActivated: () => onOpen(channel),
-          child: _ColoredCard(
-            color: Color(channel.color),
-            title: channel.title,
-            subtitle: '${channel.videos.length} videos',
-            imageUrl: channel.previewThumbnail,
-            contentKey: channel.previewVideoId ?? channel.id,
-          ),
-        );
-      },
     );
   }
 }
 
-class _VideoGrid extends StatelessWidget {
-  const _VideoGrid({
+class _VideoGridSliver extends StatelessWidget {
+  const _VideoGridSliver({
     required this.items,
     required this.crossAxisCount,
     required this.onOpen,
+    this.autofocusFirst = true,
   });
 
   final List<PlayableVideo> items;
   final int crossAxisCount;
   final ValueChanged<PlayableVideo> onOpen;
+  final bool autofocusFirst;
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return const Center(
-        child: Text(
-          'No videos yet.\nAsk a parent to sync playlists.',
-          textAlign: TextAlign.center,
+      return const SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Text(
+            'No videos yet.\nAsk a parent to sync playlists.',
+            textAlign: TextAlign.center,
+          ),
         ),
       );
     }
-    return GridView.builder(
-      padding: const EdgeInsets.all(16),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 18,
-        crossAxisSpacing: 18,
-        childAspectRatio: 16 / 11,
+    return SliverPadding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 14,
+          crossAxisSpacing: 14,
+          childAspectRatio: 16 / 11,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            final item = items[index];
+            final video = item.video;
+            return FocusTile(
+              key: ValueKey('mix-${item.channelId}-${video.id}'),
+              autofocus: autofocusFirst && index == 0,
+              onActivated: () => onOpen(item),
+              child: _ColoredCard(
+                color: const Color(0xFF5C6BC0),
+                title: video.title,
+                subtitle: item.channelId,
+                imageUrl: video.youtubeThumbnailLarge ?? video.youtubeThumbnail,
+                contentKey: video.youtubeVideoId ?? video.id,
+              ),
+            );
+          },
+          childCount: items.length,
+        ),
       ),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
-        final video = item.video;
-        return FocusTile(
-          key: ValueKey('mix-${item.channelId}-${video.id}'),
-          autofocus: index == 0,
-          onActivated: () => onOpen(item),
-          child: _ColoredCard(
-            color: const Color(0xFF5C6BC0),
-            title: video.title,
-            subtitle: item.channelId,
-            imageUrl: video.youtubeThumbnailLarge ?? video.youtubeThumbnail,
-            contentKey: video.youtubeVideoId ?? video.id,
-          ),
-        );
-      },
     );
   }
 }
@@ -487,7 +502,6 @@ class _ColoredCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String? imageUrl;
-  /// Ties the cached image to this channel/video so art refreshes per content.
   final String? contentKey;
 
   @override
@@ -509,7 +523,6 @@ class _ColoredCard extends StatelessWidget {
             memCacheWidth: memWidth,
             placeholder: (_, _) => ColoredBox(color: color),
             errorWidget: (_, url, _) {
-              // sddefault sometimes 404s; fall back to hqdefault for YouTube ids.
               final id = contentKey;
               if (id != null &&
                   id.length == 11 &&
@@ -554,7 +567,7 @@ class _ColoredCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: 18,
+                  fontSize: 16,
                 ),
               ),
               const SizedBox(height: 2),
@@ -564,7 +577,7 @@ class _ColoredCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 13,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -623,38 +636,33 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final isTablet = size.shortestSide >= 600;
-    final isTvWide = size.shortestSide >= 900 || size.width >= 1100;
-    final isLandscape = size.width > size.height;
-    final crossAxisCount = !isTablet
-        ? 1
-        : isTvWide
-            ? (isLandscape ? 3 : 2)
-            : (isLandscape ? 3 : 2);
+    final layout = LayoutMetrics.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final crossAxisCount = layout.libraryColumns();
     return Scaffold(
       appBar: AppBar(
         title: Text(
           channel.title,
-          style: TextStyle(fontSize: isTablet ? 22 : 18),
+          style: TextStyle(
+            fontSize: layout.isTablet || layout.isTvLike ? 22 : 18,
+          ),
         ),
-        backgroundColor: const Color(0xFFE3F2FD),
-        foregroundColor: const Color(0xFF0D47A1),
-        toolbarHeight: isTablet ? 64 : kToolbarHeight,
+        backgroundColor: scheme.surfaceContainerLow,
+        foregroundColor: scheme.onSurface,
+        toolbarHeight:
+            layout.isTablet || layout.isTvLike ? 64 : kToolbarHeight,
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxWidth: isTvWide ? 1600 : (isTablet ? 1100 : double.infinity),
-          ),
+          constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
           child: channel.videos.isEmpty
               ? const Center(child: Text('No videos yet.'))
               : GridView.builder(
-                  padding: EdgeInsets.all(isTablet ? 24 : 16),
+                  padding: EdgeInsets.all(layout.pagePadding),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: 18,
-                    crossAxisSpacing: 18,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
                     childAspectRatio: 16 / 11,
                   ),
                   itemCount: channel.videos.length,

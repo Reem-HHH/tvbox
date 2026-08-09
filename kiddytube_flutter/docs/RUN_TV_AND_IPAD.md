@@ -27,10 +27,43 @@ Open the **Flutter project folder**, not a single file:
 
 1. Android Studio → **File → Open** → select the `kiddytube_flutter` folder.
 2. Do **not** open only `android/`, and do **not** open the old native app at `KiddyTube/` — those are not this Flutter project.
-3. Wait for Gradle/Flutter indexing to finish.
-4. In the device dropdown, pick your Android TV, then click **Run**.
+3. Wait for Gradle/Flutter indexing to finish (bottom status bar).
+4. Install the **Flutter** and **Dart** plugins if prompted (**Settings → Plugins**).
+5. In the device dropdown (top toolbar), pick your **Android TV / Google TV**, then click **Run**.
 
-If the TV is missing from the list: enable ADB on the TV, connect USB or `adb connect <tv-ip>:5555`, then confirm with `adb devices`.
+#### If Android Studio only shows iOS simulators
+
+That usually means Studio is listing Apple simulators, not that the TV is offline. Your TV is an **Android** device via ADB.
+
+1. On the TV: enable **Developer options** → **ADB debugging** + **Wireless debugging** / network debugging.
+2. On the Mac, confirm ADB sees the TV:
+
+```bash
+export PATH="$HOME/Library/Android/sdk/platform-tools:$PATH"
+adb devices -l
+```
+
+You want a line with `device` (not `offline`). Example: `Google_TV_Streamer`.
+
+3. If empty, connect by IP (TV and Mac on same Wi‑Fi). Find the TV IP in its network settings, then:
+
+```bash
+adb connect <tv-ip>:5555
+adb devices -l
+```
+
+4. Prefer installing from the **terminal** (most reliable for wireless Google TV):
+
+```bash
+cd "/Users/reema/Documents/tv box /tvbox/kiddytube_flutter"
+export PATH="/Users/reema/Documents/tv box /tvbox/.tools/flutter/bin:$HOME/Library/Android/sdk/platform-tools:$PATH"
+flutter devices
+flutter run -d <android-tv-id>
+```
+
+Use the id Flutter prints for the Google TV / Android device (not `macos`, not an iPhone simulator).
+
+5. In Android Studio: open the device dropdown → look for an **Android** entry (may say “wireless”). Click the refresh icon next to the device list. If only iOS appears, use step 4.
 
 ---
 
