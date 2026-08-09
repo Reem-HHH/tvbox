@@ -11,6 +11,7 @@ import 'media_ids.dart';
 import 'models.dart';
 import 'recent_watch.dart';
 import 'seed.dart';
+import 'youtube_api_defaults.dart';
 import 'youtube_sync.dart';
 
 class CloudLinkStatus {
@@ -205,6 +206,7 @@ class CatalogRepository {
   final YoutubeCatalogSource _youtube;
   final CloudClient _cloud;
 
+  
   CatalogSettings? _cached;
 
   /// Stable for the process lifetime (mirrors Kotlin home shuffle seeds).
@@ -241,7 +243,7 @@ class CatalogRepository {
     await _ensurePrefs();
     final mode = HomeLibraryMode.fromStored(_prefs!.getString(_modeKey));
     final storedSeed = _prefs!.getInt(_seedKey) ?? 0;
-    final apiKey = await _secrets.readApiKey();
+    final apiKey = YoutubeApiDefaults.effective(await _secrets.readApiKey());
     var pinSalt = await _secrets.readPinSalt();
     var pinHash = await _secrets.readPinHash();
 

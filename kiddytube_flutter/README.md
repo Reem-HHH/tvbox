@@ -53,11 +53,13 @@ Open http://127.0.0.1:8787/admin on the Mac. Note your Mac’s LAN IP (`ipconfig
 flutter devices
 
 # Physical / wireless iPad
-flutter run -d <ipad-device-id>
+flutter run --dart-define-from-file=local_defines.json -d <ipad-device-id>
 
 # Android TV (Leanback) — USB or wireless adb
-flutter run -d <android-tv-id>
+flutter run --dart-define-from-file=local_defines.json -d <android-tv-id>
 ```
+
+Copy `local_defines.json.example` → `local_defines.json` and paste your YouTube API key (file is gitignored). Parent settings can still override it. Never commit real keys.
 
 Default parent PIN for development: **2580**.
 

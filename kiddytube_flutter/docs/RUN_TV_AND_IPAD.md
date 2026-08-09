@@ -15,6 +15,7 @@ Default parent PIN (dev): **2580**
 ```bash
 export PATH="/Users/reema/Documents/tv box /tvbox/.tools/flutter/bin:$PATH"
 cd "/Users/reema/Documents/tv box /tvbox/kiddytube_flutter"
+cp -n local_defines.json.example local_defines.json   # once: paste YouTube API key
 flutter pub get
 flutter devices
 ```
@@ -58,7 +59,7 @@ adb devices -l
 cd "/Users/reema/Documents/tv box /tvbox/kiddytube_flutter"
 export PATH="/Users/reema/Documents/tv box /tvbox/.tools/flutter/bin:$HOME/Library/Android/sdk/platform-tools:$PATH"
 flutter devices
-flutter run -d <android-tv-id>
+flutter run --dart-define-from-file=local_defines.json -d <android-tv-id>
 ```
 
 Use the id Flutter prints for the Google TV / Android device (not `macos`, not an iPhone simulator).
@@ -100,7 +101,7 @@ On the admin site: **Devices → Generate pairing code** when you are ready to p
 cd "/Users/reema/Documents/tv box /tvbox/kiddytube_flutter"
 export PATH="/Users/reema/Documents/tv box /tvbox/.tools/flutter/bin:$PATH"
 flutter devices
-flutter run -d <ipad-device-id>
+flutter run --dart-define-from-file=local_defines.json -d <ipad-device-id>
 ```
 
 First install can take several minutes. Leave the cable connected until the app launches.
@@ -109,7 +110,7 @@ First install can take several minutes. Leave the cable connected until the app 
 
 ```bash
 open -a Simulator
-flutter run -d <ipad-simulator-id>
+flutter run --dart-define-from-file=local_defines.json -d <ipad-simulator-id>
 ```
 
 Note: Simulator uses the Mac network, so cloud URL can be `http://127.0.0.1:8787`. A **physical** iPad must use the Mac’s LAN IP, not `127.0.0.1`.
@@ -133,7 +134,7 @@ Or from the terminal:
 cd "/Users/reema/Documents/tv box /tvbox/kiddytube_flutter"
 export PATH="/Users/reema/Documents/tv box /tvbox/.tools/flutter/bin:$PATH"
 flutter devices
-flutter run -d <android-tv-id>
+flutter run --dart-define-from-file=local_defines.json -d <android-tv-id>
 ```
 
 The app appears in the Android TV launcher (Leanback). Use the remote / D-pad to navigate.
@@ -184,7 +185,7 @@ To remove a device: **Unpair this device** in the app, and **Revoke** it in the 
 export PATH="/Users/reema/Documents/tv box /tvbox/.tools/flutter/bin:$PATH"
 cd "/Users/reema/Documents/tv box /tvbox/kiddytube_flutter"
 flutter devices
-flutter run -d <device-id>
+flutter run --dart-define-from-file=local_defines.json -d <device-id>
 
 # Cloud
 cd "/Users/reema/Documents/tv box /tvbox/cloud"
