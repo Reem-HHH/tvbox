@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Devices · KiddyTube Admin{% endblock %}
+{% block content %}
+<h1>Devices</h1>
+{% if flash %}<p class="ok">{{ flash }}</p>{% endif %}
+
+<section class="card">
+  <h2>Pair a new device</h2>
+  <p class="muted">Create a 6-digit code on this page, then enter it on the TV / phone / iPad within 10 minutes. Each device gets its own token (option B).</p>
+  <form method="post" action="/admin/devices/pair-code" class="row">
+    <label class="grow">Optional name hint
+      <input name="device_name" placeholder="Living room TV" />
+    </label>
+    <button type="submit">Generate pairing code</button>
+  </form>
+  {% if active_codes %}
+  <ul class="codes">
+    {% for c in active_codes %}
+    <li>
+      <strong class="code">{{ c.code }}</strong>
+      <span class="muted">expires {{ c.expires_at }}{% if c.device_name_hint %} · {{ c.device_name_hint }}{% endif %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <p class="muted">Pair endpoint: <code>POST {{ public_base_url }}/v1/devices/pair</code></p>
+</section>
+
+<section class="card">
+  <h2>Registered devices</h2>
+  {% if not devices %}
+  <p class="muted">No devices yet.</p>
+  {% else %}
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Platform</th><th>Token</th><th>Last seen</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for d in devices %}
+      <tr class="{% if d.revoked %}revoked{% endif %}">
+        <td>{{ d.name }}</td>
+        <td>{{ d.platform }}</td>
+        <td><code>{{ d.token_prefix }}…</code></td>
+        <td>{{ d.last_seen_at or "—" }}</td>
+        <td>
+          {% if not d.revoked %}
+          <form method="post" action="/admin/devices/{{ d.id }}/revoke" onsubmit="return confirm('Revoke this device?');">
+            <button type="submit" class="danger">Revoke</button>
+          </form>
+          {% else %}
+          <span class="muted">revoked</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+{% endblock %}

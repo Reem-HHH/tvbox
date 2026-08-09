@@ -50,11 +50,23 @@ class VideoItem {
   bool get isYoutube => youtubeVideoId != null && youtubeVideoId!.isNotEmpty;
   bool get isDirect => directUrl != null && directUrl!.isNotEmpty;
 
-  /// YouTube hqdefault thumbnail when an id is present.
+  /// YouTube thumbnail for this video. Always derived from the video id so
+  /// kids see the correct episode art when catalog content changes.
   String? get youtubeThumbnail {
     final id = youtubeVideoId;
-    if (id == null || id.isEmpty) return thumbnailUrl;
-    return thumbnailUrl ?? 'https://i.ytimg.com/vi/$id/hqdefault.jpg';
+    if (id != null && id.isNotEmpty) {
+      return 'https://i.ytimg.com/vi/$id/hqdefault.jpg';
+    }
+    return thumbnailUrl;
+  }
+
+  /// Higher-res YouTube still for large kid tiles (falls back via image error).
+  String? get youtubeThumbnailLarge {
+    final id = youtubeVideoId;
+    if (id != null && id.isNotEmpty) {
+      return 'https://i.ytimg.com/vi/$id/sddefault.jpg';
+    }
+    return youtubeThumbnail;
   }
 
   VideoItem copyWith({
@@ -132,8 +144,19 @@ class ContentChannel {
   /// Preview thumb from the first YouTube video when available.
   String? get previewThumbnail {
     for (final v in videos) {
-      final t = v.youtubeThumbnail;
+      final t = v.youtubeThumbnailLarge ?? v.youtubeThumbnail;
       if (t != null && t.isNotEmpty) return t;
+    }
+    return null;
+  }
+
+  /// Stable id of the video used for the channel tile image (for cache keys).
+  String? get previewVideoId {
+    for (final v in videos) {
+      if (v.youtubeVideoId != null && v.youtubeVideoId!.isNotEmpty) {
+        return v.youtubeVideoId;
+      }
+      if (v.thumbnailUrl != null && v.thumbnailUrl!.isNotEmpty) return v.id;
     }
     return null;
   }

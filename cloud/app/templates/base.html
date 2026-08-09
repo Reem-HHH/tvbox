@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}KiddyTube Admin{% endblock %}</title>
+  <link rel="stylesheet" href="/static/admin.css" />
+</head>
+<body>
+  {% if admin is defined and admin %}
+  <header class="top">
+    <a class="brand" href="/admin">KiddyTube Cloud</a>
+    <nav>
+      <a href="/admin/catalog">Catalog</a>
+      <a href="/admin/devices">Devices</a>
+      <form method="post" action="/admin/logout" class="inline">
+        <button type="submit">Log out</button>
+      </form>
+    </nav>
+  </header>
+  {% endif %}
+  <main class="wrap">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

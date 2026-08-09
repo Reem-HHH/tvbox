@@ -1,8 +1,10 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../cloud/cloud_client.dart';
 import '../parent/parent_pin.dart';
 import '../parent/release_pin_policy.dart';
 import 'media_ids.dart';
@@ -10,6 +12,24 @@ import 'models.dart';
 import 'recent_watch.dart';
 import 'seed.dart';
 import 'youtube_sync.dart';
+
+class CloudLinkStatus {
+  const CloudLinkStatus({
+    this.baseUrl = '',
+    this.paired = false,
+    this.tokenPrefix = '',
+    this.deviceName = '',
+    this.lastCloudSyncMs = 0,
+    this.lastRevision,
+  });
+
+  final String baseUrl;
+  final bool paired;
+  final String tokenPrefix;
+  final String deviceName;
+  final int lastCloudSyncMs;
+  final int? lastRevision;
+}
 
 class CatalogSettings {
   CatalogSettings({
@@ -75,6 +95,8 @@ abstract class SecretsStore {
   Future<String?> readPinSalt();
   Future<String?> readPinHash();
   Future<void> writePin(String? salt, String? hash);
+  Future<String?> readCloudDeviceToken();
+  Future<void> writeCloudDeviceToken(String? token);
 }
 
 class SecureSecretsStore implements SecretsStore {
@@ -85,6 +107,7 @@ class SecureSecretsStore implements SecretsStore {
   static const _apiKeySecure = 'youtube_api_key';
   static const _pinSalt = 'parent_pin_salt';
   static const _pinHash = 'parent_pin_hash';
+  static const _cloudToken = 'cloud_device_token';
 
   @override
   Future<String?> readApiKey() => _storage.read(key: _apiKeySecure);
@@ -114,12 +137,25 @@ class SecureSecretsStore implements SecretsStore {
       await _storage.write(key: _pinHash, value: hash);
     }
   }
+
+  @override
+  Future<String?> readCloudDeviceToken() => _storage.read(key: _cloudToken);
+
+  @override
+  Future<void> writeCloudDeviceToken(String? token) async {
+    if (token == null || token.isEmpty) {
+      await _storage.delete(key: _cloudToken);
+    } else {
+      await _storage.write(key: _cloudToken, value: token);
+    }
+  }
 }
 
 class MemorySecretsStore implements SecretsStore {
   String? _apiKey;
   String? _pinSalt;
   String? _pinHash;
+  String? _cloudToken;
 
   @override
   Future<String?> readApiKey() async => _apiKey;
@@ -140,6 +176,14 @@ class MemorySecretsStore implements SecretsStore {
     _pinSalt = salt;
     _pinHash = hash;
   }
+
+  @override
+  Future<String?> readCloudDeviceToken() async => _cloudToken;
+
+  @override
+  Future<void> writeCloudDeviceToken(String? token) async {
+    _cloudToken = (token == null || token.isEmpty) ? null : token;
+  }
 }
 
 class CatalogRepository {
@@ -148,15 +192,18 @@ class CatalogRepository {
     SecretsStore? secrets,
     RecentWatchStore? recentWatch,
     YoutubeCatalogSource? youtube,
+    CloudClient? cloud,
   })  : _prefs = prefs,
         _secrets = secrets ?? SecureSecretsStore(),
         recentWatch = recentWatch ?? RecentWatchStore(prefs),
-        _youtube = youtube ?? YoutubeCatalogSource();
+        _youtube = youtube ?? YoutubeCatalogSource(),
+        _cloud = cloud ?? CloudClient();
 
   SharedPreferences? _prefs;
   final SecretsStore _secrets;
   final RecentWatchStore recentWatch;
   final YoutubeCatalogSource _youtube;
+  final CloudClient _cloud;
 
   CatalogSettings? _cached;
 
@@ -173,6 +220,10 @@ class CatalogRepository {
   static const _pinChangedKey = 'pin_changed_from_default';
   static const _releaseReadyKey = 'release_ready';
   static const _lastSyncKey = 'last_sync_ms';
+  static const _cloudBaseUrlKey = 'cloud_base_url';
+  static const _cloudDeviceNameKey = 'cloud_device_name';
+  static const _lastCloudSyncKey = 'last_cloud_sync_ms';
+  static const _lastCloudRevisionKey = 'last_cloud_revision';
   static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
@@ -556,6 +607,151 @@ class CatalogRepository {
       'homeLibraryMode': settings.homeLibraryMode.storageName,
       'channels': settings.channels.map((c) => c.toJson()).toList(),
     });
+  }
+
+  Future<CloudLinkStatus> cloudStatus() async {
+    await _ensurePrefs();
+    final token = await _secrets.readCloudDeviceToken();
+    final paired = token != null && token.isNotEmpty;
+    final prefix = (token != null && token.isNotEmpty)
+        ? token.substring(0, token.length.clamp(0, 8))
+        : '';
+    return CloudLinkStatus(
+      baseUrl: _prefs!.getString(_cloudBaseUrlKey) ?? '',
+      paired: paired,
+      tokenPrefix: prefix,
+      deviceName: _prefs!.getString(_cloudDeviceNameKey) ?? '',
+      lastCloudSyncMs: _prefs!.getInt(_lastCloudSyncKey) ?? 0,
+      lastRevision: _prefs!.getInt(_lastCloudRevisionKey),
+    );
+  }
+
+  Future<void> setCloudBaseUrl(String? url) async {
+    await _ensurePrefs();
+    final trimmed = url?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      await _prefs!.remove(_cloudBaseUrlKey);
+      return;
+    }
+    await _prefs!.setString(
+      _cloudBaseUrlKey,
+      CloudClient.normalizeBaseUrl(trimmed),
+    );
+  }
+
+  static String defaultCloudPlatform() {
+    if (Platform.isIOS) return 'ios';
+    if (Platform.isAndroid) return 'android';
+    return 'unknown';
+  }
+
+  /// Register this device with a 6-digit pairing code from the cloud admin.
+  Future<String> pairWithCloud({
+    required String code,
+    String? deviceName,
+    String? baseUrl,
+    String? platform,
+  }) async {
+    await _ensurePrefs();
+    final url = (baseUrl?.trim().isNotEmpty ?? false)
+        ? CloudClient.normalizeBaseUrl(baseUrl!)
+        : (_prefs!.getString(_cloudBaseUrlKey) ?? '');
+    if (url.isEmpty) {
+      throw CloudException('Set the cloud server URL first');
+    }
+    final name = (deviceName?.trim().isNotEmpty ?? false)
+        ? deviceName!.trim()
+        : 'Flutter device';
+    final result = await _cloud.pair(
+      baseUrl: url,
+      code: code,
+      name: name,
+      platform: platform ?? defaultCloudPlatform(),
+    );
+    await _prefs!.setString(_cloudBaseUrlKey, url);
+    await _prefs!.setString(_cloudDeviceNameKey, result.name);
+    await _secrets.writeCloudDeviceToken(result.token);
+    return 'Paired as ${result.name}';
+  }
+
+  Future<void> unpairCloud() async {
+    await _ensurePrefs();
+    await _secrets.writeCloudDeviceToken(null);
+    await _prefs!.remove(_cloudDeviceNameKey);
+    await _prefs!.remove(_lastCloudSyncKey);
+    await _prefs!.remove(_lastCloudRevisionKey);
+  }
+
+  /// Replace local catalog from cloud/export JSON map.
+  Future<String> applyCatalogPayload(Map<String, dynamic> payload) async {
+    final rawChannels = payload['channels'];
+    if (rawChannels is! List) {
+      throw ArgumentError('Catalog JSON must include a channels array');
+    }
+    final channels = rawChannels
+        .map(
+          (e) => ContentChannel.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList();
+    final mode = HomeLibraryMode.fromStored(
+      payload['homeLibraryMode'] as String?,
+    );
+    final seedVersion = (payload['seedVersion'] as num?)?.toInt();
+    final revision = (payload['revision'] as num?)?.toInt();
+    await update(
+      (s) => s.copyWith(
+        channels: channels,
+        homeLibraryMode: mode,
+        seedVersion: seedVersion ?? s.seedVersion,
+      ),
+    );
+    await _ensurePrefs();
+    await _prefs!.setInt(
+      _lastCloudSyncKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
+    if (revision != null) {
+      await _prefs!.setInt(_lastCloudRevisionKey, revision);
+    }
+    return 'Applied ${channels.length} channels'
+        '${revision != null ? ' (rev $revision)' : ''}';
+  }
+
+  Future<String> pullCloudCatalog({bool force = false}) async {
+    await _ensurePrefs();
+    final status = await cloudStatus();
+    if (!status.paired) {
+      return 'Pair this device first.';
+    }
+    if (status.baseUrl.isEmpty) {
+      return 'Set the cloud server URL first.';
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (!force && now - status.lastCloudSyncMs < syncTtlMs) {
+      return 'Cloud catalog already synced today.';
+    }
+    final token = await _secrets.readCloudDeviceToken();
+    if (token == null || token.isEmpty) {
+      return 'Pair this device first.';
+    }
+    final payload = await _cloud.fetchCatalog(
+      baseUrl: status.baseUrl,
+      token: token,
+    );
+    return applyCatalogPayload(payload);
+  }
+
+  Future<bool> maybePullCloudDaily() async {
+    final status = await cloudStatus();
+    if (!status.paired || status.baseUrl.isEmpty) return false;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - status.lastCloudSyncMs < syncTtlMs) return false;
+    try {
+      final summary = await pullCloudCatalog(force: true);
+      return summary.startsWith('Applied');
+    } catch (_) {
+      return false;
+    }
   }
 
   /// Refresh playlist-backed channels that have Follow uploads enabled.

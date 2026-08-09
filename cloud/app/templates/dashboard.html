@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · KiddyTube Admin{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<p class="muted">Signed in as {{ admin.email }}</p>
+<div class="grid">
+  <a class="card linkish" href="/admin/catalog">
+    <h2>Catalog</h2>
+    <p>{{ channel_count }} channels · {{ video_count }} videos</p>
+  </a>
+  <a class="card linkish" href="/admin/devices">
+    <h2>Devices</h2>
+    <p>{{ device_count }} active device(s)</p>
+  </a>
+</div>
+<section class="card">
+  <h2>API base</h2>
+  <code>{{ public_base_url }}</code>
+  <p class="muted">Devices pair with a code from the Devices page, then call <code>GET /v1/catalog</code> with their token.</p>
+</section>
+{% endblock %}

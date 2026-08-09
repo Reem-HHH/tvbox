@@ -52,8 +52,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _maybeDailySync() async {
-    final changed = await widget.repository.maybeRefreshDaily();
-    if (changed && mounted) {
+    final cloudChanged = await widget.repository.maybePullCloudDaily();
+    final youtubeChanged = await widget.repository.maybeRefreshDaily();
+    if ((cloudChanged || youtubeChanged) && mounted) {
       await _reloadAfterSync();
     }
   }
@@ -196,11 +197,11 @@ class _HomeScreenState extends State<HomeScreen> {
       isTvWide: isTvWide,
       isLandscape: isLandscape,
     );
-    final maxContentWidth = isTvWide ? 1200.0 : (isTablet ? 980.0 : double.infinity);
+    final maxContentWidth = isTvWide ? 1600.0 : (isTablet ? 1100.0 : double.infinity);
     final logoSize = isTablet ? 56.0 : 44.0;
     final titleSize = isTablet ? 34.0 : 28.0;
-    final continueHeight = isTablet ? (isLandscape ? 168.0 : 150.0) : 120.0;
-    final continueWidth = isTablet ? (isLandscape ? 260.0 : 220.0) : 180.0;
+    final continueHeight = isTablet ? (isLandscape ? 220.0 : 200.0) : 148.0;
+    final continueWidth = isTablet ? (isLandscape ? 340.0 : 300.0) : 240.0;
 
     return Scaffold(
       body: DecoratedBox(
@@ -327,7 +328,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                 subtitle: 'Continue',
                                 imageUrl: item.youtubeVideoId == null
                                     ? null
-                                    : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/hqdefault.jpg',
+                                    : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/sddefault.jpg',
+                                contentKey: item.youtubeVideoId ?? item.videoId,
                               ),
                             ),
                           );
@@ -365,13 +367,14 @@ class _HomeScreenState extends State<HomeScreen> {
     required bool isTvWide,
     required bool isLandscape,
   }) {
-    if (!isTablet) return 2;
+    // Fewer columns = larger image tiles (kids pick by artwork).
+    if (!isTablet) return isMix ? 2 : 1;
     if (isTvWide) {
-      if (isMix) return isLandscape ? 6 : 5;
-      return isLandscape ? 5 : 4;
+      if (isMix) return isLandscape ? 3 : 2;
+      return isLandscape ? 3 : 2;
     }
-    if (isMix) return isLandscape ? 5 : 4;
-    return isLandscape ? 5 : 4;
+    if (isMix) return isLandscape ? 3 : 2;
+    return isLandscape ? 3 : 2;
   }
 }
 
@@ -397,14 +400,15 @@ class _ChannelGrid extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
+        mainAxisSpacing: 18,
+        crossAxisSpacing: 18,
         childAspectRatio: 16 / 11,
       ),
       itemCount: channels.length,
       itemBuilder: (context, index) {
         final channel = channels[index];
         return FocusTile(
+          key: ValueKey('channel-${channel.id}-${channel.previewVideoId}'),
           autofocus: autofocusFirst && index == 0,
           onActivated: () => onOpen(channel),
           child: _ColoredCard(
@@ -412,6 +416,7 @@ class _ChannelGrid extends StatelessWidget {
             title: channel.title,
             subtitle: '${channel.videos.length} videos',
             imageUrl: channel.previewThumbnail,
+            contentKey: channel.previewVideoId ?? channel.id,
           ),
         );
       },
@@ -444,21 +449,24 @@ class _VideoGrid extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: 16 / 12,
+        mainAxisSpacing: 18,
+        crossAxisSpacing: 18,
+        childAspectRatio: 16 / 11,
       ),
       itemCount: items.length,
       itemBuilder: (context, index) {
         final item = items[index];
+        final video = item.video;
         return FocusTile(
+          key: ValueKey('mix-${item.channelId}-${video.id}'),
           autofocus: index == 0,
           onActivated: () => onOpen(item),
           child: _ColoredCard(
             color: const Color(0xFF5C6BC0),
-            title: item.video.title,
+            title: video.title,
             subtitle: item.channelId,
-            imageUrl: item.video.youtubeThumbnail,
+            imageUrl: video.youtubeThumbnailLarge ?? video.youtubeThumbnail,
+            contentKey: video.youtubeVideoId ?? video.id,
           ),
         );
       },
@@ -472,24 +480,52 @@ class _ColoredCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.imageUrl,
+    this.contentKey,
   });
 
   final Color color;
   final String title;
   final String subtitle;
   final String? imageUrl;
+  /// Ties the cached image to this channel/video so art refreshes per content.
+  final String? contentKey;
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final memWidth = (width * MediaQuery.devicePixelRatioOf(context))
+        .clamp(480.0, 1280.0)
+        .round();
     return Stack(
       fit: StackFit.expand,
       children: [
         if (imageUrl != null)
           CachedNetworkImage(
+            key: ValueKey('thumb-${contentKey ?? imageUrl}'),
+            cacheKey: contentKey == null ? imageUrl : 'yt-$contentKey',
             imageUrl: imageUrl!,
             fit: BoxFit.cover,
+            fadeInDuration: const Duration(milliseconds: 180),
+            memCacheWidth: memWidth,
             placeholder: (_, _) => ColoredBox(color: color),
-            errorWidget: (_, _, _) => ColoredBox(color: color),
+            errorWidget: (_, url, _) {
+              // sddefault sometimes 404s; fall back to hqdefault for YouTube ids.
+              final id = contentKey;
+              if (id != null &&
+                  id.length == 11 &&
+                  url.contains('sddefault')) {
+                return CachedNetworkImage(
+                  key: ValueKey('thumb-hq-$id'),
+                  cacheKey: 'yt-hq-$id',
+                  imageUrl: 'https://i.ytimg.com/vi/$id/hqdefault.jpg',
+                  fit: BoxFit.cover,
+                  memCacheWidth: memWidth,
+                  placeholder: (_, _) => ColoredBox(color: color),
+                  errorWidget: (_, _, _) => ColoredBox(color: color),
+                );
+              }
+              return ColoredBox(color: color);
+            },
           )
         else
           ColoredBox(color: color),
@@ -506,7 +542,7 @@ class _ColoredCard extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.end,
@@ -518,7 +554,7 @@ class _ColoredCard extends StatelessWidget {
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
-                  fontSize: 16,
+                  fontSize: 18,
                 ),
               ),
               const SizedBox(height: 2),
@@ -528,7 +564,7 @@ class _ColoredCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 12,
+                  fontSize: 13,
                 ),
               ),
             ],
@@ -589,8 +625,13 @@ class LibraryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final isTablet = size.shortestSide >= 600;
+    final isTvWide = size.shortestSide >= 900 || size.width >= 1100;
     final isLandscape = size.width > size.height;
-    final crossAxisCount = isTablet ? (isLandscape ? 5 : 4) : 2;
+    final crossAxisCount = !isTablet
+        ? 1
+        : isTvWide
+            ? (isLandscape ? 3 : 2)
+            : (isLandscape ? 3 : 2);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -603,29 +644,33 @@ class LibraryScreen extends StatelessWidget {
       ),
       body: Center(
         child: ConstrainedBox(
-          constraints:
-              BoxConstraints(maxWidth: isTablet ? 980 : double.infinity),
+          constraints: BoxConstraints(
+            maxWidth: isTvWide ? 1600 : (isTablet ? 1100 : double.infinity),
+          ),
           child: channel.videos.isEmpty
               ? const Center(child: Text('No videos yet.'))
               : GridView.builder(
                   padding: EdgeInsets.all(isTablet ? 24 : 16),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 16 / 12,
+                    mainAxisSpacing: 18,
+                    crossAxisSpacing: 18,
+                    childAspectRatio: 16 / 11,
                   ),
                   itemCount: channel.videos.length,
                   itemBuilder: (context, index) {
                     final video = channel.videos[index];
                     return FocusTile(
+                      key: ValueKey('lib-${channel.id}-${video.id}'),
                       autofocus: index == 0,
                       onActivated: () => _play(context, index),
                       child: _ColoredCard(
                         color: Color(channel.color),
                         title: video.title,
                         subtitle: channel.title,
-                        imageUrl: video.youtubeThumbnail,
+                        imageUrl: video.youtubeThumbnailLarge ??
+                            video.youtubeThumbnail,
+                        contentKey: video.youtubeVideoId ?? video.id,
                       ),
                     );
                   },

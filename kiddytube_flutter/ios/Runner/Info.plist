@@ -70,11 +70,14 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<!-- HTTPS media / YouTube iframe playback (webview + video_player). -->
+	<!-- NSAllowsLocalNetworking: LAN cloud admin (http://192.168.x.x:8787). -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 	<key>io.flutter.embedded_views_preview</key>

@@ -1,0 +1,8 @@
+# Local secrets / runtime (paths relative to cloud/)
+.env
+data/
+.venv/
+**/__pycache__/
+*.pyc
+*.pyo
+.DS_Store

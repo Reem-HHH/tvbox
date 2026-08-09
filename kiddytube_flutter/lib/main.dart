@@ -18,15 +18,25 @@ class KiddyTubeApp extends StatelessWidget {
 
   final CatalogRepository repository;
 
+  static const _seed = Color(0xFF1E88E5);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'KiddyTube',
       debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E88E5),
+          seedColor: _seed,
           brightness: Brightness.light,
+        ),
+        useMaterial3: true,
+      ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: _seed,
+          brightness: Brightness.dark,
         ),
         useMaterial3: true,
       ),

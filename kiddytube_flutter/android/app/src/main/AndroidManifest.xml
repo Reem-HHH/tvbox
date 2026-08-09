@@ -15,7 +15,8 @@
         android:label="KiddyTube"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:banner="@drawable/tv_banner">
+        android:banner="@drawable/tv_banner"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"

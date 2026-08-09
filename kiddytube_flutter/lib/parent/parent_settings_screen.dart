@@ -273,6 +273,19 @@ class _HomeSyncTab extends StatefulWidget {
 
 class _HomeSyncTabState extends State<_HomeSyncTab> {
   bool _busy = false;
+  CloudLinkStatus? _cloud;
+
+  @override
+  void initState() {
+    super.initState();
+    _reloadCloud();
+  }
+
+  Future<void> _reloadCloud() async {
+    final status = await widget.repository.cloudStatus();
+    if (!mounted) return;
+    setState(() => _cloud = status);
+  }
 
   Future<void> _editApiKey() async {
     if (!widget.sessionOk()) return;
@@ -318,6 +331,155 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     widget.toast('API key saved');
   }
 
+  Future<void> _editCloudUrl() async {
+    if (!widget.sessionOk()) return;
+    final current = _cloud?.baseUrl ?? '';
+    final controller = TextEditingController(text: current);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cloud server URL'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: TextInputType.url,
+          decoration: const InputDecoration(
+            hintText: 'http://192.168.1.10:8787',
+            border: OutlineInputBorder(),
+            helperText: 'Mac running cloud/ on the same Wi‑Fi',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await widget.repository.setCloudBaseUrl(controller.text);
+      await _reloadCloud();
+      widget.toast('Cloud URL saved');
+    } catch (e) {
+      widget.toast('$e');
+    }
+  }
+
+  Future<void> _pairDevice() async {
+    if (!widget.sessionOk()) return;
+    final codeController = TextEditingController();
+    final nameController = TextEditingController(
+      text: _cloud?.deviceName.isNotEmpty == true
+          ? _cloud!.deviceName
+          : 'Living room',
+    );
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Pair this device'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: codeController,
+              autofocus: true,
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(6),
+              ],
+              decoration: const InputDecoration(
+                labelText: '6-digit code',
+                hintText: 'From cloud admin → Devices',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(
+                labelText: 'Device name',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Pair'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    setState(() => _busy = true);
+    try {
+      final summary = await widget.repository.pairWithCloud(
+        code: codeController.text.trim(),
+        deviceName: nameController.text.trim(),
+      );
+      await _reloadCloud();
+      widget.toast(summary);
+    } catch (e) {
+      widget.toast('$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _pullCloud() async {
+    if (!widget.sessionOk()) return;
+    setState(() => _busy = true);
+    try {
+      final summary = await widget.repository.pullCloudCatalog(force: true);
+      await widget.onChanged();
+      await _reloadCloud();
+      widget.toast(summary);
+    } catch (e) {
+      widget.toast('$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _unpair() async {
+    if (!widget.sessionOk()) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Unpair this device?'),
+        content: const Text(
+          'Removes the local cloud token. Revoke it in the admin UI too if needed.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Unpair'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await widget.repository.unpairCloud();
+    await _reloadCloud();
+    widget.toast('Device unpaired');
+  }
+
   Future<void> _refreshPlaylists() async {
     if (!widget.sessionOk()) return;
     setState(() => _busy = true);
@@ -353,6 +515,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
   Widget build(BuildContext context) {
     final settings = widget.settings;
     final scheme = Theme.of(context).colorScheme;
+    final cloud = _cloud;
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
@@ -394,6 +557,75 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                 ),
               ],
             ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'Cloud family catalog',
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: scheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          elevation: 0,
+          child: Column(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.dns_outlined),
+                title: const Text('Cloud server URL'),
+                subtitle: Text(
+                  cloud == null
+                      ? '…'
+                      : (cloud.baseUrl.isEmpty
+                          ? 'Not set — e.g. http://192.168.x.x:8787'
+                          : cloud.baseUrl),
+                ),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _busy ? null : _editCloudUrl,
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.phonelink_setup_outlined),
+                title: Text(cloud?.paired == true ? 'Re-pair device' : 'Pair device'),
+                subtitle: Text(
+                  cloud?.paired == true
+                      ? 'Paired as ${cloud!.deviceName.isEmpty ? 'device' : cloud.deviceName}'
+                          '${cloud.tokenPrefix.isEmpty ? '' : ' · ${cloud.tokenPrefix}…'}'
+                      : 'Enter the 6-digit code from the web admin',
+                ),
+                onTap: _busy ? null : _pairDevice,
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: _busy
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_download_outlined),
+                title: const Text('Pull catalog from cloud'),
+                subtitle: Text(
+                  cloud?.paired != true
+                      ? 'Pair first'
+                      : cloud!.lastCloudSyncMs == 0
+                          ? 'Never pulled'
+                          : 'Last pull ${_formatRelative(cloud.lastCloudSyncMs)}'
+                              '${cloud.lastRevision == null ? '' : ' · rev ${cloud.lastRevision}'}',
+                ),
+                onTap: _busy || cloud?.paired != true ? null : _pullCloud,
+              ),
+              if (cloud?.paired == true) ...[
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.link_off_outlined),
+                  title: const Text('Unpair this device'),
+                  onTap: _busy ? null : _unpair,
+                ),
+              ],
+            ],
           ),
         ),
         const SizedBox(height: 24),
@@ -452,6 +684,15 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
         ),
       ],
     );
+  }
+
+  String _formatRelative(int ms) {
+    final dt = DateTime.fromMillisecondsSinceEpoch(ms);
+    final diff = DateTime.now().difference(dt);
+    if (diff.inMinutes < 1) return 'just now';
+    if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+    if (diff.inDays < 1) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
   }
 }
 
