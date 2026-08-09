@@ -24,7 +24,7 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | مودا مودي | Curated Ramadan / Eid songs |
 | Dora the Explorer | Official Dora & Friends uploads |
 | سمارتا وحقيبتها العجيبة | Curated Arabic Spacetoon episodes |
-| طيور الجنة | Curated Islamic kids songs |
+| طيور بيبي | Toddler duas / gentle songs |
 | Sarah & Duck | Official uploads + starter episodes |
 | Peppa Pig | Official uploads playlist |
 | Adam & Mishmish | Curated song / letters videos |

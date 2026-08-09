@@ -90,7 +90,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 22
+    const val SEED_VERSION = 24
 
     /** Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة. */
     private const val RETIRED_KIDS_MUSIC_VIDEO_ID = "ISSlEZyIRFw"
@@ -111,6 +111,8 @@ object DefaultChannels {
         "islamic_kids",
         "playtime",
         "fulla",
+        "toyor_jana",
+        "disney_songs_ar",
         "dawood_juz_amma",
         "dawood_juz_amma_plain",
         "dawood_juz_amma_repeat",
@@ -242,21 +244,6 @@ object DefaultChannels {
                 yt("nPBlRc5heBc", "مجموعة الحلقات السابعة"),
                 yt("wcIW_tbTB3M", "مجموعة الحلقات الثامنة"),
                 yt("kJULJaJjD4M", "مجموعة الحلقات العاشرة")
-            )
-        ),
-        ContentChannel(
-            id = "toyor_jana",
-            title = "طيور الجنة",
-            iconRes = R.drawable.tile_toyor_jana,
-            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 17,
-            videos = listOf(
-                yt("7GgZjoF0D2I", "قلبي ينادي | طيور الجنة"),
-                yt("jlJaCmIOu8k", "الصدقة — ديمة بشار | طيور الجنة"),
-                yt("So6XIOgO4TM", "بيجاما — سند مقداد | طيور الجنة"),
-                yt("B5kD9sxd5Jg", "شاكر والببغاء الشاطر — الخلفاء الراشدون"),
-                yt("1zt6iH8R2uA", "شاكر والببغاء الشاطر — الفصول الأربعة"),
-                yt("02OKtnWyjNo", "دادا حبة حبة (بدون إيقاع) — راية مقداد")
             )
         ),
         ContentChannel(
@@ -616,7 +603,15 @@ object DefaultChannels {
                 yt("zZAQztwJGxg", "بيع الساعة — ماروكو الصغيرة"),
                 yt("3iKlvWdgQ2M", "ماروكو الصغيرة تستغل الفرصة"),
                 yt("KQidxkPZrOI", "عالية مكانتي — ماروكو الصغيرة"),
-                yt("OBPi512Q-0c", "ماروكو الصغيرة واكتشافها")
+                yt("OBPi512Q-0c", "ماروكو الصغيرة واكتشافها"),
+                yt("efoYDgyUdbU", "ماروكو الصغيرة والتنظيف"),
+                yt("daBmNllqeto", "ماروكو الصغيرة والمكالمة الهاتفية"),
+                yt("zT0VZaaXVgg", "ماروكو الصغيرة وصراحتها الزائدة"),
+                yt("EM4vPYt7t-A", "ماروكو والهدوء الذي لا ينتهي | سبيستون غو"),
+                yt("BCYkBHqnN0I", "مغامرات ماروكو مع العائلة | سبيستون غو"),
+                yt("STo24SNg2Ws", "ماروكو واختبار الرياضيات | سبيستون غو"),
+                yt("0gAG-rxdX2I", "حرب البلابل — ماروكو الصغيرة | سبيستون غو"),
+                yt("zZcU-kPRorc", "ماروكو في نظر الجد | سبيستون غو")
             )
         ),
         ContentChannel(
@@ -677,27 +672,23 @@ object DefaultChannels {
             sortOrder = 47,
             videos = listOf(
                 yt("L0MK7qz13bU", "Let It Go — Sing-Along (Frozen)"),
+                yt("TeQ_TTyLGMs", "Do You Want to Build a Snowman? — Sing-Along"),
                 yt("kQDw88hEr2c", "Love Is an Open Door — Sing-Along (Frozen)"),
                 yt("r4KTqce-9Z0", "You're Welcome — Sing-Along (Moana)"),
+                yt("pnZbiKKydWU", "How Far I'll Go — Sing-Along (Moana)"),
                 yt("RTWhvp_OD6s", "Where You Are — Sing-Along (Moana)"),
                 yt("ILRs2r6lcHY", "I See the Light — Sing-Along (Tangled)"),
                 yt("0fVcwXbAWtA", "When Will My Life Begin? — Sing-Along (Tangled)"),
                 yt("YRpvIiz9G8A", "We Don't Talk About Bruno — Sing-Along (Encanto)"),
-                yt("uh4dTLJ9q9o", "Lava — Official Lyric Video")
-            )
-        ),
-        ContentChannel(
-            id = "disney_songs_ar",
-            title = "أغاني ديزني",
-            iconRes = R.drawable.tile_disney_songs_ar,
-            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
-            sortOrder = 48,
-            videos = listOf(
-                yt("pBTtPEVdf3k", "أطلقي سركِ — ملكة الثلج | Disney Junior MENA"),
-                yt("r7YUuTvOq7w", "إظهري — ملكة الثلج ٢ | ديزني بالعربي"),
-                yt("05NZT9vQfJE", "في طريق مجهول — ملكة الثلج ٢ | ديزني بالعربي"),
-                yt("J_7OroO4z2U", "حاجات مش بتضيع — ملكة الثلج ٢ | ديزني بالعربي"),
-                yt("eQVNPPRqe2Y", "لأول يوم بعمري — ملكة الثلج | ديزني بالعربي")
+                yt("uh4dTLJ9q9o", "Lava — Official Lyric Video"),
+                yt("6BH-Rxd-NBo", "The Bare Necessities — Sing-Along (Jungle Book)"),
+                yt("GC_mV1IpjWA", "Under the Sea — Official Video (Little Mermaid)"),
+                yt("1MPZRcyTrcU", "You've Got a Friend in Me — Toy Story"),
+                yt("0MxulhivCvI", "Hakuna Matata — The Lion King"),
+                yt("eitDnP0_83k", "A Whole New World — Aladdin"),
+                yt("bseyU2PvBQo", "Hot Dog Dance Compilation — Mickey Mouse Clubhouse"),
+                yt("3f0C_PGcTAw", "Welcome to the Clubhouse (Hot Dog!) — Mickey"),
+                yt("DAb93ws35gA", "My Friends Tigger & Pooh Theme — Disney Junior")
             )
         ),
         ContentChannel(
@@ -711,6 +702,13 @@ object DefaultChannels {
                 yt("7x1RmD8gnug", "Babar — Remember When… (Ep. 26)"),
                 yt("OzjPwN0rDY0", "Babar — Monkey Business (Ep. 23)"),
                 yt("8lXs1qmACnU", "Babar — A Tale of Two Siblings (Ep. 36)"),
+                yt("fbRBhg1tegQ", "Babar — The City of Elephants (Ep. 4)"),
+                yt("tBebJGDwNC0", "Babar — City Ways (Ep. 2)"),
+                yt("50jU1R3tNMM", "Babar — An Elephant's Best Friend (Ep. 9)"),
+                yt("USYFs3FfPT0", "Babar — Between Friends (Ep. 16)"),
+                yt("sN52Lm31zDY", "Babar — What's Mine is Mine (Ep. 49)"),
+                yt("IBRWCeWhSGQ", "Babar — My Dinner with Rataxes (Ep. 33)"),
+                yt("OhGOJoLKOts", "Babar — Helping Hands (Ep. 54)"),
                 yt("8Z5jvr_JJUk", "Babar & Badou — Kite Fight / Zoomerblimps (Ep. 9)"),
                 yt(
                     "uilO6OTjo-4",
@@ -723,6 +721,18 @@ object DefaultChannels {
                 yt(
                     "hoT5HIAhTQ8",
                     "Babar & Badou — Fair is Fair / Savanna Surfing (Ep. 55)"
+                ),
+                yt(
+                    "QUkhjd127ho",
+                    "Babar & Badou — Ruby Rumpus / Dandy Andi (Ep. 17)"
+                ),
+                yt(
+                    "Vl1F5cB8pqE",
+                    "Babar & Badou — The Thunderclap / Junior Marching Band (Ep. 4)"
+                ),
+                yt(
+                    "_LmXqt73EVA",
+                    "Babar & Badou — Spy Trap / Sneazles (Ep. 1)"
                 )
             )
         ),

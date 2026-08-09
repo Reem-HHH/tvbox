@@ -10,7 +10,7 @@ Chibi Maruko-chan as known in the Arab world via Spacetoon — everyday school a
 ## What’s in the app
 
 - Theme + first-episode pack from Spacetoon
-- Selected part‑1 / part‑2 Arabic episode clips from QToon Production
+- Expanded Arabic episode clips from QToon Production and Spacetoon Go (~16 starters)
 - Manual allowlist only (no YouTube uploads Follow) so promos stay out of the kids grid
 
 ## Audience

@@ -17,7 +17,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [spacetoon](spacetoon.md) | Spacetoon أناشيد | High | High | Expanded curated songs |
 | [moda_modi](moda_modi.md) | مودا مودي | High | High | Ramadan / Eid songs |
 | [smarta](smarta.md) | سمارتا وحقيبتها العجيبة | High | High | Spacetoon Arabic curated |
-| [toyor_jana](toyor_jana.md) | طيور الجنة | High | High | Islamic Arabic songs allowlist |
+| [toyor_jana](toyor_jana.md) | طيور الجنة | — | — | **Retired v23** (songs kept in Kids Music where curated) |
 | [adam_mishmish](adam_mishmish.md) | Adam & Mishmish | High | High | Arabic songs / letters |
 | [zakaria](zakaria.md) | Zakaria | High | High | Arabic ABC / numbers |
 | [kiki_nadoush](kiki_nadoush.md) | Kiki wa Nadoush | High | High | Colors in Arabic |
@@ -46,8 +46,8 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [live_makkah](live_makkah.md) | مكة مباشر / القرآن مباشر | High | High | Saudi Quran TV live (IDs rotate) |
 | [masha_ar](masha_ar.md) | ماشا والدب | High | High | Arabic Masha (`@MashaBearARAB`) curated |
 | [blippi_ar](blippi_ar.md) | بليبي بالعربي | High | Medium–High | Arabic Blippi curated (no Follow) |
-| [disney_songs](disney_songs.md) | Disney Songs | High | Medium–High | EN sing-alongs curated (no Follow) |
-| [disney_songs_ar](disney_songs_ar.md) | أغاني ديزني | High | Medium–High | Arabic Disney songs curated |
+| [disney_songs](disney_songs.md) | Disney Songs | High | Medium–High | EN sing-alongs + Clubhouse (no Follow) |
+| [disney_songs_ar](disney_songs_ar.md) | أغاني ديزني | — | — | **Retired v24** |
 | [fulla](fulla.md) | Fulla / فلة | — | — | **Retired in v15** |
 
 **Rating scale used in dossiers**

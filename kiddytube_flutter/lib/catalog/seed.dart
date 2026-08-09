@@ -1,8 +1,8 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 22.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 24.
 class DefaultChannels {
-  static const seedVersion = 22;
+  static const seedVersion = 24;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -18,6 +18,8 @@ class DefaultChannels {
     'islamic_kids',
     'playtime',
     'fulla',
+    'toyor_jana',
+    'disney_songs_ar',
     'dawood_juz_amma',
     'dawood_juz_amma_plain',
     'dawood_juz_amma_repeat',
@@ -168,21 +170,6 @@ class DefaultChannels {
             _yt('nPBlRc5heBc', 'مجموعة الحلقات السابعة'),
             _yt('wcIW_tbTB3M', 'مجموعة الحلقات الثامنة'),
             _yt('kJULJaJjD4M', 'مجموعة الحلقات العاشرة'),
-          ],
-        ),
-        _channel(
-          id: 'toyor_jana',
-          title: 'طيور الجنة',
-          order: 17,
-          color: 0xFF66BB6A,
-          sourceType: SourceType.youtubeVideoList,
-          videos: [
-            _yt('7GgZjoF0D2I', 'قلبي ينادي | طيور الجنة'),
-            _yt('jlJaCmIOu8k', 'الصدقة — ديمة بشار | طيور الجنة'),
-            _yt('So6XIOgO4TM', 'بيجاما — سند مقداد | طيور الجنة'),
-            _yt('B5kD9sxd5Jg', 'شاكر والببغاء الشاطر — الخلفاء الراشدون'),
-            _yt('1zt6iH8R2uA', 'شاكر والببغاء الشاطر — الفصول الأربعة'),
-            _yt('02OKtnWyjNo', 'دادا حبة حبة (بدون إيقاع) — راية مقداد'),
           ],
         ),
         _channel(
@@ -528,6 +515,14 @@ class DefaultChannels {
             _yt('3iKlvWdgQ2M', 'ماروكو الصغيرة تستغل الفرصة'),
             _yt('KQidxkPZrOI', 'عالية مكانتي — ماروكو الصغيرة'),
             _yt('OBPi512Q-0c', 'ماروكو الصغيرة واكتشافها'),
+            _yt('efoYDgyUdbU', 'ماروكو الصغيرة والتنظيف'),
+            _yt('daBmNllqeto', 'ماروكو الصغيرة والمكالمة الهاتفية'),
+            _yt('zT0VZaaXVgg', 'ماروكو الصغيرة وصراحتها الزائدة'),
+            _yt('EM4vPYt7t-A', 'ماروكو والهدوء الذي لا ينتهي | سبيستون غو'),
+            _yt('BCYkBHqnN0I', 'مغامرات ماروكو مع العائلة | سبيستون غو'),
+            _yt('STo24SNg2Ws', 'ماروكو واختبار الرياضيات | سبيستون غو'),
+            _yt('0gAG-rxdX2I', 'حرب البلابل — ماروكو الصغيرة | سبيستون غو'),
+            _yt('zZcU-kPRorc', 'ماروكو في نظر الجد | سبيستون غو'),
           ],
         ),
         _channel(
@@ -588,27 +583,23 @@ class DefaultChannels {
           sourceType: SourceType.youtubeVideoList,
           videos: [
             _yt('L0MK7qz13bU', 'Let It Go — Sing-Along (Frozen)'),
+            _yt('TeQ_TTyLGMs', 'Do You Want to Build a Snowman? — Sing-Along'),
             _yt('kQDw88hEr2c', 'Love Is an Open Door — Sing-Along (Frozen)'),
             _yt('r4KTqce-9Z0', "You're Welcome — Sing-Along (Moana)"),
+            _yt('pnZbiKKydWU', "How Far I'll Go — Sing-Along (Moana)"),
             _yt('RTWhvp_OD6s', 'Where You Are — Sing-Along (Moana)'),
             _yt('ILRs2r6lcHY', 'I See the Light — Sing-Along (Tangled)'),
             _yt('0fVcwXbAWtA', 'When Will My Life Begin? — Sing-Along (Tangled)'),
             _yt('YRpvIiz9G8A', "We Don't Talk About Bruno — Sing-Along (Encanto)"),
             _yt('uh4dTLJ9q9o', 'Lava — Official Lyric Video'),
-          ],
-        ),
-        _channel(
-          id: 'disney_songs_ar',
-          title: 'أغاني ديزني',
-          order: 48,
-          color: 0xFF7E57C2,
-          sourceType: SourceType.youtubeVideoList,
-          videos: [
-            _yt('pBTtPEVdf3k', 'أطلقي سركِ — ملكة الثلج | Disney Junior MENA'),
-            _yt('r7YUuTvOq7w', 'إظهري — ملكة الثلج ٢ | ديزني بالعربي'),
-            _yt('05NZT9vQfJE', 'في طريق مجهول — ملكة الثلج ٢ | ديزني بالعربي'),
-            _yt('J_7OroO4z2U', 'حاجات مش بتضيع — ملكة الثلج ٢ | ديزني بالعربي'),
-            _yt('eQVNPPRqe2Y', 'لأول يوم بعمري — ملكة الثلج | ديزني بالعربي'),
+            _yt('6BH-Rxd-NBo', 'The Bare Necessities — Sing-Along (Jungle Book)'),
+            _yt('GC_mV1IpjWA', 'Under the Sea — Official Video (Little Mermaid)'),
+            _yt('1MPZRcyTrcU', "You've Got a Friend in Me — Toy Story"),
+            _yt('0MxulhivCvI', 'Hakuna Matata — The Lion King'),
+            _yt('eitDnP0_83k', 'A Whole New World — Aladdin'),
+            _yt('bseyU2PvBQo', 'Hot Dog Dance Compilation — Mickey Mouse Clubhouse'),
+            _yt('3f0C_PGcTAw', 'Welcome to the Clubhouse (Hot Dog!) — Mickey'),
+            _yt('DAb93ws35gA', 'My Friends Tigger & Pooh Theme — Disney Junior'),
           ],
         ),
         _channel(
@@ -622,6 +613,13 @@ class DefaultChannels {
             _yt('7x1RmD8gnug', 'Babar — Remember When… (Ep. 26)'),
             _yt('OzjPwN0rDY0', 'Babar — Monkey Business (Ep. 23)'),
             _yt('8lXs1qmACnU', 'Babar — A Tale of Two Siblings (Ep. 36)'),
+            _yt('fbRBhg1tegQ', 'Babar — The City of Elephants (Ep. 4)'),
+            _yt('tBebJGDwNC0', 'Babar — City Ways (Ep. 2)'),
+            _yt('50jU1R3tNMM', "Babar — An Elephant's Best Friend (Ep. 9)"),
+            _yt('USYFs3FfPT0', 'Babar — Between Friends (Ep. 16)'),
+            _yt('sN52Lm31zDY', "Babar — What's Mine is Mine (Ep. 49)"),
+            _yt('IBRWCeWhSGQ', 'Babar — My Dinner with Rataxes (Ep. 33)'),
+            _yt('OhGOJoLKOts', 'Babar — Helping Hands (Ep. 54)'),
             _yt(
               '8Z5jvr_JJUk',
               'Babar & Badou — Kite Fight / Zoomerblimps (Ep. 9)',
@@ -637,6 +635,18 @@ class DefaultChannels {
             _yt(
               'hoT5HIAhTQ8',
               'Babar & Badou — Fair is Fair / Savanna Surfing (Ep. 55)',
+            ),
+            _yt(
+              'QUkhjd127ho',
+              'Babar & Badou — Ruby Rumpus / Dandy Andi (Ep. 17)',
+            ),
+            _yt(
+              'Vl1F5cB8pqE',
+              'Babar & Badou — The Thunderclap / Junior Marching Band (Ep. 4)',
+            ),
+            _yt(
+              '_LmXqt73EVA',
+              'Babar & Badou — Spy Trap / Sneazles (Ep. 1)',
             ),
           ],
         ),

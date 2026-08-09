@@ -1,6 +1,6 @@
-# أغاني ديزني
+# أغاني ديزني (retired)
 
 - **Channel id:** `disney_songs_ar`
-- **Source:** Curated Arabic Disney songs (Disney Junior MENA / ديزني بالعربي)
+- **Status:** Retired in seed **v24** (removed from the kids home grid on upgrade)
 
-Arabic Frozen and related sing-along clips. No Follow uploads; no parodies.
+English **Disney Songs** remains; parents can still add Arabic clips manually if wanted.

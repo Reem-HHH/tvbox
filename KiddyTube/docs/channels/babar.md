@@ -10,7 +10,7 @@ Classic Babar the Elephant cartoons plus gentler **Babar and the Adventures of B
 
 ## What’s in the app
 
-Starter allowlist (~8 episodes): Elephant Express, Remember When, Monkey Business, Tale of Two Siblings, plus Badou episodes (Kite Fight, Brave Guy, Unhidden Courtyard, Fair is Fair).
+Expanded Treehouse Direct allowlist (~18 episodes): classic Babar (City Ways, City of Elephants, Elephant Express, Best Friend, Between Friends, Monkey Business, Remember When, siblings, dinner with Rataxes, helping hands, what’s mine) plus Badou double-bills (Kite Fight, Brave Guy, Thunderclap, Spy Trap, Ruby Rumpus, Unhidden Courtyard, Fair is Fair).
 
 ## Audience
 

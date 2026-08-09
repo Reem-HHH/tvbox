@@ -42,7 +42,6 @@ class CatalogJsonTest {
         "spacetoon",
         "moda_modi",
         "smarta",
-        "toyor_jana",
         "adam_mishmish",
         "zakaria",
         "kiki_nadoush",
@@ -73,7 +72,6 @@ class CatalogJsonTest {
         "masha_ar",
         "blippi_ar",
         "disney_songs",
-        "disney_songs_ar",
         "babar",
         "hadikat_almarah"
     )
@@ -99,7 +97,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionSeventeenAddsTwirlywoosEpisodes() {
-        assertEquals(22, DefaultChannels.SEED_VERSION)
+        assertEquals(24, DefaultChannels.SEED_VERSION)
         val twirly = DefaultChannels.seed().first { it.id == "twirlywoos" }
         assertTrue(twirly.videos.any { it.id == "wAFiVXz1NNw" })
         assertTrue(twirly.videos.any { it.id == "Wg0JkKmQY6A" })
@@ -169,7 +167,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionEighteenEnablesDailyFollowAndNumberblocksSeason1() {
-        assertEquals(22, DefaultChannels.SEED_VERSION)
+        assertEquals(24, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertTrue(seed.any { it.id == "maruko" })
         val maruko = seed.first { it.id == "maruko" }
@@ -177,7 +175,7 @@ class CatalogJsonTest {
         assertTrue(maruko.videos.any { it.id == "OMbPlfL2VMY" })
         assertTrue(seed.any { it.id == "live_makkah" })
         assertTrue(seed.any { it.id == "disney_songs" })
-        assertTrue(seed.any { it.id == "disney_songs_ar" })
+        assertTrue(seed.none { it.id == "disney_songs_ar" })
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
             assertFalse(seed.any { it.id == id })
@@ -235,9 +233,7 @@ class CatalogJsonTest {
         assertTrue(numberblocks.followUploads)
         assertTrue(numberblocks.videos.any { it.id == "Ap5kgJ-bpEQ" })
 
-        val toyorJana = seed.first { it.id == "toyor_jana" }
-        assertEquals("طيور الجنة", toyorJana.title)
-        assertTrue(toyorJana.videos.any { it.id == "7GgZjoF0D2I" })
+        assertTrue(seed.none { it.id == "toyor_jana" })
 
         val coco = seed.first { it.id == "cocomelon" }
         assertEquals("UUbCmjCuTUZos6Inko4u57UQ", coco.youtubePlaylistId)
@@ -312,7 +308,7 @@ class CatalogJsonTest {
         assertTrue(songs.videos.none { it.id == "old" })
         assertTrue(merged.any { it.id == "moda_modi" })
         assertTrue(merged.any { it.id == "dora" })
-        assertTrue(merged.any { it.id == "toyor_jana" })
+        assertTrue(merged.none { it.id == "toyor_jana" })
         assertTrue(merged.any { it.id == "smarta" })
         assertTrue(merged.any { it.id == "omar_hana" })
     }
@@ -364,7 +360,7 @@ class CatalogJsonTest {
             assertFalse(merged.any { it.id == id })
         }
         assertTrue(merged.any { it.id == "dora" })
-        assertTrue(merged.any { it.id == "toyor_jana" })
+        assertTrue(merged.none { it.id == "toyor_jana" })
         assertTrue(merged.any { it.id == "smarta" })
         assertTrue(merged.any { it.id == "adam_mishmish" })
         assertTrue(merged.any { it.id == "omar_hana" })

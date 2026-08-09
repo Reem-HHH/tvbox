@@ -48,7 +48,7 @@ void main() {
 
 
   test('seed keeps Twirlywoos expanded starters', () {
-    expect(DefaultChannels.seedVersion, 22);
+    expect(DefaultChannels.seedVersion, 24);
     final twirly = DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
     expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
     expect(twirly.videos.any((v) => v.id == 'Wg0JkKmQY6A'), isTrue);
@@ -56,18 +56,19 @@ void main() {
   });
 
   test('seed v19 adds Maruko Chan Arabic starters', () {
-    expect(DefaultChannels.seedVersion, 22);
+    expect(DefaultChannels.seedVersion, 24);
     final maruko = DefaultChannels.seed().firstWhere((c) => c.id == 'maruko');
     expect(maruko.title, 'ماروكو الصغيرة');
     expect(maruko.followUploads, isFalse);
     expect(maruko.youtubePlaylistId, isNull);
     expect(maruko.videos.any((v) => v.id == 'OMbPlfL2VMY'), isTrue);
     expect(maruko.videos.any((v) => v.id == '7Xf9nKYyAM4'), isTrue);
-    expect(maruko.videos.length, greaterThanOrEqualTo(8));
+    expect(maruko.videos.length, greaterThanOrEqualTo(16));
+    expect(maruko.videos.any((v) => v.id == 'efoYDgyUdbU'), isTrue);
   });
 
   test('seed includes live Makkah Quran Masha Blippi Disney channels', () {
-    expect(DefaultChannels.seedVersion, 22);
+    expect(DefaultChannels.seedVersion, 24);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
     expect(ids.containsAll([
@@ -76,21 +77,21 @@ void main() {
       'masha_ar',
       'blippi_ar',
       'disney_songs',
-      'disney_songs_ar',
     ]), isTrue);
+    expect(ids.contains('disney_songs_ar'), isFalse);
+    expect(DefaultChannels.retiredChannelIds.contains('disney_songs_ar'), isTrue);
     final makkah = seed.firstWhere((c) => c.id == 'live_makkah');
     expect(makkah.videos.any((v) => v.id == 'wawzF8i5yAo'), isTrue);
     expect(makkah.followUploads, isFalse);
     final disney = seed.firstWhere((c) => c.id == 'disney_songs');
     expect(disney.videos.any((v) => v.id == 'L0MK7qz13bU'), isTrue);
+    expect(disney.videos.any((v) => v.id == 'bseyU2PvBQo'), isTrue);
+    expect(disney.videos.length, greaterThanOrEqualTo(16));
     expect(disney.followUploads, isFalse);
-    final disneyAr = seed.firstWhere((c) => c.id == 'disney_songs_ar');
-    expect(disneyAr.title, 'أغاني ديزني');
-    expect(disneyAr.followUploads, isFalse);
   });
 
   test('seed v18 enables daily follow and Numberblocks Season 1', () {
-    expect(DefaultChannels.seedVersion, 22);
+    expect(DefaultChannels.seedVersion, 24);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -122,21 +123,105 @@ void main() {
     expect(kidsMusic.videos.any((v) => v.id == 'ISSlEZyIRFw'), isFalse);
     expect(kidsMusic.videos.any((v) => v.id == '03X3iys-Rcs'), isTrue);
     expect(kidsMusic.videos.any((v) => v.id == 'XE4qklLOokQ'), isTrue);
+    expect(ids.contains('toyor_jana'), isFalse);
+    expect(DefaultChannels.retiredChannelIds.contains('toyor_jana'), isTrue);
   });
 
   test('seed v22 adds Babar and Hadikat al-Marah channels', () {
-    expect(DefaultChannels.seedVersion, 22);
+    expect(DefaultChannels.seedVersion, 24);
     final seed = DefaultChannels.seed();
     final babar = seed.firstWhere((c) => c.id == 'babar');
     expect(babar.title, 'بابار');
     expect(babar.followUploads, isFalse);
-    expect(babar.videos.length, greaterThanOrEqualTo(8));
+    expect(babar.videos.length, greaterThanOrEqualTo(16));
+    expect(babar.videos.any((v) => v.id == 'fbRBhg1tegQ'), isTrue);
     expect(babar.videos.any((v) => v.id == 'CKG8KXSiehs'), isTrue);
     final garden = seed.firstWhere((c) => c.id == 'hadikat_almarah');
     expect(garden.title, 'حديقة المرح');
     expect(garden.followUploads, isFalse);
     expect(garden.videos.any((v) => v.id == 'knTqvBZtgDc'), isTrue);
     expect(garden.videos.length, greaterThanOrEqualTo(8));
+  });
+
+  test('mergeSeedUpdates retires Arabic Disney and expands English Disney Songs', () {
+    final existing = [
+      ContentChannel(
+        id: 'disney_songs_ar',
+        title: 'أغاني ديزني',
+        sourceType: SourceType.youtubeVideoList,
+        videos: const [
+          VideoItem(
+            id: 'pBTtPEVdf3k',
+            title: 'أطلقي سركِ',
+            youtubeVideoId: 'pBTtPEVdf3k',
+          ),
+        ],
+      ),
+      ContentChannel(
+        id: 'disney_songs',
+        title: 'Disney Songs',
+        sourceType: SourceType.youtubeVideoList,
+        videos: const [
+          VideoItem(
+            id: 'L0MK7qz13bU',
+            title: 'Let It Go',
+            youtubeVideoId: 'L0MK7qz13bU',
+          ),
+        ],
+      ),
+    ];
+    final merged = DefaultChannels.mergeSeedUpdates(existing);
+    expect(merged.any((c) => c.id == 'disney_songs_ar'), isFalse);
+    final disney = merged.firstWhere((c) => c.id == 'disney_songs');
+    expect(disney.videos.any((v) => v.id == 'bseyU2PvBQo'), isTrue);
+    expect(disney.videos.any((v) => v.id == 'TeQ_TTyLGMs'), isTrue);
+  });
+
+  test('mergeSeedUpdates retires طيور الجنة and expands Maruko Babar', () {
+    final existing = [
+      ContentChannel(
+        id: 'toyor_jana',
+        title: 'طيور الجنة',
+        sourceType: SourceType.youtubeVideoList,
+        videos: const [
+          VideoItem(
+            id: '7GgZjoF0D2I',
+            title: 'قلبي ينادي',
+            youtubeVideoId: '7GgZjoF0D2I',
+          ),
+        ],
+      ),
+      ContentChannel(
+        id: 'maruko',
+        title: 'ماروكو الصغيرة',
+        sourceType: SourceType.youtubeVideoList,
+        videos: const [
+          VideoItem(
+            id: 'OMbPlfL2VMY',
+            title: 'الحلقات الثلاث الأولى',
+            youtubeVideoId: 'OMbPlfL2VMY',
+          ),
+        ],
+      ),
+      ContentChannel(
+        id: 'babar',
+        title: 'بابار',
+        sourceType: SourceType.youtubeVideoList,
+        videos: const [
+          VideoItem(
+            id: 'CKG8KXSiehs',
+            title: 'Elephant Express',
+            youtubeVideoId: 'CKG8KXSiehs',
+          ),
+        ],
+      ),
+    ];
+    final merged = DefaultChannels.mergeSeedUpdates(existing);
+    expect(merged.any((c) => c.id == 'toyor_jana'), isFalse);
+    final maruko = merged.firstWhere((c) => c.id == 'maruko');
+    expect(maruko.videos.any((v) => v.id == 'efoYDgyUdbU'), isTrue);
+    final babar = merged.firstWhere((c) => c.id == 'babar');
+    expect(babar.videos.any((v) => v.id == 'fbRBhg1tegQ'), isTrue);
   });
 
   test('mergeSeedUpdates replaces wrong Kids Music sleep song', () {
@@ -196,7 +281,7 @@ void main() {
 
 
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 22);
+    expect(DefaultChannels.seedVersion, 24);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();

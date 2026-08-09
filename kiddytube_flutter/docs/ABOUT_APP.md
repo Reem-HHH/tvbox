@@ -34,7 +34,7 @@ The older Kotlin TV app in `KiddyTube/` still exists for parity; day-to-day use 
 - **Continue watching** — resumes near where they left off.
 - Logo + lock open parent settings.
 
-### Channels kids get by default (seed v22 highlights)
+### Channels kids get by default (seed v24 highlights)
 
 Islamic / Arabic-first shows, preschool series, plus recent adds:
 
@@ -44,7 +44,7 @@ Islamic / Arabic-first shows, preschool series, plus recent adds:
 | ماشا والدب | Arabic Masha |
 | بليبي بالعربي | Arabic Blippi |
 | ماروكو الصغيرة | Arabic Maruko |
-| Disney Songs / أغاني ديزني | Curated sing-alongs (no auto Follow) |
+| Disney Songs | EN sing-alongs + Mickey/Pooh (no auto Follow) |
 | Kids Music | Toyor / Hala / Osratouna songs + البندورة الحمراء |
 | بابار | Treehouse Babar & Badou (English allowlist) |
 | حديقة المرح | WildBrain Arabic Night Garden |
