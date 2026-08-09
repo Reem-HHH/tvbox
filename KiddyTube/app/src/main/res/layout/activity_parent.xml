@@ -13,7 +13,7 @@
         android:paddingStart="@dimen/header_padding_h"
         android:paddingTop="@dimen/header_padding_v"
         android:paddingEnd="@dimen/header_padding_h"
-        android:paddingBottom="12dp">
+        android:paddingBottom="8dp">
 
         <TextView
             android:id="@+id/parentBrandTitle"
@@ -42,7 +42,25 @@
             android:textSize="@dimen/sync_chip_text" />
     </LinearLayout>
 
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:clipToPadding="false"
+        android:paddingStart="@dimen/grid_padding"
+        android:paddingEnd="@dimen/grid_padding"
+        android:paddingBottom="10dp"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/parentTabs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
     <ScrollView
+        android:id="@+id/parentScroll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

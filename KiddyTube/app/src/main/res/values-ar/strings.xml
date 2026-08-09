@@ -62,6 +62,9 @@
     <string name="parent_section_actions">الكتالوج</string>
     <string name="parent_section_channels">القنوات</string>
     <string name="parent_section_security">الأمان</string>
+    <string name="parent_tab_channels">القنوات</string>
+    <string name="parent_tab_security">الأمان</string>
+    <string name="parent_tab_home_sync">الرئيسية والمزامنة</string>
     <string name="parent_default_pin_warning">غيّر رمز PIN الافتراضي (2580) قبل الإصدار. جاهزية الإصدار تبقى متوقفة حتى تغيّره. إصدارات الإنتاج تمنع مشاهدة الأطفال حتى يتم تغيير الرمز.</string>
     <string name="parent_change_pin_first">غيّر رمز PIN الافتراضي أولاً</string>
     <string name="parent_release_pin_required">اطلب من أحد الوالدين فتح القفل وتغيير رمز PIN الافتراضي (2580) قبل المشاهدة.</string>

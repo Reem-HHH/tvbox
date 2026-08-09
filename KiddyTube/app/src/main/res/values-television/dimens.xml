@@ -23,4 +23,9 @@
     <dimen name="player_safe_inset">36dp</dimen>
     <dimen name="parent_meta_text">16sp</dimen>
     <dimen name="parent_playlist_text">15sp</dimen>
+    <dimen name="parent_tab_min_height">56dp</dimen>
+    <dimen name="parent_tab_padding_h">22dp</dimen>
+    <dimen name="parent_tab_padding_v">14dp</dimen>
+    <dimen name="parent_tab_gap">12dp</dimen>
+    <dimen name="parent_tab_text">18sp</dimen>
 </resources>

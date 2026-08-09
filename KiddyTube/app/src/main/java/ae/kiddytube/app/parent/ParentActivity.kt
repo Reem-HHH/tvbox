@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.text.InputType
 import android.util.TypedValue
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
@@ -31,14 +32,29 @@ import ae.kiddytube.app.ui.ChannelGridActivity
 import kotlinx.coroutines.launch
 
 class ParentActivity : AppCompatActivity() {
+    private enum class ParentTab {
+        CHANNELS,
+        SECURITY,
+        HOME_SYNC
+    }
+
     private lateinit var container: LinearLayout
+    private lateinit var tabsRow: LinearLayout
     private lateinit var settings: CatalogSettings
+    private var selectedTab: ParentTab = ParentTab.CHANNELS
+    private val tabButtons = linkedMapOf<ParentTab, Button>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!requireActiveSession()) return
         setContentView(R.layout.activity_parent)
         container = findViewById(R.id.parentContent)
+        tabsRow = findViewById(R.id.parentTabs)
+        if (savedInstanceState != null) {
+            selectedTab = ParentTab.entries.getOrElse(
+                savedInstanceState.getInt(STATE_SELECTED_TAB, 0)
+            ) { ParentTab.CHANNELS }
+        }
         findViewById<TextView>(R.id.parentBack).setOnClickListener { goBackToChannels() }
         onBackPressedDispatcher.addCallback(
             this,
@@ -49,7 +65,119 @@ class ParentActivity : AppCompatActivity() {
             }
         )
         ImmersiveMode.apply(this)
+        setupTabs()
         lifecycleScope.launch { reload() }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt(STATE_SELECTED_TAB, selectedTab.ordinal)
+    }
+
+    private fun setupTabs() {
+        tabsRow.removeAllViews()
+        tabButtons.clear()
+        val specs = listOf(
+            ParentTab.CHANNELS to R.string.parent_tab_channels,
+            ParentTab.SECURITY to R.string.parent_tab_security,
+            ParentTab.HOME_SYNC to R.string.parent_tab_home_sync
+        )
+        specs.forEachIndexed { index, (tab, labelRes) ->
+            val button = Button(this).apply {
+                text = getString(labelRes)
+                isAllCaps = false
+                setBackgroundResource(R.drawable.focusable_tab_button)
+                setTextColor(inkNavy())
+                setTextSize(
+                    TypedValue.COMPLEX_UNIT_PX,
+                    resources.getDimension(R.dimen.parent_tab_text)
+                )
+                minHeight = resources.getDimensionPixelSize(R.dimen.parent_tab_min_height)
+                setPadding(
+                    resources.getDimensionPixelSize(R.dimen.parent_tab_padding_h),
+                    resources.getDimensionPixelSize(R.dimen.parent_tab_padding_v),
+                    resources.getDimensionPixelSize(R.dimen.parent_tab_padding_h),
+                    resources.getDimensionPixelSize(R.dimen.parent_tab_padding_v)
+                )
+                isFocusable = true
+                isFocusableInTouchMode = true
+                setOnClickListener { selectTab(tab, requestFocusOnTab = true) }
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).also {
+                    if (index < specs.lastIndex) {
+                        it.marginEnd = resources.getDimensionPixelSize(R.dimen.parent_tab_gap)
+                    }
+                }
+            }
+            tabButtons[tab] = button
+            tabsRow.addView(button)
+        }
+        val buttons = tabButtons.values.toList()
+        buttons.forEach { button ->
+            if (button.id == android.view.View.NO_ID) {
+                button.id = android.view.View.generateViewId()
+            }
+        }
+        buttons.forEachIndexed { i, button ->
+            if (i > 0) button.nextFocusLeftId = buttons[i - 1].id
+            if (i < buttons.lastIndex) button.nextFocusRightId = buttons[i + 1].id
+        }
+        updateTabSelectionUi()
+    }
+
+    private fun selectTab(tab: ParentTab, requestFocusOnTab: Boolean = false) {
+        if (!::settings.isInitialized) {
+            selectedTab = tab
+            updateTabSelectionUi()
+            return
+        }
+        selectedTab = tab
+        container.removeAllViews()
+        render()
+        updateTabSelectionUi()
+        if (requestFocusOnTab) {
+            tabButtons[tab]?.requestFocus()
+        } else {
+            focusFirstContentControl()
+        }
+    }
+
+    private fun updateTabSelectionUi() {
+        tabButtons.forEach { (tab, button) ->
+            button.isSelected = tab == selectedTab
+        }
+    }
+
+    private fun focusFirstContentControl() {
+        container.post {
+            val focusable = container.findFocusableInTouchModeDeep()
+                ?: container.findFocusableDeep()
+            focusable?.requestFocus()
+        }
+    }
+
+    private fun View.findFocusableDeep(): View? {
+        if (isFocusable && isShown) return this
+        if (this is ViewGroup) {
+            for (i in 0 until childCount) {
+                val found = getChildAt(i).findFocusableDeep()
+                if (found != null) return found
+            }
+        }
+        return null
+    }
+
+    private fun View.findFocusableInTouchModeDeep(): View? {
+        if (isFocusable && isFocusableInTouchMode && isShown && this is Button) return this
+        if (this is ViewGroup) {
+            for (i in 0 until childCount) {
+                val found = getChildAt(i).findFocusableInTouchModeDeep()
+                if (found != null) return found
+            }
+        }
+        return null
     }
 
     private suspend fun reload() {
@@ -60,38 +188,87 @@ class ParentActivity : AppCompatActivity() {
         settings = (application as KiddyTubeApp).catalogRepository.current()
         container.removeAllViews()
         render()
+        updateTabSelectionUi()
+        // Keep focus on the selected tab chip after mutations so D-pad stays predictable.
+        tabButtons[selectedTab]?.requestFocus()
     }
 
     private fun render() {
-        val totalVideos = settings.channels.sumOf { it.videos.size }
-        addSectionCard {
-            addSectionTitle(it, getString(R.string.parent_section_overview))
-            addInfo(it, "KiddyTube ${BuildConfig.VERSION_NAME}")
-            addInfo(it, getString(R.string.parent_video_count, totalVideos))
-            if (!settings.pinChangedFromDefault) {
-                addInfo(it, getString(R.string.parent_default_pin_warning))
-            }
-            addInfo(
-                it,
-                "YouTube API key: ${
-                    when {
-                        !settings.youtubeApiKey.isNullOrBlank() -> "set (parent)"
-                        !BuildConfig.YOUTUBE_API_KEY.isNullOrBlank() -> "set (build)"
-                        else -> "not set"
-                    }
-                }"
-            )
-            val sha1 = AndroidAppIdentity.signingCertSha1Hex(this)
-            addInfo(
-                it,
-                if (sha1.isNullOrBlank()) {
-                    getString(R.string.parent_signing_sha1_unavailable)
-                } else {
-                    getString(R.string.parent_signing_sha1, sha1)
-                }
-            )
+        when (selectedTab) {
+            ParentTab.CHANNELS -> renderChannelsTab()
+            ParentTab.SECURITY -> renderSecurityTab()
+            ParentTab.HOME_SYNC -> renderHomeSyncTab()
         }
+        // Point tab nextFocusDown at first focusable in the panel.
+        container.post {
+            val first = container.findFocusableDeep()
+            if (first != null && first.id == android.view.View.NO_ID) {
+                first.id = android.view.View.generateViewId()
+            }
+            val firstId = first?.id ?: android.view.View.NO_ID
+            tabButtons.values.forEach { tab ->
+                tab.nextFocusDownId = firstId
+            }
+        }
+    }
 
+    private fun renderChannelsTab() {
+        addHeading(getString(R.string.parent_section_channels))
+        settings.channels.sortedBy { it.sortOrder }.forEach { addChannelCard(it) }
+    }
+
+    private fun renderSecurityTab() {
+        addSectionCard {
+            addSectionTitle(it, getString(R.string.parent_section_security))
+            addButton(it, getString(R.string.parent_change_pin)) { promptChangePin() }
+            val releaseOn = settings.releaseReady && settings.pinChangedFromDefault
+            addToggle(
+                it,
+                if (releaseOn) {
+                    getString(R.string.parent_release_ready_on)
+                } else {
+                    getString(R.string.parent_release_ready_off)
+                }
+            ) {
+                if (!releaseOn && !settings.pinChangedFromDefault) {
+                    toast(getString(R.string.parent_change_pin_first))
+                    lifecycleScope.launch { reload() }
+                    return@addToggle
+                }
+                update { s ->
+                    s.copy(releaseReady = !releaseOn && s.pinChangedFromDefault)
+                }
+            }
+            addButton(it, "Reset all settings") {
+                AlertDialog.Builder(this)
+                    .setTitle("Reset?")
+                    .setMessage("Clears channels and PIN (re-seeded to default 2580).")
+                    .setPositiveButton("Reset") { _, _ ->
+                        withActiveSession {
+                            val app = application as KiddyTubeApp
+                            app.catalogRepository.resetAll()
+                            app.clearRecentWatch()
+                            val salt = ParentPinManager.newSaltHex()
+                            val hash = ParentPinManager.hashPin(ParentPinManager.DEFAULT_DEV_PIN, salt)
+                            app.catalogRepository.update { s ->
+                                s.copy(
+                                    pinSalt = salt,
+                                    pinHash = hash,
+                                    pinChangedFromDefault = false,
+                                    releaseReady = false
+                                )
+                            }
+                            reload()
+                        }
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }
+        }
+    }
+
+    private fun renderHomeSyncTab() {
+        val totalVideos = settings.channels.sumOf { it.videos.size }
         addSectionCard {
             addSectionTitle(it, getString(R.string.parent_section_actions))
             val mixOn = settings.homeLibraryMode == HomeLibraryMode.MIX_VIDEOS
@@ -163,55 +340,32 @@ class ParentActivity : AppCompatActivity() {
             }
         }
 
-        addHeading(getString(R.string.parent_section_channels))
-        settings.channels.sortedBy { it.sortOrder }.forEach { addChannelCard(it) }
-
         addSectionCard {
-            addSectionTitle(it, getString(R.string.parent_section_security))
-            addButton(it, getString(R.string.parent_change_pin)) { promptChangePin() }
-            val releaseOn = settings.releaseReady && settings.pinChangedFromDefault
-            addToggle(
+            addSectionTitle(it, getString(R.string.parent_section_overview))
+            addInfo(it, "KiddyTube ${BuildConfig.VERSION_NAME}")
+            addInfo(it, getString(R.string.parent_video_count, totalVideos))
+            if (!settings.pinChangedFromDefault) {
+                addInfo(it, getString(R.string.parent_default_pin_warning))
+            }
+            addInfo(
                 it,
-                if (releaseOn) {
-                    getString(R.string.parent_release_ready_on)
-                } else {
-                    getString(R.string.parent_release_ready_off)
-                }
-            ) {
-                if (!releaseOn && !settings.pinChangedFromDefault) {
-                    toast(getString(R.string.parent_change_pin_first))
-                    lifecycleScope.launch { reload() }
-                    return@addToggle
-                }
-                update { s ->
-                    s.copy(releaseReady = !releaseOn && s.pinChangedFromDefault)
-                }
-            }
-            addButton(it, "Reset all settings") {
-                AlertDialog.Builder(this)
-                    .setTitle("Reset?")
-                    .setMessage("Clears channels and PIN (re-seeded to default 2580).")
-                    .setPositiveButton("Reset") { _, _ ->
-                        withActiveSession {
-                            val app = application as KiddyTubeApp
-                            app.catalogRepository.resetAll()
-                            app.clearRecentWatch()
-                            val salt = ParentPinManager.newSaltHex()
-                            val hash = ParentPinManager.hashPin(ParentPinManager.DEFAULT_DEV_PIN, salt)
-                            app.catalogRepository.update { s ->
-                                s.copy(
-                                    pinSalt = salt,
-                                    pinHash = hash,
-                                    pinChangedFromDefault = false,
-                                    releaseReady = false
-                                )
-                            }
-                            reload()
-                        }
+                "YouTube API key: ${
+                    when {
+                        !settings.youtubeApiKey.isNullOrBlank() -> "set (parent)"
+                        !BuildConfig.YOUTUBE_API_KEY.isNullOrBlank() -> "set (build)"
+                        else -> "not set"
                     }
-                    .setNegativeButton(R.string.cancel, null)
-                    .show()
-            }
+                }"
+            )
+            val sha1 = AndroidAppIdentity.signingCertSha1Hex(this)
+            addInfo(
+                it,
+                if (sha1.isNullOrBlank()) {
+                    getString(R.string.parent_signing_sha1_unavailable)
+                } else {
+                    getString(R.string.parent_signing_sha1, sha1)
+                }
+            )
         }
     }
 
@@ -680,5 +834,9 @@ class ParentActivity : AppCompatActivity() {
         if (!::container.isInitialized) return
         if (!requireActiveSession()) return
         ImmersiveMode.apply(this)
+    }
+
+    companion object {
+        private const val STATE_SELECTED_TAB = "parent_selected_tab"
     }
 }

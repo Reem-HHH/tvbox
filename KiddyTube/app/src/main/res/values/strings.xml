@@ -62,6 +62,9 @@
     <string name="parent_section_actions">Catalog</string>
     <string name="parent_section_channels">Channels</string>
     <string name="parent_section_security">Security</string>
+    <string name="parent_tab_channels">Channels</string>
+    <string name="parent_tab_security">Security</string>
+    <string name="parent_tab_home_sync">Home &amp; Sync</string>
     <string name="parent_default_pin_warning">Change the default PIN (2580) before release. Release ready stays off until you change it. Release builds also block kid playback until the PIN is changed.</string>
     <string name="parent_change_pin_first">Change the default PIN first</string>
     <string name="parent_release_pin_required">Ask a parent to unlock and change the default PIN (2580) before watching.</string>
