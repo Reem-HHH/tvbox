@@ -730,6 +730,58 @@ class _ChannelDetailPane extends StatelessWidget {
     await onChanged();
   }
 
+  Future<void> _editPlaylist(BuildContext context) async {
+    if (!sessionOk()) return;
+    final controller = TextEditingController(
+      text: channel.youtubePlaylistId ?? '',
+    );
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Playlist ID'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            hintText: 'PL… or YouTube playlist URL',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, ''),
+            child: const Text('Clear'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (result == null) return;
+    try {
+      await repository.setPlaylistId(
+        channel.id,
+        result.isEmpty ? null : result,
+      );
+      await onChanged();
+      toast(result.isEmpty ? 'Playlist cleared' : 'Playlist updated');
+    } catch (e) {
+      toast('$e');
+    }
+  }
+
+  Future<void> _toggleVideoSeek(VideoItem video, bool value) async {
+    if (!sessionOk()) return;
+    await repository.setVideoAllowSeek(channel.id, video.id, value);
+    await onChanged();
+  }
+
   Future<void> _addYoutube(BuildContext context) async {
     if (!sessionOk()) return;
     final controller = TextEditingController();
@@ -908,8 +960,21 @@ class _ChannelDetailPane extends StatelessWidget {
         ),
         SwitchListTile(
           title: const Text('Allow seek (FF/RW)'),
+          subtitle: const Text('Default for this channel’s videos'),
           value: channel.defaultAllowSeek,
           onChanged: channel.enabled ? _toggleSeek : null,
+        ),
+        ListTile(
+          title: const Text('Playlist'),
+          subtitle: Text(
+            channel.youtubePlaylistId?.isNotEmpty == true
+                ? channel.youtubePlaylistId!
+                : 'None — Follow uploads stays off',
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.edit_outlined),
+          onTap: () => _editPlaylist(context),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
@@ -955,12 +1020,27 @@ class _ChannelDetailPane extends StatelessWidget {
                   if (v.manual) 'Manual',
                   if (v.isDirect) 'Direct',
                   if (v.isYoutube && !v.manual) 'Synced',
+                  v.allowSeek ? 'Seek on' : 'Seek off',
                 ].join(' · '),
               ),
-              trailing: IconButton(
-                tooltip: 'Remove',
-                icon: const Icon(Icons.delete_outline),
-                onPressed: () => _deleteVideo(context, v),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: v.allowSeek ? 'Disable seek' : 'Enable seek',
+                    icon: Icon(
+                      v.allowSeek
+                          ? Icons.fast_forward
+                          : Icons.fast_forward_outlined,
+                    ),
+                    onPressed: () => _toggleVideoSeek(v, !v.allowSeek),
+                  ),
+                  IconButton(
+                    tooltip: 'Remove',
+                    icon: const Icon(Icons.delete_outline),
+                    onPressed: () => _deleteVideo(context, v),
+                  ),
+                ],
               ),
             ),
           ),

@@ -53,6 +53,18 @@ void main() {
       );
       expect(MediaIds.isDirectMediaUrl('https://cdn.example.com/video'), isFalse);
     });
+
+    test('extractPlaylistId from URL and bare id', () {
+      expect(MediaIds.extractPlaylistId('PLabcdefghijklmnop'), 'PLabcdefghijklmnop');
+      expect(
+        MediaIds.extractPlaylistId(
+          'https://www.youtube.com/playlist?list=PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm',
+        ),
+        'PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm',
+      );
+      expect(MediaIds.extractPlaylistId('short'), isNull);
+      expect(MediaIds.extractPlaylistId(''), isNull);
+    });
   });
 
   group('CatalogRepository channel mutators', () {
@@ -128,6 +140,27 @@ void main() {
         ),
         isTrue,
       );
+    });
+
+    test('setPlaylistId and setVideoAllowSeek', () async {
+      final id = DefaultChannels.seed().first.id;
+      await repo.setPlaylistId(
+        id,
+        'https://www.youtube.com/playlist?list=PLtestplaylist01',
+      );
+      var ch = repo.current().channels.firstWhere((c) => c.id == id);
+      expect(ch.youtubePlaylistId, 'PLtestplaylist01');
+      expect(ch.playlistManagedByParent, isTrue);
+
+      final videoId = ch.videos.first.id;
+      await repo.setVideoAllowSeek(id, videoId, false);
+      ch = repo.current().channels.firstWhere((c) => c.id == id);
+      expect(ch.videos.firstWhere((v) => v.id == videoId).allowSeek, isFalse);
+
+      await repo.setPlaylistId(id, null);
+      ch = repo.current().channels.firstWhere((c) => c.id == id);
+      expect(ch.youtubePlaylistId, isNull);
+      expect(ch.followUploads, isFalse);
     });
   });
 }

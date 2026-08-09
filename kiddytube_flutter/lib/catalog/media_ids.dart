@@ -7,6 +7,9 @@ class MediaIds {
   static final _videoFromUrl = RegExp(
     r'(?:youtube\.com/watch\?.*v=|youtu\.be/|youtube\.com/embed/)([\w-]{11})',
   );
+  static final _playlistFromUrl = RegExp(
+    r'[?&]list=([\w-]+)|youtube\.com/playlist\?list=([\w-]+)',
+  );
   static const _allowedExtensions = ['.mp4', '.m3u8', '.mpd'];
 
   static bool isValidVideoId(String? id) {
@@ -37,6 +40,24 @@ class MediaIds {
       if (id != null && seen.add(id)) ids.add(id);
     }
     return ids;
+  }
+
+  /// Playlist id from URL (`list=`) or bare id (e.g. `PLabcdef`).
+  static String? extractPlaylistId(String? input) {
+    if (input == null || input.trim().isEmpty) return null;
+    final trimmed = input.trim();
+    final m = _playlistFromUrl.firstMatch(trimmed);
+    if (m != null) {
+      return m.group(1) ?? m.group(2);
+    }
+    if (trimmed.length >= 8 &&
+        trimmed.length <= 64 &&
+        !trimmed.contains('/') &&
+        !trimmed.contains('=') &&
+        RegExp(r'^[\w-]+$').hasMatch(trimmed)) {
+      return trimmed;
+    }
+    return null;
   }
 
   static String defaultThumbnail(String videoId) =>

@@ -356,6 +356,48 @@ class CatalogRepository {
     });
   }
 
+  /// Set or clear the YouTube playlist id (parent-managed).
+  Future<void> setPlaylistId(String channelId, String? raw) async {
+    final trimmed = raw?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      await _updateChannel(channelId, (ch) {
+        return ch.copyWith(
+          clearPlaylist: true,
+          sourceType: SourceType.youtubeVideoList,
+          playlistManagedByParent: true,
+          followUploads: false,
+        );
+      });
+      return;
+    }
+    final playlistId = MediaIds.extractPlaylistId(trimmed);
+    if (playlistId == null) {
+      throw ArgumentError('Invalid playlist ID or URL');
+    }
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        youtubePlaylistId: playlistId,
+        sourceType: SourceType.youtubePlaylist,
+        playlistManagedByParent: true,
+      );
+    });
+  }
+
+  Future<void> setVideoAllowSeek(
+    String channelId,
+    String videoId,
+    bool allowSeek,
+  ) async {
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        videos: [
+          for (final v in ch.videos)
+            if (v.id == videoId) v.copyWith(allowSeek: allowSeek) else v,
+        ],
+      );
+    });
+  }
+
   Future<void> _updateChannel(
     String channelId,
     ContentChannel Function(ContentChannel) transform,
