@@ -18,6 +18,8 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
+import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -52,6 +54,9 @@ class PlayerActivity : AppCompatActivity() {
     private lateinit var container: FrameLayout
     private lateinit var titleOverlay: TextView
     private lateinit var seekFeedback: TextView
+    private lateinit var seekScrubPanel: LinearLayout
+    private lateinit var seekScrubBar: ProgressBar
+    private lateinit var seekTimeText: TextView
     private lateinit var pinManager: ParentPinManager
     private lateinit var parentUnlock: ParentUnlockCoordinator
     private lateinit var remote: RemoteKeyHandler
@@ -66,15 +71,31 @@ class PlayerActivity : AppCompatActivity() {
     private var appliedStartSeek = false
     private val handler = Handler(Looper.getMainLooper())
     private val seekMs = 10_000L
+    private val scrubAccelerateAfterMs = 400L
+    private val scrubFastStepMs = 30_000L
+    private val scrubCommitIdleMs = 400L
     private val doubleTapMs = 320L
     private val progressPersistIntervalMs = 12_000L
     private var lastTapUptimeMs = 0L
     private var lastTapX = 0f
+    /** Pending scrub position (UI only until commit). */
+    private var scrubbing = false
+    private var scrubReady = false
+    private var pendingPosMs = 0L
+    private var scrubDurationMs = 0L
+    private var scrubStartUptimeMs = 0L
+    private var queuedScrubDeltaMs = 0L
     private val hideSeekFeedback = Runnable {
         if (::seekFeedback.isInitialized) {
             seekFeedback.visibility = View.GONE
         }
     }
+    private val hideScrubPanel = Runnable {
+        if (::seekScrubPanel.isInitialized) {
+            seekScrubPanel.visibility = View.GONE
+        }
+    }
+    private val commitScrubRunnable = Runnable { commitScrub() }
     private val hideTitleOverlay = Runnable {
         if (::titleOverlay.isInitialized) {
             titleOverlay.visibility = View.GONE
@@ -95,6 +116,9 @@ class PlayerActivity : AppCompatActivity() {
         container = findViewById(R.id.playerContainer)
         titleOverlay = findViewById(R.id.titleOverlay)
         seekFeedback = findViewById(R.id.seekFeedback)
+        seekScrubPanel = findViewById(R.id.seekScrubPanel)
+        seekScrubBar = findViewById(R.id.seekScrubBar)
+        seekTimeText = findViewById(R.id.seekTimeText)
         val navBack = findViewById<TextView>(R.id.navBack)
         navBack.setOnClickListener { finish() }
         // Touch taps Back; on TV the chip stays focusable so Down can land on it.
@@ -469,8 +493,8 @@ class PlayerActivity : AppCompatActivity() {
             handler.removeCallbacks(pendingSingleTap)
             lastTapUptimeMs = 0L
             when {
-                x < width / 3f -> seekBy(-seekMs)
-                x > width * 2f / 3f -> seekBy(seekMs)
+                x < width / 3f -> scrubImmediate(-seekMs)
+                x > width * 2f / 3f -> scrubImmediate(seekMs)
                 else -> togglePlayback()
             }
             return
@@ -491,14 +515,158 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun seekBy(deltaMs: Long) {
+    private fun scrubImmediate(deltaMs: Long) {
+        scrubBy(deltaMs, commitNow = true)
+    }
+
+    /**
+     * Move a virtual scrub playhead without seeking the decoder on every key repeat.
+     * Commits once on key-up or after a short idle.
+     */
+    private fun scrubBy(deltaMs: Long, commitNow: Boolean = false) {
         if (!allowSeek) {
             showSeekFeedback(getString(R.string.player_seek_disabled))
             return
         }
+        handler.removeCallbacks(hideScrubPanel)
+        handler.removeCallbacks(hideSeekFeedback)
+        seekFeedback.visibility = View.GONE
+
+        val step = scrubStepFor(deltaMs)
+        if (!scrubbing) {
+            scrubbing = true
+            scrubReady = false
+            queuedScrubDeltaMs = step
+            scrubStartUptimeMs = SystemClock.uptimeMillis()
+            beginScrubSession {
+                scrubReady = true
+                applyQueuedScrubDeltas()
+                updateScrubOverlay()
+                if (commitNow) {
+                    commitScrub()
+                } else {
+                    scheduleScrubCommit()
+                }
+            }
+            return
+        }
+        if (!scrubReady) {
+            queuedScrubDeltaMs += step
+        } else {
+            applyScrubDelta(step)
+            updateScrubOverlay()
+        }
+        if (commitNow) {
+            commitScrub()
+        } else {
+            scheduleScrubCommit()
+        }
+    }
+
+    private fun scrubStepFor(baseDeltaMs: Long): Long {
+        if (!scrubbing) return baseDeltaMs
+        val held = SystemClock.uptimeMillis() - scrubStartUptimeMs
+        if (held < scrubAccelerateAfterMs) return baseDeltaMs
+        return if (baseDeltaMs >= 0) scrubFastStepMs else -scrubFastStepMs
+    }
+
+    private fun beginScrubSession(onReady: () -> Unit) {
+        val exo = player
+        if (exo != null) {
+            pendingPosMs = exo.currentPosition.coerceAtLeast(0L)
+            val dur = exo.duration
+            scrubDurationMs = if (dur != C.TIME_UNSET && dur > 0L) dur else 0L
+            onReady()
+            return
+        }
+        val wv = webView
+        if (wv != null) {
+            wv.evaluateJavascript("progressSnapshot()") { raw ->
+                val parsed = parseProgressSnapshot(raw)
+                pendingPosMs = parsed.first
+                scrubDurationMs = parsed.second
+                onReady()
+            }
+            return
+        }
+        pendingPosMs = 0L
+        scrubDurationMs = 0L
+        onReady()
+    }
+
+    private fun parseProgressSnapshot(raw: String?): Pair<Long, Long> {
+        if (raw.isNullOrBlank() || raw == "null") return 0L to 0L
+        val cleaned = raw.trim().removeSurrounding("\"")
+        val parts = cleaned.split(',')
+        if (parts.size < 2) return 0L to 0L
+        val pos = parts[0].toLongOrNull() ?: 0L
+        val dur = parts[1].toLongOrNull() ?: 0L
+        return pos.coerceAtLeast(0L) to dur.coerceAtLeast(0L)
+    }
+
+    private fun applyQueuedScrubDeltas() {
+        if (queuedScrubDeltaMs == 0L) return
+        applyScrubDelta(queuedScrubDeltaMs)
+        queuedScrubDeltaMs = 0L
+    }
+
+    private fun applyScrubDelta(deltaMs: Long) {
+        val max = if (scrubDurationMs > 0L) {
+            (scrubDurationMs - 250L).coerceAtLeast(0L)
+        } else {
+            Long.MAX_VALUE / 4
+        }
+        pendingPosMs = (pendingPosMs + deltaMs).coerceIn(0L, max)
+    }
+
+    private fun updateScrubOverlay() {
+        seekScrubPanel.visibility = View.VISIBLE
+        if (scrubDurationMs > 0L) {
+            val progress = ((pendingPosMs * 1000L) / scrubDurationMs).toInt().coerceIn(0, 1000)
+            seekScrubBar.max = 1000
+            seekScrubBar.progress = progress
+            seekScrubBar.isIndeterminate = false
+        } else {
+            seekScrubBar.isIndeterminate = true
+        }
+        val posLabel = formatPlayerTime(pendingPosMs)
+        val durLabel = if (scrubDurationMs > 0L) formatPlayerTime(scrubDurationMs) else "--:--"
+        seekTimeText.text = getString(R.string.player_seek_time, posLabel, durLabel)
+    }
+
+    private fun formatPlayerTime(ms: Long): String {
+        val totalSec = (ms / 1000L).coerceAtLeast(0L)
+        val m = totalSec / 60L
+        val s = totalSec % 60L
+        return "%d:%02d".format(m, s)
+    }
+
+    private fun scheduleScrubCommit() {
+        handler.removeCallbacks(commitScrubRunnable)
+        handler.postDelayed(commitScrubRunnable, scrubCommitIdleMs)
+    }
+
+    private fun commitScrub() {
+        handler.removeCallbacks(commitScrubRunnable)
+        if (!scrubbing) return
+        if (!scrubReady) {
+            // Snapshot still pending — commit when it arrives.
+            scheduleScrubCommit()
+            return
+        }
+        scrubbing = false
+        scrubReady = false
+        queuedScrubDeltaMs = 0L
+        seekToAbsolute(pendingPosMs)
+        updateScrubOverlay()
+        handler.removeCallbacks(hideScrubPanel)
+        handler.postDelayed(hideScrubPanel, 1_200)
+    }
+
+    private fun seekToAbsolute(positionMs: Long) {
         player?.let {
             val duration = it.duration
-            val next = (it.currentPosition + deltaMs).coerceAtLeast(0L).let { pos ->
+            val next = positionMs.coerceAtLeast(0L).let { pos ->
                 if (duration != C.TIME_UNSET && duration > 0L) {
                     pos.coerceAtMost((duration - 250L).coerceAtLeast(0L))
                 } else {
@@ -508,23 +676,31 @@ class PlayerActivity : AppCompatActivity() {
             it.seekTo(next)
             it.playWhenReady = true
         }
-        val deltaSec = deltaMs / 1000.0
-        // Call the page-global helper; harden against not-ready / NaN inside JS.
-        webView?.evaluateJavascript("seekBy($deltaSec)", null)
-        val seconds = abs(deltaMs / 1000L).toInt()
-        val label = if (deltaMs >= 0) {
-            getString(R.string.player_seek_forward, seconds)
-        } else {
-            getString(R.string.player_seek_back, seconds)
-        }
-        showSeekFeedback(label)
+        val sec = positionMs / 1000.0
+        webView?.evaluateJavascript("seekToAbs($sec)", null)
     }
 
     private fun showSeekFeedback(message: String) {
+        seekScrubPanel.visibility = View.GONE
         seekFeedback.text = message
         seekFeedback.visibility = View.VISIBLE
         handler.removeCallbacks(hideSeekFeedback)
         handler.postDelayed(hideSeekFeedback, 1_200)
+    }
+
+    private fun isPlayerSeekKey(keyCode: Int): Boolean = when (keyCode) {
+        KeyEvent.KEYCODE_DPAD_LEFT,
+        KeyEvent.KEYCODE_DPAD_RIGHT,
+        KeyEvent.KEYCODE_MEDIA_NEXT,
+        KeyEvent.KEYCODE_MEDIA_PREVIOUS,
+        KeyEvent.KEYCODE_MEDIA_FAST_FORWARD,
+        KeyEvent.KEYCODE_FORWARD,
+        KeyEvent.KEYCODE_MEDIA_SKIP_FORWARD,
+        KeyEvent.KEYCODE_MEDIA_STEP_FORWARD,
+        KeyEvent.KEYCODE_MEDIA_REWIND,
+        KeyEvent.KEYCODE_MEDIA_SKIP_BACKWARD,
+        KeyEvent.KEYCODE_MEDIA_STEP_BACKWARD -> true
+        else -> false
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -663,6 +839,21 @@ class PlayerActivity : AppCompatActivity() {
                   if(player.playVideo)player.playVideo();
                 }catch(e){}
               }
+              function seekToAbs(sec){
+                if(!player||typeof player.seekTo!=='function')return;
+                var t=Number(sec)||0;
+                if(t<0)t=0;
+                try{
+                  if(typeof player.getDuration==='function'){
+                    var d=player.getDuration();
+                    if(typeof d==='number'&&d>0&&t>d-1)t=Math.max(0,d-1);
+                  }
+                }catch(e){}
+                try{
+                  player.seekTo(t,true);
+                  if(player.playVideo)player.playVideo();
+                }catch(e){}
+              }
               function progressSnapshot(){
                 try{
                   var pos=0,dur=0;
@@ -765,6 +956,10 @@ class PlayerActivity : AppCompatActivity() {
                 finish()
                 return true
             }
+            if (isPlayerSeekKey(event.keyCode) && scrubbing) {
+                commitScrub()
+                return true
+            }
         }
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
 
@@ -806,13 +1001,13 @@ class PlayerActivity : AppCompatActivity() {
                     true
                 }
             }
-            // In the player, D-pad L/R and media next/prev seek instead of changing items.
+            // In the player, D-pad L/R and media next/prev scrub instead of changing items.
             RemoteAction.SeekForward, RemoteAction.NextItem -> {
-                seekBy(seekMs)
+                scrubBy(seekMs)
                 true
             }
             RemoteAction.SeekBack, RemoteAction.PreviousItem -> {
-                seekBy(-seekMs)
+                scrubBy(-seekMs)
                 true
             }
             RemoteAction.VolumeUp, RemoteAction.VolumeDown -> true
@@ -820,6 +1015,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        if (scrubbing) commitScrub()
         persistContinueProgress()
         player?.playWhenReady = false
         webView?.evaluateJavascript("pausePlayback()", null)

@@ -22,6 +22,7 @@ class CatalogSettings {
     this.releaseReady = false,
     this.failCount = 0,
     this.lockedUntilMs = 0,
+    this.lastSyncMs = 0,
   }) : channels = channels ?? DefaultChannels.seed();
 
   final List<ContentChannel> channels;
@@ -34,6 +35,7 @@ class CatalogSettings {
   final bool releaseReady;
   final int failCount;
   final int lockedUntilMs;
+  final int lastSyncMs;
 
   CatalogSettings copyWith({
     List<ContentChannel>? channels,
@@ -47,6 +49,7 @@ class CatalogSettings {
     bool? releaseReady,
     int? failCount,
     int? lockedUntilMs,
+    int? lastSyncMs,
   }) {
     return CatalogSettings(
       channels: channels ?? this.channels,
@@ -60,6 +63,7 @@ class CatalogSettings {
       releaseReady: releaseReady ?? this.releaseReady,
       failCount: failCount ?? this.failCount,
       lockedUntilMs: lockedUntilMs ?? this.lockedUntilMs,
+      lastSyncMs: lastSyncMs ?? this.lastSyncMs,
     );
   }
 }
@@ -167,6 +171,8 @@ class CatalogRepository {
   static const _lockedUntilKey = 'pin_locked_until_ms';
   static const _pinChangedKey = 'pin_changed_from_default';
   static const _releaseReadyKey = 'release_ready';
+  static const _lastSyncKey = 'last_sync_ms';
+  static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
     _prefs ??= await SharedPreferences.getInstance();
@@ -231,6 +237,7 @@ class CatalogRepository {
       releaseReady: sanitized.releaseReady,
       failCount: _prefs!.getInt(_failCountKey) ?? 0,
       lockedUntilMs: _prefs!.getInt(_lockedUntilKey) ?? 0,
+      lastSyncMs: _prefs!.getInt(_lastSyncKey) ?? 0,
     );
     _cached = settings;
     return settings;
@@ -287,6 +294,7 @@ class CatalogRepository {
     await _persistLockout(next.failCount, next.lockedUntilMs);
     await _prefs!.setBool(_pinChangedKey, next.pinChangedFromDefault);
     await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
+    await _prefs!.setInt(_lastSyncKey, next.lastSyncMs);
     if (next.youtubeApiKey != current.youtubeApiKey) {
       await _secrets.writeApiKey(next.youtubeApiKey);
     }
@@ -386,12 +394,18 @@ class CatalogRepository {
     });
   }
 
-  /// Refresh all playlist-backed channels. Returns a human-readable summary.
-  Future<String> refreshAllPlaylists() async {
+  /// Refresh playlist-backed channels that have Follow uploads enabled.
+  /// Returns a human-readable summary.
+  Future<String> refreshAllPlaylists({bool force = false}) async {
     final settings = await load();
     final apiKey = settings.youtubeApiKey?.trim();
     if (apiKey == null || apiKey.isEmpty) {
       return 'Add a YouTube Data API key in Parent settings first.';
+    }
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (!force && now - settings.lastSyncMs < syncTtlMs) {
+      return 'Already synced today.';
     }
 
     var updated = 0;
@@ -402,11 +416,10 @@ class CatalogRepository {
     for (var i = 0; i < channels.length; i++) {
       final ch = channels[i];
       final playlistId = ch.youtubePlaylistId?.trim();
-      if (playlistId == null || playlistId.isEmpty) {
-        skipped++;
-        continue;
-      }
-      if (!ch.enabled && !ch.followUploads) {
+      if (!ch.enabled ||
+          playlistId == null ||
+          playlistId.isEmpty ||
+          !ch.followUploads) {
         skipped++;
         continue;
       }
@@ -437,11 +450,30 @@ class CatalogRepository {
       }
     }
 
-    await update((s) => s.copyWith(channels: channels));
+    await update(
+      (s) => s.copyWith(
+        channels: channels,
+        lastSyncMs: updated > 0
+            ? DateTime.now().millisecondsSinceEpoch
+            : s.lastSyncMs,
+      ),
+    );
     if (errors.isNotEmpty) {
       return 'Updated $updated playlists; ${errors.length} failed.\n'
           '${errors.take(3).join('\n')}';
     }
     return 'Updated $updated playlists ($skipped skipped).';
+  }
+
+  /// Home/launch path: sync playlists at most once per 24h when an API key exists.
+  Future<bool> maybeRefreshDaily() async {
+    final settings = await load();
+    final apiKey = settings.youtubeApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return false;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - settings.lastSyncMs < syncTtlMs) return false;
+    final summary = await refreshAllPlaylists(force: true);
+    return !summary.startsWith('Already synced') &&
+        !summary.startsWith('Add a YouTube');
   }
 }

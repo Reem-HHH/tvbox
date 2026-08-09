@@ -1,11 +1,13 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 17.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 18.
 class DefaultChannels {
-  static const seedVersion = 17;
+  static const seedVersion = 18;
 
   static const _spacetoonUploadsPlaylist = 'UUuQKih3Ac3NABADQKQdeV6A';
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
+  static const _numberblocksSeason1Playlist =
+      'PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm';
 
   static const retiredChannelIds = {
     'arabic_cartoons',
@@ -33,7 +35,7 @@ class DefaultChannels {
     'dawood_juz_26',
   };
 
-  static List<ContentChannel> seed() => [
+  static List<ContentChannel> seed() => _withDailyFollow([
         _channel(
           id: 'omar_hana',
           title: 'Omar & Hana',
@@ -408,7 +410,7 @@ class DefaultChannels {
           title: 'Numberblocks',
           order: 37,
           color: 0xFFAB47BC,
-          playlist: _uploadsOf('UCPlwvN0w4qFSP1FllALB92w'),
+          playlist: _numberblocksSeason1Playlist,
           videos: [
             _yt('jVeYnCehEFE', 'One — Numberblocks S1 E1'),
             _yt('bz2oWyDjgbc', 'Another One — Numberblocks S1 E2'),
@@ -416,6 +418,7 @@ class DefaultChannels {
             _yt('6-duQqX5ECs', 'Three — Numberblocks S1 E4'),
             _yt('IqkSbJqplpg', 'One, Two, Three — Numberblocks S1 E5'),
             _yt('yKAttOvgWJc', 'Three Little Pigs — Numberblocks S1 E8'),
+            _yt('Ap5kgJ-bpEQ', 'How to Count — Numberblocks S1 E10'),
           ],
         ),
         _channel(
@@ -476,7 +479,18 @@ class DefaultChannels {
             _yt('qbrHu-vkXiI', 'مغامرات منصور — الحلقات المميزة ج7'),
           ],
         ),
-      ];
+      ]);
+
+  /// Playlist-backed channels follow uploads daily by default.
+  static List<ContentChannel> _withDailyFollow(List<ContentChannel> channels) {
+    return [
+      for (final ch in channels)
+        if (ch.youtubePlaylistId == null || ch.youtubePlaylistId!.isEmpty)
+          ch
+        else
+          ch.copyWith(followUploads: true),
+    ];
+  }
 
   /// Merge newer seed defaults onto an existing catalog without wiping parent toggles.
   static List<ContentChannel> mergeSeedUpdates(List<ContentChannel> existing) {
@@ -503,6 +517,14 @@ class DefaultChannels {
           seedCh.youtubePlaylistId != null &&
           seedCh.youtubePlaylistId!.isNotEmpty &&
           current.videos.isEmpty;
+      final replaceNumberblocksPlaylist = seedCh.id == 'numberblocks' &&
+          !current.playlistManagedByParent &&
+          seedCh.youtubePlaylistId != null &&
+          seedCh.youtubePlaylistId!.isNotEmpty &&
+          current.youtubePlaylistId != seedCh.youtubePlaylistId;
+      final enableFollowFromSeed = seedCh.followUploads &&
+          !current.followUploads &&
+          !current.playlistManagedByParent;
 
       final existingIds = current.videos.map((v) => v.id).toSet();
       final missingVideos =
@@ -513,6 +535,8 @@ class DefaultChannels {
 
       if (clearSpacetoonUploads ||
           needsPlaylist ||
+          replaceNumberblocksPlaylist ||
+          enableFollowFromSeed ||
           missingVideos.isNotEmpty ||
           titleStale ||
           disableFromSeed) {
@@ -533,17 +557,22 @@ class DefaultChannels {
               : current.title,
           youtubePlaylistId: clearSpacetoonUploads
               ? null
-              : (needsPlaylist
+              : (needsPlaylist || replaceNumberblocksPlaylist
                   ? seedCh.youtubePlaylistId
                   : current.youtubePlaylistId),
           clearPlaylist: clearSpacetoonUploads,
           videos: videos,
-          sourceType: clearSpacetoonUploads || needsPlaylist
+          sourceType: clearSpacetoonUploads ||
+                  needsPlaylist ||
+                  replaceNumberblocksPlaylist
               ? seedCh.sourceType
               : current.sourceType,
           sortOrder: seedCh.sortOrder,
           color: seedCh.color,
           enabled: !seedCh.enabled ? false : current.enabled,
+          followUploads: !current.playlistManagedByParent && seedCh.followUploads
+              ? true
+              : current.followUploads,
         );
       } else if (current.sortOrder != seedCh.sortOrder ||
           current.color != seedCh.color) {
@@ -581,7 +610,7 @@ class DefaultChannels {
       videos: videos,
       sortOrder: order,
       color: color,
-      followUploads: false,
+      followUploads: playlist != null && playlist.isNotEmpty,
     );
   }
 

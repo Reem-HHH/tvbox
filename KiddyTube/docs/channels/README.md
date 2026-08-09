@@ -35,7 +35,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [pingu](pingu.md) | Pingu | High | High | Official nonverbal shorts |
 | [daniel_tiger](daniel_tiger.md) | Daniel Tiger | High | Medium–High | Social-emotional preschool |
 | [hey_duggee](hey_duggee.md) | Hey Duggee | High | High | Badge episodes |
-| [numberblocks](numberblocks.md) | Numberblocks | High | High | Series 1 counting starters |
+| [numberblocks](numberblocks.md) | Numberblocks | High | High | Season 1 full episodes + daily Follow |
 | [pocoyo](pocoyo.md) | Pocoyo | High | High | Official English episodes feed |
 | [cocomelon](cocomelon.md) | CoComelon | High | High | English nursery rhymes |
 | [masha](masha.md) | Masha and the Bear | High | High | Classic slapstick preschool |

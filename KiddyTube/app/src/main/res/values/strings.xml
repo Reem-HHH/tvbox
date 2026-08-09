@@ -50,6 +50,7 @@
     <string name="player_seek_forward">+%1$ds</string>
     <string name="player_seek_back">−%1$ds</string>
     <string name="player_seek_disabled">Seeking is off</string>
+    <string name="player_seek_time">%1$s / %2$s</string>
     <string name="a11y_channel_tile">Channel: %1$s</string>
     <string name="a11y_video_tile">Video: %1$s</string>
     <string name="a11y_continue_watch_tile">Continue watching: %1$s</string>

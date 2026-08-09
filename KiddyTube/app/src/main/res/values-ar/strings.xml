@@ -50,6 +50,7 @@
     <string name="player_seek_forward">+%1$d ث</string>
     <string name="player_seek_back">−%1$d ث</string>
     <string name="player_seek_disabled">التقديم/الترجيع متوقف</string>
+    <string name="player_seek_time">%1$s / %2$s</string>
     <string name="a11y_channel_tile">قناة: %1$s</string>
     <string name="a11y_video_tile">فيديو: %1$s</string>
     <string name="a11y_continue_watch_tile">متابعة المشاهدة: %1$s</string>

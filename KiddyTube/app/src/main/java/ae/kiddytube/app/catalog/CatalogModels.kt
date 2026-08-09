@@ -90,13 +90,16 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 17
+    const val SEED_VERSION = 18
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
 
     /** Primary Dawood TV hub playlist (Juz Amma) — deeper playlists documented for parents. */
     private const val DAWOOD_HUB_PLAYLIST = "PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR"
+
+    /** Official Numberblocks Season 1 full episodes (preferred over channel uploads). */
+    private const val NUMBERBLOCKS_SEASON_1_PLAYLIST = "PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm"
 
     /** Pre–v6 generics, retired shows, and pre–v16 multi-tile Dawood channels. */
     private val RETIRED_CHANNEL_IDS = setOf(
@@ -125,7 +128,8 @@ object DefaultChannels {
         "dawood_juz_26"
     )
 
-    fun seed(): List<ContentChannel> = listOf(
+    fun seed(): List<ContentChannel> = withDailyFollow(
+        listOf(
         // Islamic / Arabic-first home order for preschool installs.
         ContentChannel(
             id = "omar_hana",
@@ -513,7 +517,7 @@ object DefaultChannels {
             title = "Numberblocks",
             iconRes = R.drawable.tile_numberblocks,
             sourceType = SourceType.YOUTUBE_PLAYLIST,
-            youtubePlaylistId = uploadsOf("UCPlwvN0w4qFSP1FllALB92w"),
+            youtubePlaylistId = NUMBERBLOCKS_SEASON_1_PLAYLIST,
             sortOrder = 37,
             videos = listOf(
                 yt("jVeYnCehEFE", "One — Numberblocks S1 E1"),
@@ -521,7 +525,8 @@ object DefaultChannels {
                 yt("aJzaNIpbUZo", "Two — Numberblocks S1 E3"),
                 yt("6-duQqX5ECs", "Three — Numberblocks S1 E4"),
                 yt("IqkSbJqplpg", "One, Two, Three — Numberblocks S1 E5"),
-                yt("yKAttOvgWJc", "Three Little Pigs — Numberblocks S1 E8")
+                yt("yKAttOvgWJc", "Three Little Pigs — Numberblocks S1 E8"),
+                yt("Ap5kgJ-bpEQ", "How to Count — Numberblocks S1 E10")
             )
         ),
         ContentChannel(
@@ -587,7 +592,17 @@ object DefaultChannels {
                 yt("qbrHu-vkXiI", "مغامرات منصور — الحلقات المميزة ج7")
             )
         )
+        )
     )
+
+    /**
+     * Playlist-backed channels follow uploads daily by default; manual libraries stay off.
+     */
+    private fun withDailyFollow(channels: List<ContentChannel>): List<ContentChannel> =
+        channels.map { ch ->
+            if (ch.youtubePlaylistId.isNullOrBlank()) ch
+            else ch.copy(followUploads = true)
+        }
 
     /**
      * Apply newer seed playlist/video defaults onto an existing catalog without
@@ -617,6 +632,13 @@ object DefaultChannels {
                 current.youtubePlaylistId.isNullOrBlank() &&
                 !seed.youtubePlaylistId.isNullOrBlank() &&
                 current.videos.isEmpty()
+            val replaceNumberblocksPlaylist = seed.id == "numberblocks" &&
+                !current.playlistManagedByParent &&
+                !seed.youtubePlaylistId.isNullOrBlank() &&
+                current.youtubePlaylistId != seed.youtubePlaylistId
+            val enableFollowFromSeed = seed.followUploads &&
+                !current.followUploads &&
+                !current.playlistManagedByParent
             val existingIds = current.videos.map { it.id }.toSet()
             val missingVideos = seed.videos.filter { it.id !in existingIds }
             val titleStale = current.title != seed.title &&
@@ -624,7 +646,8 @@ object DefaultChannels {
             // Seed marks later ajza disabled for preschool; apply on upgrade only when seed says off.
             val disableFromSeed = !seed.enabled && current.enabled
 
-            if (clearSpacetoonUploads || needsPlaylist || missingVideos.isNotEmpty() || titleStale ||
+            if (clearSpacetoonUploads || needsPlaylist || replaceNumberblocksPlaylist ||
+                enableFollowFromSeed || missingVideos.isNotEmpty() || titleStale ||
                 disableFromSeed
             ) {
                 fun withSeekPolicy(items: List<VideoItem>): List<VideoItem> =
@@ -641,18 +664,23 @@ object DefaultChannels {
                     title = if (titleStale || clearSpacetoonUploads) seed.title else current.title,
                     youtubePlaylistId = when {
                         clearSpacetoonUploads -> null
-                        needsPlaylist -> seed.youtubePlaylistId
+                        needsPlaylist || replaceNumberblocksPlaylist -> seed.youtubePlaylistId
                         else -> current.youtubePlaylistId
                     },
                     videos = videos.newestFirst(),
                     sourceType = when {
                         clearSpacetoonUploads -> seed.sourceType
-                        needsPlaylist -> SourceType.YOUTUBE_PLAYLIST
+                        needsPlaylist || replaceNumberblocksPlaylist -> SourceType.YOUTUBE_PLAYLIST
                         else -> current.sourceType
                     },
                     sortOrder = seed.sortOrder,
                     iconRes = seed.iconRes,
-                    enabled = if (!seed.enabled) false else current.enabled
+                    enabled = if (!seed.enabled) false else current.enabled,
+                    followUploads = if (!current.playlistManagedByParent && seed.followUploads) {
+                        true
+                    } else {
+                        current.followUploads
+                    }
                 )
             } else if (current.sortOrder != seed.sortOrder || current.iconRes != seed.iconRes) {
                 byId[seed.id] = current.copy(
@@ -683,7 +711,7 @@ object DefaultChannels {
         enabled = enabled,
         youtubePlaylistId = playlistId,
         sortOrder = order,
-        followUploads = false,
+        followUploads = true,
         videos = videos
     )
 

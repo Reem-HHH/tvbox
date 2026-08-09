@@ -133,7 +133,7 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen> {
       _busy = true;
       _status = 'Refreshing…';
     });
-    final summary = await widget.repository.refreshAllPlaylists();
+    final summary = await widget.repository.refreshAllPlaylists(force: true);
     await _reload();
     if (!mounted) return;
     setState(() {

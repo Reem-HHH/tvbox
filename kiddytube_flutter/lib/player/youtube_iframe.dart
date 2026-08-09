@@ -41,7 +41,20 @@ String youtubeIframeHtml({
       if(!player||!player.getCurrentTime||!player.seekTo) return;
       var t=(player.getCurrentTime()||0)+deltaSec;
       if(t<0) t=0;
+      var d=player.getDuration?player.getDuration():0;
+      if(typeof d==='number'&&d>0&&t>d-1) t=Math.max(0,d-1);
       player.seekTo(t,true);
+    }catch(e){}
+  }
+  function seekToAbs(sec){
+    try{
+      if(!player||!player.seekTo) return;
+      var t=Number(sec)||0;
+      if(t<0) t=0;
+      var d=player.getDuration?player.getDuration():0;
+      if(typeof d==='number'&&d>0&&t>d-1) t=Math.max(0,d-1);
+      player.seekTo(t,true);
+      if(player.playVideo) player.playVideo();
     }catch(e){}
   }
   function pausePlayback(){

@@ -56,6 +56,7 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- Disabled-seek chip (center). -->
     <TextView
         android:id="@+id/seekFeedback"
         android:layout_width="wrap_content"
@@ -70,4 +71,42 @@
         android:textColor="@color/player_chip_text"
         android:textSize="20sp"
         android:visibility="gone" />
+
+    <!-- FF/RW scrub: progress + absolute time. -->
+    <LinearLayout
+        android:id="@+id/seekScrubPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginStart="48dp"
+        android:layout_marginEnd="48dp"
+        android:layout_marginBottom="36dp"
+        android:background="@drawable/player_title_chip"
+        android:gravity="center_horizontal"
+        android:orientation="vertical"
+        android:paddingStart="20dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="14dp"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/seekScrubBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:indeterminate="false"
+            android:max="1000"
+            android:progress="0"
+            android:progressTint="@color/player_chip_text" />
+
+        <TextView
+            android:id="@+id/seekTimeText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/player_chip_text"
+            android:textSize="20sp" />
+    </LinearLayout>
 </FrameLayout>

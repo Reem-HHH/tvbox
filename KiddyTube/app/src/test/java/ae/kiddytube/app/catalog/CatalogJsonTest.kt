@@ -90,7 +90,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionSeventeenAddsTwirlywoosEpisodes() {
-        assertEquals(17, DefaultChannels.SEED_VERSION)
+        assertEquals(18, DefaultChannels.SEED_VERSION)
         val twirly = DefaultChannels.seed().first { it.id == "twirlywoos" }
         assertTrue(twirly.videos.any { it.id == "wAFiVXz1NNw" })
         assertTrue(twirly.videos.any { it.id == "Wg0JkKmQY6A" })
@@ -98,8 +98,69 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionSixteenConsolidatesDawoodAndAddsKidsMusic() {
-        assertEquals(17, DefaultChannels.SEED_VERSION)
+    fun mergeEnablesFollowUploadsAndNumberblocksSeason1Playlist() {
+        val existing = listOf(
+            ContentChannel(
+                id = "numberblocks",
+                title = "Numberblocks",
+                iconRes = R.drawable.tile_numberblocks,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "UUPlwvN0w4qFSP1FllALB92w",
+                followUploads = false,
+                playlistManagedByParent = false,
+                sortOrder = 37,
+                videos = listOf(
+                    VideoItem("jVeYnCehEFE", "One", youtubeVideoId = "jVeYnCehEFE")
+                )
+            ),
+            ContentChannel(
+                id = "dora",
+                title = "Dora the Explorer",
+                iconRes = R.drawable.tile_dora,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "UUkvPyGW-gsYucCK37UR0q2g",
+                followUploads = false,
+                playlistManagedByParent = false,
+                sortOrder = 20,
+                videos = listOf(
+                    VideoItem("7bqSFXuEUgo", "Dora", youtubeVideoId = "7bqSFXuEUgo")
+                )
+            )
+        )
+        val merged = DefaultChannels.mergeSeedUpdates(existing)
+        val numberblocks = merged.first { it.id == "numberblocks" }
+        assertEquals("PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm", numberblocks.youtubePlaylistId)
+        assertTrue(numberblocks.followUploads)
+        assertTrue(numberblocks.videos.any { it.id == "Ap5kgJ-bpEQ" })
+        assertTrue(merged.first { it.id == "dora" }.followUploads)
+    }
+
+    @Test
+    fun mergeKeepsParentManagedFollowUploadsOff() {
+        val existing = listOf(
+            ContentChannel(
+                id = "numberblocks",
+                title = "Numberblocks",
+                iconRes = R.drawable.tile_numberblocks,
+                sourceType = SourceType.YOUTUBE_PLAYLIST,
+                youtubePlaylistId = "UUPlwvN0w4qFSP1FllALB92w",
+                followUploads = false,
+                playlistManagedByParent = true,
+                sortOrder = 37,
+                videos = listOf(
+                    VideoItem("jVeYnCehEFE", "One", youtubeVideoId = "jVeYnCehEFE")
+                )
+            )
+        )
+        val merged = DefaultChannels.mergeSeedUpdates(existing)
+        val numberblocks = merged.first { it.id == "numberblocks" }
+        assertFalse(numberblocks.followUploads)
+        assertEquals("UUPlwvN0w4qFSP1FllALB92w", numberblocks.youtubePlaylistId)
+    }
+
+    @Test
+    fun seedVersionEighteenEnablesDailyFollowAndNumberblocksSeason1() {
+        assertEquals(18, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -112,7 +173,7 @@ class CatalogJsonTest {
         val dawood = seed.first { it.id == "dawood" }
         assertEquals("داوود", dawood.title)
         assertEquals("PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR", dawood.youtubePlaylistId)
-        assertFalse(dawood.followUploads)
+        assertTrue(dawood.followUploads)
         assertEquals(R.drawable.tile_dawood, dawood.iconRes)
         assertEquals(1, seed.count { it.id == "dawood" || it.id.startsWith("dawood_") })
 
@@ -139,8 +200,13 @@ class CatalogJsonTest {
         val dora = seed.first { it.id == "dora" }
         assertEquals("Dora the Explorer", dora.title)
         assertEquals("UUkvPyGW-gsYucCK37UR0q2g", dora.youtubePlaylistId)
-        assertFalse(dora.followUploads)
+        assertTrue(dora.followUploads)
         assertTrue(dora.videos.any { it.id == "7bqSFXuEUgo" })
+
+        val numberblocks = seed.first { it.id == "numberblocks" }
+        assertEquals("PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm", numberblocks.youtubePlaylistId)
+        assertTrue(numberblocks.followUploads)
+        assertTrue(numberblocks.videos.any { it.id == "Ap5kgJ-bpEQ" })
 
         val toyorJana = seed.first { it.id == "toyor_jana" }
         assertEquals("طيور الجنة", toyorJana.title)

@@ -27,8 +27,8 @@ data class SyncResult(
 )
 
 /**
- * Playlist import is opt-in via [followUploads] only.
- * Empty seed libraries keep hand-picked starters until a parent enables Follow uploads.
+ * Playlist import is controlled by [followUploads].
+ * Seed defaults Follow on for playlist-backed channels; parents can opt out per channel.
  * [suppressEmptyImport] / [videoCount] are retained for call-site compatibility.
  */
 object SyncPolicy {

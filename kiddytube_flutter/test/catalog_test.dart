@@ -46,16 +46,77 @@ void main() {
     );
   });
 
-  test('seed v17 has Twirlywoos episode expansion', () {
-    expect(DefaultChannels.seedVersion, 17);
-    final twirly =
-        DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
+
+  test('seed keeps Twirlywoos expanded starters', () {
+    expect(DefaultChannels.seedVersion, 18);
+    final twirly = DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
     expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
+    expect(twirly.videos.any((v) => v.id == 'Wg0JkKmQY6A'), isTrue);
     expect(twirly.videos.length, greaterThanOrEqualTo(9));
   });
 
+  test('seed v18 enables daily follow and Numberblocks Season 1', () {
+    expect(DefaultChannels.seedVersion, 18);
+    final seed = DefaultChannels.seed();
+    expect(seed.length, greaterThanOrEqualTo(30));
+    final ids = seed.map((c) => c.id).toSet();
+    expect(ids.contains('omar_hana'), isTrue);
+    expect(ids.contains('dawood'), isTrue);
+    expect(ids.contains('cocomelon'), isTrue);
+    expect(ids.contains('mansour'), isTrue);
+    expect(ids.contains('numberblocks'), isTrue);
+    for (final ch in seed) {
+      if (ch.youtubePlaylistId != null && ch.youtubePlaylistId!.isNotEmpty) {
+        expect(ch.followUploads, isTrue, reason: ch.id);
+      }
+      if (ch.id == 'dawood') {
+        expect(ch.youtubePlaylistId, isNotNull);
+        continue;
+      }
+      expect(ch.videos, isNotEmpty, reason: ch.id);
+      expect(ch.videos.every((v) => v.youtubeVideoId == v.id), isTrue);
+    }
+    final numberblocks = seed.firstWhere((c) => c.id == 'numberblocks');
+    expect(
+      numberblocks.youtubePlaylistId,
+      'PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm',
+    );
+    expect(numberblocks.videos.any((v) => v.id == 'Ap5kgJ-bpEQ'), isTrue);
+    final kidsMusic = seed.firstWhere((c) => c.id == 'kids_music');
+    expect(kidsMusic.followUploads, isFalse);
+  });
+
+  test('mergeSeedUpdates enables follow and Numberblocks Season 1 playlist', () {
+    final existing = [
+      ContentChannel(
+        id: 'numberblocks',
+        title: 'Numberblocks',
+        sourceType: SourceType.youtubePlaylist,
+        youtubePlaylistId: 'UUPlwvN0w4qFSP1FllALB92w',
+        followUploads: false,
+        videos: const [
+          VideoItem(
+            id: 'jVeYnCehEFE',
+            title: 'One',
+            youtubeVideoId: 'jVeYnCehEFE',
+          ),
+        ],
+      ),
+    ];
+    final merged = DefaultChannels.mergeSeedUpdates(existing);
+    final numberblocks = merged.firstWhere((c) => c.id == 'numberblocks');
+    expect(
+      numberblocks.youtubePlaylistId,
+      'PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm',
+    );
+    expect(numberblocks.followUploads, isTrue);
+    expect(numberblocks.videos.any((v) => v.id == 'Ap5kgJ-bpEQ'), isTrue);
+  });
+
+
+
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 17);
+    expect(DefaultChannels.seedVersion, 18);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();

@@ -47,6 +47,20 @@ class _PlayerScreenState extends State<PlayerScreen>
   Timer? _progressTimer;
   String? _seekHint;
 
+  bool _scrubbing = false;
+  bool _scrubReady = false;
+  bool _showScrubOverlay = false;
+  int _pendingPosMs = 0;
+  int _scrubDurationMs = 0;
+  int _queuedDeltaMs = 0;
+  int _scrubStartMs = 0;
+  Timer? _commitTimer;
+  Timer? _hideScrubTimer;
+  static const _seekStepMs = 10000;
+  static const _scrubFastStepMs = 30000;
+  static const _scrubAccelerateAfterMs = 400;
+  static const _scrubCommitIdleMs = 400;
+
   PlayableVideo get _current => widget.queue[_index];
   bool get _allowSeek => _current.video.allowSeek;
 
@@ -65,6 +79,8 @@ class _PlayerScreenState extends State<PlayerScreen>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _progressTimer?.cancel();
+    _commitTimer?.cancel();
+    _hideScrubTimer?.cancel();
     unawaited(_persistProgress());
     _disposePlayers();
     unawaited(WakelockPlus.disable());
@@ -90,6 +106,11 @@ class _PlayerScreenState extends State<PlayerScreen>
   void _disposePlayers() {
     _progressTimer?.cancel();
     _progressTimer = null;
+    _commitTimer?.cancel();
+    _hideScrubTimer?.cancel();
+    _scrubbing = false;
+    _scrubReady = false;
+    _showScrubOverlay = false;
     _webController = null;
     _videoController?.removeListener(_onVideoTick);
     _videoController?.dispose();
@@ -288,7 +309,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     }
   }
 
-  Future<void> _seekBy(int deltaMs) async {
+  Future<void> _scrubBy(int deltaMs, {bool commitNow = false}) async {
     if (!_allowSeek) {
       setState(() => _seekHint = 'Seek disabled for this video');
       Future<void>.delayed(const Duration(seconds: 2), () {
@@ -296,20 +317,126 @@ class _PlayerScreenState extends State<PlayerScreen>
       });
       return;
     }
+    setState(() => _seekHint = null);
+    _hideScrubTimer?.cancel();
+    final step = _scrubStepFor(deltaMs);
+    if (!_scrubbing) {
+      _scrubbing = true;
+      _showScrubOverlay = true;
+      _scrubReady = false;
+      _queuedDeltaMs = step;
+      _scrubStartMs = DateTime.now().millisecondsSinceEpoch;
+      await _beginScrubSession();
+      if (!mounted) return;
+      _scrubReady = true;
+      _applyQueuedScrubDeltas();
+      setState(() {});
+      if (commitNow) {
+        await _commitScrub();
+      } else {
+        _scheduleScrubCommit();
+      }
+      return;
+    }
+    if (!_scrubReady) {
+      _queuedDeltaMs += step;
+    } else {
+      _applyScrubDelta(step);
+      setState(() {});
+    }
+    if (commitNow) {
+      await _commitScrub();
+    } else {
+      _scheduleScrubCommit();
+    }
+  }
+
+  int _scrubStepFor(int baseDeltaMs) {
+    if (!_scrubbing) return baseDeltaMs;
+    final held = DateTime.now().millisecondsSinceEpoch - _scrubStartMs;
+    if (held < _scrubAccelerateAfterMs) return baseDeltaMs;
+    return baseDeltaMs >= 0 ? _scrubFastStepMs : -_scrubFastStepMs;
+  }
+
+  Future<void> _beginScrubSession() async {
+    final snap = await _progressSnapshot();
+    _pendingPosMs = snap?.pos ?? 0;
+    _scrubDurationMs = snap?.dur ?? 0;
+  }
+
+  void _applyQueuedScrubDeltas() {
+    if (_queuedDeltaMs == 0) return;
+    _applyScrubDelta(_queuedDeltaMs);
+    _queuedDeltaMs = 0;
+  }
+
+  void _applyScrubDelta(int deltaMs) {
+    final max = _scrubDurationMs > 0
+        ? (_scrubDurationMs - 250).clamp(0, _scrubDurationMs)
+        : 1 << 30;
+    _pendingPosMs = (_pendingPosMs + deltaMs).clamp(0, max);
+  }
+
+  void _scheduleScrubCommit() {
+    _commitTimer?.cancel();
+    _commitTimer = Timer(
+      const Duration(milliseconds: _scrubCommitIdleMs),
+      () => unawaited(_commitScrub()),
+    );
+  }
+
+  Future<void> _commitScrub() async {
+    _commitTimer?.cancel();
+    if (!_scrubbing) return;
+    if (!_scrubReady) {
+      _scheduleScrubCommit();
+      return;
+    }
+    _scrubbing = false;
+    _scrubReady = false;
+    _queuedDeltaMs = 0;
+    await _seekToAbsolute(_pendingPosMs);
+    if (!mounted) return;
+    setState(() => _showScrubOverlay = true);
+    _hideScrubTimer?.cancel();
+    _hideScrubTimer = Timer(const Duration(milliseconds: 1200), () {
+      if (mounted && !_scrubbing) {
+        setState(() => _showScrubOverlay = false);
+      }
+    });
+  }
+
+  Future<void> _seekToAbsolute(int positionMs) async {
     final video = _videoController;
     if (video != null && video.value.isInitialized) {
-      final next = video.value.position + Duration(milliseconds: deltaMs);
-      final clamped = next < Duration.zero
-          ? Duration.zero
-          : (next > video.value.duration ? video.value.duration : next);
-      await video.seekTo(clamped);
+      final dur = video.value.duration;
+      var next = Duration(milliseconds: positionMs);
+      if (next < Duration.zero) next = Duration.zero;
+      if (dur > Duration.zero && next > dur) next = dur;
+      await video.seekTo(next);
       return;
     }
     final web = _webController;
     if (web != null) {
-      final sec = deltaMs / 1000.0;
-      await web.runJavaScript('seekBy($sec)');
+      final sec = positionMs / 1000.0;
+      await web.runJavaScript('seekToAbs($sec)');
     }
+  }
+
+  String _formatPlayerTime(int ms) {
+    final totalSec = (ms ~/ 1000).clamp(0, 24 * 3600);
+    final m = totalSec ~/ 60;
+    final s = totalSec % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  bool _isSeekLogicalKey(LogicalKeyboardKey key) {
+    return key == LogicalKeyboardKey.arrowLeft ||
+        key == LogicalKeyboardKey.arrowRight ||
+        key == LogicalKeyboardKey.mediaFastForward ||
+        key == LogicalKeyboardKey.mediaRewind ||
+        key == LogicalKeyboardKey.mediaTrackNext ||
+        key == LogicalKeyboardKey.mediaTrackPrevious;
   }
 
   Future<void> _togglePlayPause() async {
@@ -349,21 +476,24 @@ class _PlayerScreenState extends State<PlayerScreen>
     final title = _current.video.title;
     return Shortcuts(
       shortcuts: <LogicalKeySet, Intent>{
-        LogicalKeySet(LogicalKeyboardKey.arrowLeft): const _SeekIntent(-10000),
-        LogicalKeySet(LogicalKeyboardKey.arrowRight): const _SeekIntent(10000),
+        LogicalKeySet(LogicalKeyboardKey.arrowLeft):
+            const _SeekIntent(-_seekStepMs),
+        LogicalKeySet(LogicalKeyboardKey.arrowRight):
+            const _SeekIntent(_seekStepMs),
         LogicalKeySet(LogicalKeyboardKey.select): const _ToggleIntent(),
         LogicalKeySet(LogicalKeyboardKey.enter): const _ToggleIntent(),
         LogicalKeySet(LogicalKeyboardKey.space): const _ToggleIntent(),
         LogicalKeySet(LogicalKeyboardKey.mediaPlayPause): const _ToggleIntent(),
         LogicalKeySet(LogicalKeyboardKey.mediaFastForward):
-            const _SeekIntent(10000),
-        LogicalKeySet(LogicalKeyboardKey.mediaRewind): const _SeekIntent(-10000),
+            const _SeekIntent(_seekStepMs),
+        LogicalKeySet(LogicalKeyboardKey.mediaRewind):
+            const _SeekIntent(-_seekStepMs),
       },
       child: Actions(
         actions: <Type, Action<Intent>>{
           _SeekIntent: CallbackAction<_SeekIntent>(
             onInvoke: (intent) {
-              unawaited(_seekBy(intent.deltaMs));
+              unawaited(_scrubBy(intent.deltaMs));
               return null;
             },
           ),
@@ -376,6 +506,15 @@ class _PlayerScreenState extends State<PlayerScreen>
         },
         child: Focus(
           autofocus: true,
+          onKeyEvent: (node, event) {
+            if (event is KeyUpEvent &&
+                _isSeekLogicalKey(event.logicalKey) &&
+                _scrubbing) {
+              unawaited(_commitScrub());
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
           child: Scaffold(
             backgroundColor: Colors.black,
             body: Stack(
@@ -429,6 +568,7 @@ class _PlayerScreenState extends State<PlayerScreen>
                       ),
                     ),
                   ),
+                if (_showScrubOverlay) _buildScrubOverlay(),
                 SafeArea(
                   child: Stack(
                     children: [
@@ -473,6 +613,53 @@ class _PlayerScreenState extends State<PlayerScreen>
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScrubOverlay() {
+    final progress = _scrubDurationMs > 0
+        ? (_pendingPosMs / _scrubDurationMs).clamp(0.0, 1.0)
+        : 0.0;
+    final posLabel = _formatPlayerTime(_pendingPosMs);
+    final durLabel = _scrubDurationMs > 0
+        ? _formatPlayerTime(_scrubDurationMs)
+        : '--:--';
+    return Positioned(
+      left: 48,
+      right: 48,
+      bottom: 48,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: Colors.black54,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _scrubDurationMs > 0 ? progress : null,
+                  minHeight: 8,
+                  backgroundColor: Colors.white24,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '$posLabel / $durLabel',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
           ),
         ),
       ),

@@ -1,7 +1,7 @@
 # Numberblocks
 
 - **Channel id:** `numberblocks`
-- **Source:** Official Numberblocks uploads (`@numberblocks` / `UCPlwvN0w4qFSP1FllALB92w`)
+- **Source:** Official Numberblocks Season 1 full episodes (`PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm`)
 
 ## What it is
 
@@ -9,8 +9,8 @@ BBC / Alphablocks Studio counting cartoon—number friends that teach early math
 
 ## What’s in the app
 
-- Official uploads playlist linked with Follow uploads **off**
-- **Series 1 (Level 1)** starters only: One through early counting stories
+- Season 1 full-episodes playlist with **Follow uploads on** by default (daily sync pulls new items)
+- Seed starters cover early Series 1 counting stories plus How to Count (S1 E10)
 
 ## Audience
 
@@ -24,4 +24,4 @@ Ages ~3–5 for Series 1.
 | Clean language | High |
 | Violence / scary | None |
 | Conservative / family fit | High |
-| Parent caveats | Later series get harder; keep Follow off or skim before enabling. |
+| Parent caveats | Later series get harder; turn Follow off or switch playlist in Parent settings if needed. |

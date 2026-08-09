@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -42,9 +43,32 @@ class _HomeScreenState extends State<HomeScreen> {
         _recent = recent;
         _error = null;
       });
+      // Daily playlist sync (same 24h TTL as native TV launch sync).
+      unawaited(_maybeDailySync());
     } catch (e) {
       if (!mounted) return;
       setState(() => _error = e);
+    }
+  }
+
+  Future<void> _maybeDailySync() async {
+    final changed = await widget.repository.maybeRefreshDaily();
+    if (changed && mounted) {
+      await _reloadAfterSync();
+    }
+  }
+
+  Future<void> _reloadAfterSync() async {
+    try {
+      final settings = await widget.repository.load();
+      final recent = await widget.repository.recentWatch.load();
+      if (!mounted) return;
+      setState(() {
+        _settings = settings;
+        _recent = recent;
+      });
+    } catch (_) {
+      // Keep the already-painted catalog if a post-sync reload fails.
     }
   }
 
