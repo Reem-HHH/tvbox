@@ -65,7 +65,8 @@ class CatalogJsonTest {
         "pocoyo",
         "cocomelon",
         "masha",
-        "mansour"
+        "mansour",
+        "maruko"
     )
 
     @Test
@@ -75,7 +76,7 @@ class CatalogJsonTest {
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
         assertEquals("omar_hana", decoded.first().id)
-        assertEquals("mansour", decoded.last().id)
+        assertEquals("maruko", decoded.last().id)
     }
 
     @Test
@@ -88,8 +89,8 @@ class CatalogJsonTest {
     }
 
     @Test
-    fun seedVersionSixteenConsolidatesDawoodAndAddsKidsMusic() {
-        assertEquals(16, DefaultChannels.SEED_VERSION)
+    fun seedVersionSeventeenAddsMarukoChan() {
+        assertEquals(17, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
@@ -146,6 +147,14 @@ class CatalogJsonTest {
         val mansour = seed.first { it.id == "mansour" }
         assertEquals("منصور", mansour.title)
         assertTrue(mansour.videos.any { it.id == "TohnJvGq-cU" })
+
+        val maruko = seed.first { it.id == "maruko" }
+        assertEquals("Maruko Chan", maruko.title)
+        assertEquals("UUBqA04GYbwNh_oP6tJEvYuw", maruko.youtubePlaylistId)
+        assertFalse(maruko.followUploads)
+        assertEquals(R.drawable.tile_maruko, maruko.iconRes)
+        assertTrue(maruko.videos.any { it.id == "OmTJQVnNq5Y" })
+        assertTrue(maruko.videos.any { it.id == "QgBr3ga1ryQ" })
 
         assertEquals(R.drawable.tile_zakaria, seed.first { it.id == "zakaria" }.iconRes)
         assertTrue(seed.first { it.id == "adam_mishmish" }.videos.any { it.id == "FurzMF0L6QI" })
@@ -269,6 +278,7 @@ class CatalogJsonTest {
         assertTrue(merged.any { it.id == "cocomelon" })
         assertTrue(merged.any { it.id == "masha" })
         assertTrue(merged.any { it.id == "mansour" })
+        assertTrue(merged.any { it.id == "maruko" })
     }
 
     @Test

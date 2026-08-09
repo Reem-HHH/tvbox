@@ -10,7 +10,7 @@ Cross-platform kids browser for:
 
 ## Features (current)
 
-- Catalog seed parity with Kotlin `SEED_VERSION` **16**
+- Catalog seed parity with Kotlin `SEED_VERSION` **17**
 - Home **Shows** vs **Mix** (Mix/Shows toggle gated behind parent PIN)
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel)
 - Parent PIN dashboard MVP (change PIN, API key, enable channels, refresh playlists, clear continue watching, export catalog)
@@ -51,7 +51,7 @@ Playlist sync needs a YouTube Data API key (set in Parent settings → stored in
 
 ```
 lib/
-  catalog/   models, seed v16, repository, sync, continue watching
+  catalog/   models, seed v17, repository, sync, continue watching
   parent/    PIN, session, settings screen
   player/    YouTube iframe + video_player
   ui/        home + focus tiles

@@ -90,7 +90,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 16
+    const val SEED_VERSION = 17
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -580,6 +580,23 @@ object DefaultChannels {
                 yt("T1AlwoEdxGo", "مغامرات منصور — مغامرات مشوقة الجزء 5"),
                 yt("l5LwMtanIg8", "مغامرات منصور — مغامرات مشوقة الجزء 4"),
                 yt("qbrHu-vkXiI", "مغامرات منصور — الحلقات المميزة ج7")
+            )
+        ),
+        // Seed v17 — Chibi Maruko-chan (official Japanese channel starters).
+        ContentChannel(
+            id = "maruko",
+            title = "Maruko Chan",
+            iconRes = R.drawable.tile_maruko,
+            sourceType = SourceType.YOUTUBE_PLAYLIST,
+            youtubePlaylistId = uploadsOf("UCBqA04GYbwNh_oP6tJEvYuw"),
+            sortOrder = 42,
+            videos = listOf(
+                yt("OmTJQVnNq5Y", "おどるポンポコリン — First Ending — ちびまる子ちゃん"),
+                yt("QgBr3ga1ryQ", "おどるポンポコリン — Second Opening — ちびまる子ちゃん"),
+                yt("zFg0iWmXoBs", "アララの呪文 — Ending Dance Version"),
+                yt("IFQxPBZ-VfM", "まる子、叩いてかぶってジャンケンポン！の巻"),
+                yt("829nPLoF49w", "ちびまる子ちゃんクッキング — プリン・ア・ラ・モード"),
+                yt("BPhUqyr4Rwk", "ちびまる子ちゃんクッキング — なりきりクレープ屋さん")
             )
         )
     )

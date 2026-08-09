@@ -38,6 +38,7 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | CoComelon | Official nursery-rhyme starters |
 | Masha and the Bear | Official English episode starters |
 | منصور | Official مغامرات منصور starters |
+| Maruko Chan | Official ちびまる子ちゃん theme & cooking starters |
 
 Parent can change any playlist, add video IDs, or add direct MP4/HLS URLs.
 
