@@ -33,3 +33,5 @@ flutter:
   assets:
     - assets/kiddytube_logo.png
     - assets/kiddytube_logo_full.png
+    - assets/kiddytube_logo_header.png
+    - assets/kiddytube_logo_splash.png

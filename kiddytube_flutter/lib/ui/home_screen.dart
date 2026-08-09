@@ -223,10 +223,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Image.asset(
-                              'assets/kiddytube_logo.png',
+                              'assets/kiddytube_logo_header.png',
                               height: layout.logoSize,
                               width: layout.logoSize,
-                              fit: BoxFit.cover,
+                              fit: BoxFit.contain,
+                              filterQuality: FilterQuality.high,
                             ),
                           ),
                           const SizedBox(width: 12),
