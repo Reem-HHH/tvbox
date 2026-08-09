@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../parent/parent_pin.dart';
 import '../parent/release_pin_policy.dart';
+import 'media_ids.dart';
 import 'models.dart';
 import 'recent_watch.dart';
 import 'seed.dart';
@@ -340,6 +341,127 @@ class CatalogRepository {
       }).toList();
       return s.copyWith(channels: channels);
     });
+  }
+
+  Future<void> setFollowUploads(String channelId, bool follow) async {
+    await update((s) {
+      final channels = s.channels.map((c) {
+        if (c.id != channelId) return c;
+        return c.copyWith(
+          followUploads: follow,
+          playlistManagedByParent: true,
+        );
+      }).toList();
+      return s.copyWith(channels: channels);
+    });
+  }
+
+  Future<void> _updateChannel(
+    String channelId,
+    ContentChannel Function(ContentChannel) transform,
+  ) async {
+    await update((s) {
+      final channels = [
+        for (final c in s.channels)
+          if (c.id == channelId) transform(c) else c,
+      ];
+      return s.copyWith(channels: channels);
+    });
+  }
+
+  /// Append YouTube videos from bare ids / URLs (CSV). Marks them manual.
+  Future<int> addManualVideoIds(String channelId, String csvOrUrls) async {
+    final ids = MediaIds.parseVideoIdsCsv(csvOrUrls);
+    if (ids.isEmpty) return 0;
+    final settings = await load();
+    final channel = settings.channels.firstWhere(
+      (c) => c.id == channelId,
+      orElse: () => throw ArgumentError('Unknown channel'),
+    );
+    final existing = channel.videos.map((v) => v.id).toSet();
+    final newIds = ids.where((id) => !existing.contains(id)).toList();
+    if (newIds.isEmpty) return 0;
+
+    final tagged = [
+      for (final id in newIds)
+        VideoItem(
+          id: id,
+          title: 'Video $id',
+          youtubeVideoId: id,
+          thumbnailUrl: MediaIds.defaultThumbnail(id),
+          publishedAtMs: DateTime.now().millisecondsSinceEpoch,
+          manual: true,
+          allowSeek: channel.defaultAllowSeek,
+        ),
+    ];
+
+    await _updateChannel(channelId, (ch) {
+      final merged = _newestFirst([...tagged, ...ch.videos]);
+      final byId = <String, VideoItem>{};
+      for (final v in merged) {
+        byId.putIfAbsent(v.id, () => v);
+      }
+      return ch.copyWith(
+        videos: byId.values.toList(),
+        sourceType: SourceType.youtubeVideoList,
+      );
+    });
+    return newIds.length;
+  }
+
+  Future<void> addDirectVideo(
+    String channelId,
+    String title,
+    String url,
+  ) async {
+    if (!MediaIds.isDirectMediaUrl(url)) {
+      throw ArgumentError('Invalid direct media URL (HTTPS .mp4/.m3u8/.mpd)');
+    }
+    final id = 'direct_${DateTime.now().millisecondsSinceEpoch}';
+    await _updateChannel(channelId, (ch) {
+      final item = VideoItem(
+        id: id,
+        title: title.trim().isEmpty ? 'Video' : title.trim(),
+        directUrl: url.trim(),
+        publishedAtMs: DateTime.now().millisecondsSinceEpoch,
+        manual: true,
+        allowSeek: ch.defaultAllowSeek,
+      );
+      final hasYoutube = ch.videos.any((v) => v.isYoutube);
+      return ch.copyWith(
+        videos: _newestFirst([item, ...ch.videos]),
+        sourceType: hasYoutube ? ch.sourceType : SourceType.directUrl,
+      );
+    });
+  }
+
+  Future<void> removeVideo(String channelId, String videoId) async {
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        videos: ch.videos.where((v) => v.id != videoId).toList(),
+      );
+    });
+  }
+
+  /// Drops synced/remote items; keeps parent-added manual and direct URLs.
+  Future<void> clearSyncedVideos(String channelId) async {
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        videos: ch.videos.where((v) => v.manual || v.isDirect).toList(),
+      );
+    });
+  }
+
+  static List<VideoItem> _newestFirst(List<VideoItem> items) {
+    final indexed = items.asMap().entries.toList();
+    indexed.sort((a, b) {
+      final aMs = a.value.publishedAtMs ?? -1;
+      final bMs = b.value.publishedAtMs ?? -1;
+      final byDate = bMs.compareTo(aMs);
+      if (byDate != 0) return byDate;
+      return a.key.compareTo(b.key);
+    });
+    return indexed.map((e) => e.value).toList();
   }
 
   Future<void> changePin(String newPin) async {
