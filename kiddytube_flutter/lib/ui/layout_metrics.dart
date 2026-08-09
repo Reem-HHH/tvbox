@@ -32,7 +32,12 @@ class LayoutMetrics {
 
   double get pagePadding => isTablet || isTvLike ? 28 : 16;
 
-  double get logoSize => isTablet || isTvLike ? 56 : 44;
+  /// Header lockup — large enough to read the mark on TV from the couch.
+  double get logoSize {
+    if (isTvLike) return 112;
+    if (isTablet) return 88;
+    return 72;
+  }
 
   double get titleSize => isTablet || isTvLike ? 34 : 28;
 

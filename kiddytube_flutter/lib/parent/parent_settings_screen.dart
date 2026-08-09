@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../catalog/catalog_repository.dart';
 import '../catalog/models.dart';
+import '../ui/tv_text_dialog.dart';
 import 'parent_pin.dart';
 import 'parent_session.dart';
 
@@ -154,32 +155,31 @@ class _SecurityTab extends StatelessWidget {
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TvTextDialog(
         title: const Text('Change PIN'),
-        content: TextField(
-          controller: controller,
-          obscureText: true,
-          autofocus: true,
-          keyboardType: TextInputType.number,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(ParentPinManager.maxPinLength),
-          ],
-          decoration: const InputDecoration(
-            hintText: 'New 4–8 digit PIN (not 2580)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
+        submitLabel: 'Save',
+        onCancel: () => Navigator.pop(ctx, false),
+        onSubmit: () => Navigator.pop(ctx, true),
+        fieldBuilder: (context, fieldFocus, submitFromField) {
+          return TextField(
+            controller: controller,
+            focusNode: fieldFocus,
+            obscureText: true,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(ParentPinManager.maxPinLength),
+            ],
+            decoration: const InputDecoration(
+              hintText: 'New 4–8 digit PIN (not 2580)',
+              border: OutlineInputBorder(),
+              helperText: 'Press Down for Save, or Select to submit',
+            ),
+            onSubmitted: (_) => submitFromField(),
+          );
+        },
       ),
     );
     if (ok != true) return;

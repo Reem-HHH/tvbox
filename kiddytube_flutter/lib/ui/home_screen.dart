@@ -263,7 +263,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Image.asset(
                               'assets/kiddytube_logo_header.png',
                               height: layout.logoSize,
-                              width: layout.logoSize,
                               fit: BoxFit.contain,
                               filterQuality: FilterQuality.medium,
                             ),

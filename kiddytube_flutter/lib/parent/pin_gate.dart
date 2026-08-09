@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../catalog/catalog_repository.dart';
+import '../ui/tv_text_dialog.dart';
 import 'parent_biometrics.dart';
 import 'parent_pin.dart';
 import 'parent_session.dart';
@@ -141,41 +142,43 @@ class _PinDialogState extends State<_PinDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return TvTextDialog(
       title: const Text('Parent PIN'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _controller,
-            autofocus: true,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(ParentPinManager.maxPinLength),
-            ],
-            decoration: const InputDecoration(
-              hintText: 'Enter PIN',
+      submitLabel: 'Unlock',
+      submitEnabled: !_busy,
+      onCancel: () {
+        if (!_busy) Navigator.of(context).pop(false);
+      },
+      onSubmit: _submit,
+      fieldBuilder: (context, fieldFocus, submitFromField) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _controller,
+              focusNode: fieldFocus,
+              autofocus: true,
+              obscureText: true,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(ParentPinManager.maxPinLength),
+              ],
+              decoration: const InputDecoration(
+                hintText: 'Enter PIN',
+                helperText: 'Press Down for Unlock, or Select to submit',
+              ),
+              onSubmitted: (_) => submitFromField(),
             ),
-            onSubmitted: (_) => _submit(),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 8),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            ],
           ],
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancel'),
-        ),
-        FilledButton(
-          onPressed: _busy ? null : _submit,
-          child: const Text('Unlock'),
-        ),
-      ],
+        );
+      },
     );
   }
 }
