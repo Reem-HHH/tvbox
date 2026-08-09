@@ -44,8 +44,8 @@ void main() {
     );
   });
 
-  test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 16);
+  test('seed v17 has expected channels and starter videos where applicable', () {
+    expect(DefaultChannels.seedVersion, 17);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -53,6 +53,11 @@ void main() {
     expect(ids.contains('dawood'), isTrue);
     expect(ids.contains('cocomelon'), isTrue);
     expect(ids.contains('mansour'), isTrue);
+    expect(ids.contains('maruko'), isTrue);
+    final maruko = seed.firstWhere((c) => c.id == 'maruko');
+    expect(maruko.title, 'Maruko Chan');
+    expect(maruko.youtubePlaylistId, 'UUBqA04GYbwNh_oP6tJEvYuw');
+    expect(maruko.videos.any((v) => v.id == 'OmTJQVnNq5Y'), isTrue);
     for (final ch in seed) {
       if (ch.id == 'dawood') {
         expect(ch.youtubePlaylistId, isNotNull);
@@ -76,6 +81,7 @@ void main() {
     ];
     final merged = DefaultChannels.mergeSeedUpdates(existing);
     expect(merged.any((c) => c.id == 'peppa'), isTrue);
+    expect(merged.any((c) => c.id == 'maruko'), isTrue);
     expect(merged.any((c) => c.id == 'omar_hana'), isTrue);
   });
 

@@ -1,8 +1,8 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 16.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 17.
 class DefaultChannels {
-  static const seedVersion = 16;
+  static const seedVersion = 17;
 
   static const _spacetoonUploadsPlaylist = 'UUuQKih3Ac3NABADQKQdeV6A';
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
@@ -469,6 +469,21 @@ class DefaultChannels {
             _yt('T1AlwoEdxGo', 'مغامرات منصور — مغامرات مشوقة الجزء 5'),
             _yt('l5LwMtanIg8', 'مغامرات منصور — مغامرات مشوقة الجزء 4'),
             _yt('qbrHu-vkXiI', 'مغامرات منصور — الحلقات المميزة ج7'),
+          ],
+        ),
+        _channel(
+          id: 'maruko',
+          title: 'Maruko Chan',
+          order: 42,
+          color: 0xFFE85D4C,
+          playlist: _uploadsOf('UCBqA04GYbwNh_oP6tJEvYuw'),
+          videos: [
+            _yt('OmTJQVnNq5Y', 'おどるポンポコリン — First Ending — ちびまる子ちゃん'),
+            _yt('QgBr3ga1ryQ', 'おどるポンポコリン — Second Opening — ちびまる子ちゃん'),
+            _yt('zFg0iWmXoBs', 'アララの呪文 — Ending Dance Version'),
+            _yt('IFQxPBZ-VfM', 'まる子、叩いてかぶってジャンケンポン！の巻'),
+            _yt('829nPLoF49w', 'ちびまる子ちゃんクッキング — プリン・ア・ラ・モード'),
+            _yt('BPhUqyr4Rwk', 'ちびまる子ちゃんクッキング — なりきりクレープ屋さん'),
           ],
         ),
       ];

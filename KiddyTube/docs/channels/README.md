@@ -2,7 +2,7 @@
 
 KiddyTube’s home grid is **one channel = one named show**. Generic mixes (Arabic Cartoons, Learn Arabic, Playtime, Islamic Kids) were retired in seed v6.
 
-Seed **v16** consolidates Dawood TV into **one** home tile (`dawood`) and adds **Kids Music** (بابا فين، ماما جابت بيبي، مابي أنام). Earlier multi-tile Dawood channels are retired on upgrade.
+Seed **v17** adds **Maruko Chan** (`maruko` — ちびまる子ちゃん). Seed **v16** consolidated Dawood TV into **one** home tile (`dawood`) and added **Kids Music** (بابا فين، ماما جابت بيبي، مابي أنام). Earlier multi-tile Dawood channels are retired on upgrade.
 
 Each file below describes what ships in the app, audience fit (~ages 3–5 unless noted), and parent-facing clean / conservative notes. These docs are **not** packaged in the APK; edit the live catalog in the parent dashboard.
 
@@ -40,6 +40,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [cocomelon](cocomelon.md) | CoComelon | High | High | English nursery rhymes |
 | [masha](masha.md) | Masha and the Bear | High | High | Classic slapstick preschool |
 | [mansour](mansour.md) | منصور | High | High | UAE kids adventure |
+| [maruko](maruko.md) | Maruko Chan | High | Medium–High | Official ちびまる子ちゃん starters |
 | [fulla](fulla.md) | Fulla / فلة | — | — | **Retired in v15** |
 
 **Rating scale used in dossiers**
