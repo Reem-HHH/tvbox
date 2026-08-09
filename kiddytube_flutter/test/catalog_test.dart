@@ -48,7 +48,7 @@ void main() {
 
 
   test('seed keeps Twirlywoos expanded starters', () {
-    expect(DefaultChannels.seedVersion, 20);
+    expect(DefaultChannels.seedVersion, 22);
     final twirly = DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
     expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
     expect(twirly.videos.any((v) => v.id == 'Wg0JkKmQY6A'), isTrue);
@@ -56,7 +56,7 @@ void main() {
   });
 
   test('seed v19 adds Maruko Chan Arabic starters', () {
-    expect(DefaultChannels.seedVersion, 20);
+    expect(DefaultChannels.seedVersion, 22);
     final maruko = DefaultChannels.seed().firstWhere((c) => c.id == 'maruko');
     expect(maruko.title, 'ماروكو الصغيرة');
     expect(maruko.followUploads, isFalse);
@@ -66,8 +66,8 @@ void main() {
     expect(maruko.videos.length, greaterThanOrEqualTo(8));
   });
 
-  test('seed v20 adds live Makkah Quran Masha Blippi Disney channels', () {
-    expect(DefaultChannels.seedVersion, 20);
+  test('seed includes live Makkah Quran Masha Blippi Disney channels', () {
+    expect(DefaultChannels.seedVersion, 22);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
     expect(ids.containsAll([
@@ -90,7 +90,7 @@ void main() {
   });
 
   test('seed v18 enables daily follow and Numberblocks Season 1', () {
-    expect(DefaultChannels.seedVersion, 20);
+    expect(DefaultChannels.seedVersion, 22);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -118,6 +118,52 @@ void main() {
     expect(numberblocks.videos.any((v) => v.id == 'Ap5kgJ-bpEQ'), isTrue);
     final kidsMusic = seed.firstWhere((c) => c.id == 'kids_music');
     expect(kidsMusic.followUploads, isFalse);
+    expect(kidsMusic.videos.any((v) => v.id == 'qn3ITODjLiw'), isTrue);
+    expect(kidsMusic.videos.any((v) => v.id == 'ISSlEZyIRFw'), isFalse);
+    expect(kidsMusic.videos.any((v) => v.id == '03X3iys-Rcs'), isTrue);
+    expect(kidsMusic.videos.any((v) => v.id == 'XE4qklLOokQ'), isTrue);
+  });
+
+  test('seed v22 adds Babar and Hadikat al-Marah channels', () {
+    expect(DefaultChannels.seedVersion, 22);
+    final seed = DefaultChannels.seed();
+    final babar = seed.firstWhere((c) => c.id == 'babar');
+    expect(babar.title, 'بابار');
+    expect(babar.followUploads, isFalse);
+    expect(babar.videos.length, greaterThanOrEqualTo(8));
+    expect(babar.videos.any((v) => v.id == 'CKG8KXSiehs'), isTrue);
+    final garden = seed.firstWhere((c) => c.id == 'hadikat_almarah');
+    expect(garden.title, 'حديقة المرح');
+    expect(garden.followUploads, isFalse);
+    expect(garden.videos.any((v) => v.id == 'knTqvBZtgDc'), isTrue);
+    expect(garden.videos.length, greaterThanOrEqualTo(8));
+  });
+
+  test('mergeSeedUpdates replaces wrong Kids Music sleep song', () {
+    final existing = [
+      ContentChannel(
+        id: 'kids_music',
+        title: 'Kids Music',
+        sourceType: SourceType.youtubeVideoList,
+        videos: const [
+          VideoItem(
+            id: 'wyOJfLSeZIE',
+            title: 'بابا فين',
+            youtubeVideoId: 'wyOJfLSeZIE',
+          ),
+          VideoItem(
+            id: 'ISSlEZyIRFw',
+            title: 'مابي أنام — wrong',
+            youtubeVideoId: 'ISSlEZyIRFw',
+          ),
+        ],
+      ),
+    ];
+    final merged = DefaultChannels.mergeSeedUpdates(existing);
+    final kidsMusic = merged.firstWhere((c) => c.id == 'kids_music');
+    expect(kidsMusic.videos.any((v) => v.id == 'ISSlEZyIRFw'), isFalse);
+    expect(kidsMusic.videos.any((v) => v.id == 'qn3ITODjLiw'), isTrue);
+    expect(kidsMusic.videos.any((v) => v.id == 'wyOJfLSeZIE'), isTrue);
   });
 
   test('mergeSeedUpdates enables follow and Numberblocks Season 1 playlist', () {
@@ -150,7 +196,7 @@ void main() {
 
 
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 20);
+    expect(DefaultChannels.seedVersion, 22);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();

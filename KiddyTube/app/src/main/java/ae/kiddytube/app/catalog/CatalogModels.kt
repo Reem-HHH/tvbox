@@ -90,7 +90,10 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 20
+    const val SEED_VERSION = 22
+
+    /** Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة. */
+    private const val RETIRED_KIDS_MUSIC_VIDEO_ID = "ISSlEZyIRFw"
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -175,7 +178,14 @@ object DefaultChannels {
             videos = listOf(
                 yt("wyOJfLSeZIE", "بابا فين — Free Baby (Music Video)"),
                 yt("5wnNBQAkc-A", "ماما جابت بيبي — جنى مقداد | طيور الجنة"),
-                yt("ISSlEZyIRFw", "مابي أنام — حلا الترك")
+                yt("qn3ITODjLiw", "بنيتي الحبوبة — حلا الترك و مشاعل"),
+                yt("03X3iys-Rcs", "أغنية آيس كريم — ثعلوب والفواكه | أسرتنا"),
+                yt("Gmhk7mWG050", "في منزل أنثى السنجاب — أسرتنا"),
+                yt("Pf1Y0JtfMPU", "أنشودة الخضروات — أسرتنا"),
+                yt("WqzwrbzSqyY", "أغنية الكواكب — أسرتنا"),
+                yt("wK-YBukZUuU", "كوكسينو والعنكبوت — أسرتنا"),
+                yt("NWcs3bZ0fSM", "رمضان جانا — أسرتنا"),
+                yt("XE4qklLOokQ", "أنا البندورة الحمراء — طيور الجنة")
             )
         ),
         ContentChannel(
@@ -689,6 +699,49 @@ object DefaultChannels {
                 yt("J_7OroO4z2U", "حاجات مش بتضيع — ملكة الثلج ٢ | ديزني بالعربي"),
                 yt("eQVNPPRqe2Y", "لأول يوم بعمري — ملكة الثلج | ديزني بالعربي")
             )
+        ),
+        ContentChannel(
+            id = "babar",
+            title = "بابار",
+            iconRes = R.drawable.tile_babar,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 49,
+            videos = listOf(
+                yt("CKG8KXSiehs", "Babar — The Elephant Express (Ep. 18)"),
+                yt("7x1RmD8gnug", "Babar — Remember When… (Ep. 26)"),
+                yt("OzjPwN0rDY0", "Babar — Monkey Business (Ep. 23)"),
+                yt("8lXs1qmACnU", "Babar — A Tale of Two Siblings (Ep. 36)"),
+                yt("8Z5jvr_JJUk", "Babar & Badou — Kite Fight / Zoomerblimps (Ep. 9)"),
+                yt(
+                    "uilO6OTjo-4",
+                    "Babar & Badou — The Brave Guy / Starring Ms. Strich (Ep. 14)"
+                ),
+                yt(
+                    "PlKszSbTh1E",
+                    "Babar & Badou — The Unhidden Courtyard / The Rhino Rule (Ep. 36)"
+                ),
+                yt(
+                    "hoT5HIAhTQ8",
+                    "Babar & Badou — Fair is Fair / Savanna Surfing (Ep. 55)"
+                )
+            )
+        ),
+        ContentChannel(
+            id = "hadikat_almarah",
+            title = "حديقة المرح",
+            iconRes = R.drawable.tile_hadikat_almarah,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 50,
+            videos = listOf(
+                yt("knTqvBZtgDc", "نظيف نظيف — حديقة المرح | 1"),
+                yt("bGRQ9KBKpwA", "جوجو — حديقة المرح | 2"),
+                yt("lZKz-xtGLiU", "الطائرة الظريفة — حديقة المرح | 3"),
+                yt("talSXCgXMJk", "أواني الزهور — حديقة المرح | 4"),
+                yt("EHCfylJXNto", "الدمى المضحكة عال — حديقة المرح | 5"),
+                yt("rqmJ3-3kcEg", "استيقظ إيجل بيجل — حديقة المرح"),
+                yt("DDhMUpA3CuA", "حجر هوبزا هوب الخاصة — حديقة المرح"),
+                yt("fi1qBp_VNfY", "1 + 2 — حديقة المرح")
+            )
         )
         )
     )
@@ -737,7 +790,14 @@ object DefaultChannels {
             val enableFollowFromSeed = seed.followUploads &&
                 !current.followUploads &&
                 !current.playlistManagedByParent
-            val existingIds = current.videos.map { it.id }.toSet()
+            val dropWrongKidsMusic = seed.id == "kids_music" &&
+                current.videos.any { it.id == RETIRED_KIDS_MUSIC_VIDEO_ID }
+            val baseVideos = if (dropWrongKidsMusic) {
+                current.videos.filter { it.id != RETIRED_KIDS_MUSIC_VIDEO_ID }
+            } else {
+                current.videos
+            }
+            val existingIds = baseVideos.map { it.id }.toSet()
             val missingVideos = seed.videos.filter { it.id !in existingIds }
             val titleStale = current.title != seed.title &&
                 (seed.id == "spacetoon" || clearSpacetoonUploads)
@@ -745,8 +805,8 @@ object DefaultChannels {
             val disableFromSeed = !seed.enabled && current.enabled
 
             if (clearSpacetoonUploads || needsPlaylist || replaceNumberblocksPlaylist ||
-                enableFollowFromSeed || missingVideos.isNotEmpty() || titleStale ||
-                disableFromSeed
+                enableFollowFromSeed || missingVideos.isNotEmpty() || dropWrongKidsMusic ||
+                titleStale || disableFromSeed
             ) {
                 fun withSeekPolicy(items: List<VideoItem>): List<VideoItem> =
                     items.map { it.copy(allowSeek = current.defaultAllowSeek) }
@@ -754,8 +814,8 @@ object DefaultChannels {
                     clearSpacetoonUploads -> withSeekPolicy(seed.videos)
                     current.videos.isEmpty() && seed.videos.isNotEmpty() ->
                         withSeekPolicy(seed.videos)
-                    missingVideos.isNotEmpty() ->
-                        current.videos + withSeekPolicy(missingVideos)
+                    missingVideos.isNotEmpty() || dropWrongKidsMusic ->
+                        baseVideos + withSeekPolicy(missingVideos)
                     else -> current.videos
                 }
                 byId[seed.id] = current.copy(

@@ -33,7 +33,9 @@ On launch (when online), KiddyTube auto-refreshes linked playlists using the You
 | Dancing Fruit | Curated Hey Bear Sensory dancing-fruit clips |
 | Mini Muslim | MiniMuslims uploads + starters |
 | داوود | Single Dawood TV hub (Juz Amma playlist) |
-| Kids Music | بابا فين / ماما جابت بيبي / مابي أنام |
+| Kids Music | Toyor / Hala / Osratouna songs + البندورة الحمراء |
+| بابار | Treehouse Babar & Badou curated episodes |
+| حديقة المرح | WildBrain Arabic In the Night Garden |
 | Omar & Hana | Official uploads + starters |
 | CoComelon | Official nursery-rhyme starters |
 | Masha and the Bear | Official English episode starters |

@@ -344,7 +344,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: _ColoredCard(
                                   color: const Color(0xFF5C6BC0),
                                   title: item.title,
-                                  subtitle: 'Continue',
+                                  badge: 'Continue',
                                   imageUrl: item.youtubeVideoId == null
                                       ? null
                                       : 'https://i.ytimg.com/vi/${item.youtubeVideoId}/mqdefault.jpg',
@@ -529,7 +529,8 @@ class _ChannelGridSliver extends StatelessWidget {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 16 / 11,
+          // 16:9 art + caption under the image.
+          childAspectRatio: 16 / 13,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -541,7 +542,6 @@ class _ChannelGridSliver extends StatelessWidget {
               child: _ColoredCard(
                 color: Color(channel.color),
                 title: channel.title,
-                subtitle: '${channel.videos.length} videos',
                 imageUrl: channel.previewThumbnail,
                 contentKey: channel.previewVideoId ?? channel.id,
                 memCacheWidth: memCacheWidth,
@@ -591,7 +591,7 @@ class _VideoGridSliver extends StatelessWidget {
           crossAxisCount: crossAxisCount,
           mainAxisSpacing: 14,
           crossAxisSpacing: 14,
-          childAspectRatio: 16 / 11,
+          childAspectRatio: 16 / 13,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) {
@@ -604,7 +604,6 @@ class _VideoGridSliver extends StatelessWidget {
               child: _ColoredCard(
                 color: const Color(0xFF5C6BC0),
                 title: video.title,
-                subtitle: item.channelId,
                 imageUrl: video.youtubeThumbnail,
                 contentKey: video.youtubeVideoId ?? video.id,
                 memCacheWidth: memCacheWidth,
@@ -619,11 +618,12 @@ class _VideoGridSliver extends StatelessWidget {
   }
 }
 
+/// Thumbnail-first tile: full image on top, short caption underneath (not overlaid).
 class _ColoredCard extends StatelessWidget {
   const _ColoredCard({
     required this.color,
     required this.title,
-    required this.subtitle,
+    this.badge,
     this.imageUrl,
     this.contentKey,
     this.memCacheWidth,
@@ -631,91 +631,107 @@ class _ColoredCard extends StatelessWidget {
 
   final Color color;
   final String title;
-  final String subtitle;
+  /// Optional tiny chip on the image (e.g. Continue).
+  final String? badge;
   final String? imageUrl;
   final String? contentKey;
   final int? memCacheWidth;
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final layout = LayoutMetrics.of(context);
     final dpr = MediaQuery.devicePixelRatioOf(context);
     final memWidth = memCacheWidth ??
         (MediaQuery.sizeOf(context).width / 3 * dpr).clamp(160.0, 480.0).round();
-    return Stack(
-      fit: StackFit.expand,
+    // Same caption size in Shows and Mix (Mix tiles are narrower; fixed overlay
+    // text used to look smaller / eat more of the art).
+    final titleSize = layout.isTvLike ? 15.0 : (layout.isTablet ? 14.0 : 13.0);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (imageUrl != null)
-          CachedNetworkImage(
-            key: ValueKey('thumb-${contentKey ?? imageUrl}'),
-            cacheKey: contentKey == null ? imageUrl : 'yt-mq-$contentKey',
-            imageUrl: imageUrl!,
-            fit: BoxFit.cover,
-            fadeInDuration: Duration.zero,
-            fadeOutDuration: Duration.zero,
-            filterQuality: FilterQuality.low,
-            memCacheWidth: memWidth,
-            placeholder: (_, _) => ColoredBox(color: color),
-            errorWidget: (_, url, _) {
-              final id = contentKey;
-              if (id != null &&
-                  id.length == 11 &&
-                  !url.contains('hqdefault')) {
-                return CachedNetworkImage(
-                  key: ValueKey('thumb-hq-$id'),
-                  cacheKey: 'yt-hq-$id',
-                  imageUrl: 'https://i.ytimg.com/vi/$id/hqdefault.jpg',
-                  fit: BoxFit.cover,
-                  fadeInDuration: Duration.zero,
-                  filterQuality: FilterQuality.low,
-                  memCacheWidth: memWidth,
-                  placeholder: (_, _) => ColoredBox(color: color),
-                  errorWidget: (_, _, _) => ColoredBox(color: color),
-                );
-              }
-              return ColoredBox(color: color);
-            },
-          )
-        else
-          ColoredBox(color: color),
-        DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Colors.transparent,
-                Colors.black.withValues(alpha: 0.65),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (imageUrl != null)
+                  CachedNetworkImage(
+                    key: ValueKey('thumb-${contentKey ?? imageUrl}'),
+                    cacheKey: contentKey == null ? imageUrl : 'yt-mq-$contentKey',
+                    imageUrl: imageUrl!,
+                    fit: BoxFit.cover,
+                    fadeInDuration: Duration.zero,
+                    fadeOutDuration: Duration.zero,
+                    filterQuality: FilterQuality.low,
+                    memCacheWidth: memWidth,
+                    placeholder: (_, _) => ColoredBox(color: color),
+                    errorWidget: (_, url, _) {
+                      final id = contentKey;
+                      if (id != null &&
+                          id.length == 11 &&
+                          !url.contains('hqdefault')) {
+                        return CachedNetworkImage(
+                          key: ValueKey('thumb-hq-$id'),
+                          cacheKey: 'yt-hq-$id',
+                          imageUrl: 'https://i.ytimg.com/vi/$id/hqdefault.jpg',
+                          fit: BoxFit.cover,
+                          fadeInDuration: Duration.zero,
+                          filterQuality: FilterQuality.low,
+                          memCacheWidth: memWidth,
+                          placeholder: (_, _) => ColoredBox(color: color),
+                          errorWidget: (_, _, _) => ColoredBox(color: color),
+                        );
+                      }
+                      return ColoredBox(color: color);
+                    },
+                  )
+                else
+                  ColoredBox(color: color),
+                if (badge != null)
+                  Positioned(
+                    left: 8,
+                    bottom: 8,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.55),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        child: Text(
+                          badge!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
         ),
         Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 12,
-                ),
-              ),
-            ],
+          padding: const EdgeInsets.fromLTRB(6, 6, 6, 2),
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: scheme.onSurface,
+              fontWeight: FontWeight.w600,
+              fontSize: titleSize,
+              height: 1.15,
+            ),
           ),
         ),
       ],
@@ -805,7 +821,7 @@ class LibraryScreen extends StatelessWidget {
                     crossAxisCount: crossAxisCount,
                     mainAxisSpacing: 14,
                     crossAxisSpacing: 14,
-                    childAspectRatio: 16 / 11,
+                    childAspectRatio: 16 / 13,
                   ),
                   itemCount: channel.videos.length,
                   itemBuilder: (context, index) {
@@ -817,7 +833,6 @@ class LibraryScreen extends StatelessWidget {
                       child: _ColoredCard(
                         color: Color(channel.color),
                         title: video.title,
-                        subtitle: channel.title,
                         imageUrl: video.youtubeThumbnail,
                         contentKey: video.youtubeVideoId ?? video.id,
                         memCacheWidth: memCacheWidth,

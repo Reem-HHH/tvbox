@@ -8,11 +8,13 @@ class FocusTile extends StatefulWidget {
     required this.onActivated,
     required this.child,
     this.autofocus = false,
+    this.focusNode,
   });
 
   final VoidCallback onActivated;
   final Widget child;
   final bool autofocus;
+  final FocusNode? focusNode;
 
   @override
   State<FocusTile> createState() => _FocusTileState();
@@ -24,6 +26,7 @@ class _FocusTileState extends State<FocusTile> {
   @override
   Widget build(BuildContext context) {
     return FocusableActionDetector(
+      focusNode: widget.focusNode,
       autofocus: widget.autofocus,
       onShowFocusHighlight: (show) {
         if (_focused == show) return;

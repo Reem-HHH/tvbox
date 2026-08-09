@@ -1,8 +1,11 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 20.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 22.
 class DefaultChannels {
-  static const seedVersion = 20;
+  static const seedVersion = 22;
+
+  /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
+  static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
 
   static const _spacetoonUploadsPlaylist = 'UUuQKih3Ac3NABADQKQdeV6A';
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
@@ -78,7 +81,38 @@ class DefaultChannels {
           videos: [
             _yt('wyOJfLSeZIE', 'بابا فين — Free Baby (Music Video)'),
             _yt('5wnNBQAkc-A', 'ماما جابت بيبي — جنى مقداد | طيور الجنة'),
-            _yt('ISSlEZyIRFw', 'مابي أنام — حلا الترك'),
+            _yt(
+              'qn3ITODjLiw',
+              'بنيتي الحبوبة — حلا الترك و مشاعل',
+            ),
+            _yt(
+              '03X3iys-Rcs',
+              'أغنية آيس كريم — ثعلوب والفواكه | أسرتنا',
+            ),
+            _yt(
+              'Gmhk7mWG050',
+              'في منزل أنثى السنجاب — أسرتنا',
+            ),
+            _yt(
+              'Pf1Y0JtfMPU',
+              'أنشودة الخضروات — أسرتنا',
+            ),
+            _yt(
+              'WqzwrbzSqyY',
+              'أغنية الكواكب — أسرتنا',
+            ),
+            _yt(
+              'wK-YBukZUuU',
+              'كوكسينو والعنكبوت — أسرتنا',
+            ),
+            _yt(
+              'NWcs3bZ0fSM',
+              'رمضان جانا — أسرتنا',
+            ),
+            _yt(
+              'XE4qklLOokQ',
+              'أنا البندورة الحمراء — طيور الجنة',
+            ),
           ],
         ),
         _channel(
@@ -577,6 +611,52 @@ class DefaultChannels {
             _yt('eQVNPPRqe2Y', 'لأول يوم بعمري — ملكة الثلج | ديزني بالعربي'),
           ],
         ),
+        _channel(
+          id: 'babar',
+          title: 'بابار',
+          order: 49,
+          color: 0xFF78909C,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('CKG8KXSiehs', 'Babar — The Elephant Express (Ep. 18)'),
+            _yt('7x1RmD8gnug', 'Babar — Remember When… (Ep. 26)'),
+            _yt('OzjPwN0rDY0', 'Babar — Monkey Business (Ep. 23)'),
+            _yt('8lXs1qmACnU', 'Babar — A Tale of Two Siblings (Ep. 36)'),
+            _yt(
+              '8Z5jvr_JJUk',
+              'Babar & Badou — Kite Fight / Zoomerblimps (Ep. 9)',
+            ),
+            _yt(
+              'uilO6OTjo-4',
+              'Babar & Badou — The Brave Guy / Starring Ms. Strich (Ep. 14)',
+            ),
+            _yt(
+              'PlKszSbTh1E',
+              'Babar & Badou — The Unhidden Courtyard / The Rhino Rule (Ep. 36)',
+            ),
+            _yt(
+              'hoT5HIAhTQ8',
+              'Babar & Badou — Fair is Fair / Savanna Surfing (Ep. 55)',
+            ),
+          ],
+        ),
+        _channel(
+          id: 'hadikat_almarah',
+          title: 'حديقة المرح',
+          order: 50,
+          color: 0xFFAB47BC,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('knTqvBZtgDc', 'نظيف نظيف — حديقة المرح | 1'),
+            _yt('bGRQ9KBKpwA', 'جوجو — حديقة المرح | 2'),
+            _yt('lZKz-xtGLiU', 'الطائرة الظريفة — حديقة المرح | 3'),
+            _yt('talSXCgXMJk', 'أواني الزهور — حديقة المرح | 4'),
+            _yt('EHCfylJXNto', 'الدمى المضحكة عال — حديقة المرح | 5'),
+            _yt('rqmJ3-3kcEg', 'استيقظ إيجل بيجل — حديقة المرح'),
+            _yt('DDhMUpA3CuA', 'حجر هوبزا هوب الخاصة — حديقة المرح'),
+            _yt('fi1qBp_VNfY', '1 + 2 — حديقة المرح'),
+          ],
+        ),
       ]);
 
   /// Playlist-backed channels follow uploads daily by default.
@@ -624,7 +704,14 @@ class DefaultChannels {
           !current.followUploads &&
           !current.playlistManagedByParent;
 
-      final existingIds = current.videos.map((v) => v.id).toSet();
+      final dropWrongKidsMusic = seedCh.id == 'kids_music' &&
+          current.videos.any((v) => v.id == _retiredKidsMusicVideoId);
+      final baseVideos = dropWrongKidsMusic
+          ? current.videos
+              .where((v) => v.id != _retiredKidsMusicVideoId)
+              .toList()
+          : current.videos;
+      final existingIds = baseVideos.map((v) => v.id).toSet();
       final missingVideos =
           seedCh.videos.where((v) => !existingIds.contains(v.id)).toList();
       final titleStale = current.title != seedCh.title &&
@@ -636,6 +723,7 @@ class DefaultChannels {
           replaceNumberblocksPlaylist ||
           enableFollowFromSeed ||
           missingVideos.isNotEmpty ||
+          dropWrongKidsMusic ||
           titleStale ||
           disableFromSeed) {
         final List<VideoItem> videos;
@@ -643,8 +731,8 @@ class DefaultChannels {
           videos = seedCh.videos;
         } else if (current.videos.isEmpty && seedCh.videos.isNotEmpty) {
           videos = seedCh.videos;
-        } else if (missingVideos.isNotEmpty) {
-          videos = [...current.videos, ...missingVideos];
+        } else if (missingVideos.isNotEmpty || dropWrongKidsMusic) {
+          videos = [...baseVideos, ...missingVideos];
         } else {
           videos = current.videos;
         }

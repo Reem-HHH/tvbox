@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../catalog/catalog_repository.dart';
 import '../catalog/models.dart';
+import '../ui/focus_tile.dart';
 import '../ui/tv_text_dialog.dart';
 import 'parent_pin.dart';
 import 'parent_session.dart';
@@ -27,11 +28,18 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen>
   void initState() {
     super.initState();
     _tabs = TabController(length: 3, vsync: this);
+    _tabs.addListener(_onTabChanged);
     _reload();
+  }
+
+  void _onTabChanged() {
+    if (_tabs.indexIsChanging) return;
+    setState(() {});
   }
 
   @override
   void dispose() {
+    _tabs.removeListener(_onTabChanged);
     _tabs.dispose();
     super.dispose();
   }
@@ -101,27 +109,37 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen>
                   child: TabBarView(
                     controller: _tabs,
                     children: [
-                      _ChannelsTab(
-                        settings: settings,
-                        repository: widget.repository,
-                        isTablet: isTablet,
-                        sessionOk: _sessionOk,
-                        onChanged: _reload,
-                        toast: _toast,
+                      // Keep inactive tabs out of D-pad traversal (TV).
+                      ExcludeFocus(
+                        excluding: _tabs.index != 0,
+                        child: _ChannelsTab(
+                          settings: settings,
+                          repository: widget.repository,
+                          isTablet: isTablet,
+                          sessionOk: _sessionOk,
+                          onChanged: _reload,
+                          toast: _toast,
+                        ),
                       ),
-                      _SecurityTab(
-                        settings: settings,
-                        repository: widget.repository,
-                        sessionOk: _sessionOk,
-                        onChanged: _reload,
-                        toast: _toast,
+                      ExcludeFocus(
+                        excluding: _tabs.index != 1,
+                        child: _SecurityTab(
+                          settings: settings,
+                          repository: widget.repository,
+                          sessionOk: _sessionOk,
+                          onChanged: _reload,
+                          toast: _toast,
+                        ),
                       ),
-                      _HomeSyncTab(
-                        settings: settings,
-                        repository: widget.repository,
-                        sessionOk: _sessionOk,
-                        onChanged: _reload,
-                        toast: _toast,
+                      ExcludeFocus(
+                        excluding: _tabs.index != 2,
+                        child: _HomeSyncTab(
+                          settings: settings,
+                          repository: widget.repository,
+                          sessionOk: _sessionOk,
+                          onChanged: _reload,
+                          toast: _toast,
+                        ),
                       ),
                     ],
                   ),
@@ -719,12 +737,31 @@ class _ChannelsTab extends StatefulWidget {
 
 class _ChannelsTabState extends State<_ChannelsTab> {
   final _search = TextEditingController();
+  late final FocusNode _searchFocus = FocusNode(onKeyEvent: _onSearchKey);
+  final FocusNode _firstChannelFocus = FocusNode();
   String? _selectedId;
 
   @override
   void dispose() {
+    _searchFocus.dispose();
+    _firstChannelFocus.dispose();
     _search.dispose();
     super.dispose();
+  }
+
+  KeyEventResult _onSearchKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+        event.logicalKey == LogicalKeyboardKey.tab) {
+      // TextField eats ArrowDown for caret movement; move to the channel list.
+      if (_firstChannelFocus.canRequestFocus) {
+        _firstChannelFocus.requestFocus();
+      } else {
+        FocusScope.of(context).nextFocus();
+      }
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   List<ContentChannel> get _filtered {
@@ -760,6 +797,8 @@ class _ChannelsTabState extends State<_ChannelsTab> {
             child: _ChannelListPane(
               channels: channels,
               search: _search,
+              searchFocus: _searchFocus,
+              firstChannelFocus: _firstChannelFocus,
               selectedId: selected?.id,
               onSearch: () => setState(() {}),
               onSelect: (id) => setState(() => _selectedId = id),
@@ -796,9 +835,19 @@ class _ChannelsTabState extends State<_ChannelsTab> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: TextField(
             controller: _search,
+            focusNode: _searchFocus,
             onChanged: (_) => setState(() {}),
+            textInputAction: TextInputAction.next,
+            onSubmitted: (_) {
+              if (_firstChannelFocus.canRequestFocus) {
+                _firstChannelFocus.requestFocus();
+              } else {
+                FocusScope.of(context).nextFocus();
+              }
+            },
             decoration: InputDecoration(
               hintText: 'Search channels',
+              helperText: 'Press Down to browse channels',
               prefixIcon: const Icon(Icons.search),
               filled: true,
               border: OutlineInputBorder(
@@ -815,11 +864,13 @@ class _ChannelsTabState extends State<_ChannelsTab> {
             itemBuilder: (context, index) {
               final ch = channels[index];
               return _ChannelExpansionCard(
+                key: ValueKey('channel-card-${ch.id}'),
                 channel: ch,
                 repository: widget.repository,
                 sessionOk: widget.sessionOk,
                 onChanged: widget.onChanged,
                 toast: widget.toast,
+                focusNode: index == 0 ? _firstChannelFocus : null,
               );
             },
           ),
@@ -833,6 +884,8 @@ class _ChannelListPane extends StatelessWidget {
   const _ChannelListPane({
     required this.channels,
     required this.search,
+    required this.searchFocus,
+    required this.firstChannelFocus,
     required this.selectedId,
     required this.onSearch,
     required this.onSelect,
@@ -840,6 +893,8 @@ class _ChannelListPane extends StatelessWidget {
 
   final List<ContentChannel> channels;
   final TextEditingController search;
+  final FocusNode searchFocus;
+  final FocusNode firstChannelFocus;
   final String? selectedId;
   final VoidCallback onSearch;
   final ValueChanged<String> onSelect;
@@ -852,9 +907,19 @@ class _ChannelListPane extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           child: TextField(
             controller: search,
+            focusNode: searchFocus,
             onChanged: (_) => onSearch(),
+            textInputAction: TextInputAction.next,
+            onSubmitted: (_) {
+              if (firstChannelFocus.canRequestFocus) {
+                firstChannelFocus.requestFocus();
+              } else {
+                FocusScope.of(context).nextFocus();
+              }
+            },
             decoration: InputDecoration(
               hintText: 'Search',
+              helperText: 'Down → channels',
               prefixIcon: const Icon(Icons.search),
               filled: true,
               isDense: true,
@@ -871,19 +936,22 @@ class _ChannelListPane extends StatelessWidget {
             itemBuilder: (context, index) {
               final ch = channels[index];
               final selected = ch.id == selectedId;
-              return ListTile(
-                selected: selected,
-                selectedTileColor:
-                    Theme.of(context).colorScheme.primaryContainer,
-                title: Text(ch.title),
-                subtitle: Text(
-                  '${ch.enabled ? 'On' : 'Off'} · ${ch.videos.length} videos',
+              return FocusTile(
+                focusNode: index == 0 ? firstChannelFocus : null,
+                onActivated: () => onSelect(ch.id),
+                child: ListTile(
+                  selected: selected,
+                  selectedTileColor:
+                      Theme.of(context).colorScheme.primaryContainer,
+                  title: Text(ch.title),
+                  subtitle: Text(
+                    '${ch.enabled ? 'On' : 'Off'} · ${ch.videos.length} videos',
+                  ),
+                  trailing: Icon(
+                    ch.enabled ? Icons.visibility : Icons.visibility_off,
+                    size: 18,
+                  ),
                 ),
-                trailing: Icon(
-                  ch.enabled ? Icons.visibility : Icons.visibility_off,
-                  size: 18,
-                ),
-                onTap: () => onSelect(ch.id),
               );
             },
           ),
@@ -893,13 +961,15 @@ class _ChannelListPane extends StatelessWidget {
   }
 }
 
-class _ChannelExpansionCard extends StatelessWidget {
+class _ChannelExpansionCard extends StatefulWidget {
   const _ChannelExpansionCard({
+    super.key,
     required this.channel,
     required this.repository,
     required this.sessionOk,
     required this.onChanged,
     required this.toast,
+    this.focusNode,
   });
 
   final ContentChannel channel;
@@ -907,28 +977,48 @@ class _ChannelExpansionCard extends StatelessWidget {
   final _SessionCheck sessionOk;
   final Future<void> Function() onChanged;
   final _Toast toast;
+  final FocusNode? focusNode;
+
+  @override
+  State<_ChannelExpansionCard> createState() => _ChannelExpansionCardState();
+}
+
+class _ChannelExpansionCardState extends State<_ChannelExpansionCard> {
+  bool _expanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final channel = widget.channel;
     return Card(
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 10),
       clipBehavior: Clip.antiAlias,
-      child: ExpansionTile(
-        title: Text(channel.title),
-        subtitle: Text(
-          '${channel.enabled ? 'On' : 'Off'} · ${channel.videos.length} videos'
-          '${channel.followUploads ? ' · Follow' : ''}',
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _ChannelDetailPane(
-            channel: channel,
-            repository: repository,
-            sessionOk: sessionOk,
-            onChanged: onChanged,
-            toast: toast,
-            compact: true,
+          FocusTile(
+            focusNode: widget.focusNode,
+            onActivated: () => setState(() => _expanded = !_expanded),
+            child: ListTile(
+              title: Text(channel.title),
+              subtitle: Text(
+                '${channel.enabled ? 'On' : 'Off'} · ${channel.videos.length} videos'
+                '${channel.followUploads ? ' · Follow' : ''}',
+              ),
+              trailing: Icon(
+                _expanded ? Icons.expand_less : Icons.expand_more,
+              ),
+            ),
           ),
+          if (_expanded)
+            _ChannelDetailPane(
+              channel: channel,
+              repository: widget.repository,
+              sessionOk: widget.sessionOk,
+              onChanged: widget.onChanged,
+              toast: widget.toast,
+              compact: true,
+            ),
         ],
       ),
     );

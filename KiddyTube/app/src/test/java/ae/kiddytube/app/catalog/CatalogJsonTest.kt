@@ -73,7 +73,9 @@ class CatalogJsonTest {
         "masha_ar",
         "blippi_ar",
         "disney_songs",
-        "disney_songs_ar"
+        "disney_songs_ar",
+        "babar",
+        "hadikat_almarah"
     )
 
     @Test
@@ -83,7 +85,7 @@ class CatalogJsonTest {
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
         assertEquals("omar_hana", decoded.first().id)
-        assertEquals("disney_songs_ar", decoded.last().id)
+        assertEquals("hadikat_almarah", decoded.last().id)
     }
 
     @Test
@@ -97,7 +99,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionSeventeenAddsTwirlywoosEpisodes() {
-        assertEquals(20, DefaultChannels.SEED_VERSION)
+        assertEquals(22, DefaultChannels.SEED_VERSION)
         val twirly = DefaultChannels.seed().first { it.id == "twirlywoos" }
         assertTrue(twirly.videos.any { it.id == "wAFiVXz1NNw" })
         assertTrue(twirly.videos.any { it.id == "Wg0JkKmQY6A" })
@@ -167,7 +169,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionEighteenEnablesDailyFollowAndNumberblocksSeason1() {
-        assertEquals(20, DefaultChannels.SEED_VERSION)
+        assertEquals(22, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertTrue(seed.any { it.id == "maruko" })
         val maruko = seed.first { it.id == "maruko" }
@@ -197,8 +199,19 @@ class CatalogJsonTest {
         assertFalse(kidsMusic.followUploads)
         assertTrue(kidsMusic.videos.any { it.id == "wyOJfLSeZIE" })
         assertTrue(kidsMusic.videos.any { it.id == "5wnNBQAkc-A" })
-        assertTrue(kidsMusic.videos.any { it.id == "ISSlEZyIRFw" })
+        assertTrue(kidsMusic.videos.any { it.id == "qn3ITODjLiw" })
+        assertTrue(kidsMusic.videos.none { it.id == "ISSlEZyIRFw" })
+        assertTrue(kidsMusic.videos.any { it.id == "03X3iys-Rcs" })
+        assertTrue(kidsMusic.videos.any { it.id == "XE4qklLOokQ" })
         assertEquals(R.drawable.tile_kids_music, kidsMusic.iconRes)
+        val babar = seed.first { it.id == "babar" }
+        assertEquals("بابار", babar.title)
+        assertTrue(babar.videos.any { it.id == "CKG8KXSiehs" })
+        assertEquals(R.drawable.tile_babar, babar.iconRes)
+        val garden = seed.first { it.id == "hadikat_almarah" }
+        assertEquals("حديقة المرح", garden.title)
+        assertTrue(garden.videos.any { it.id == "knTqvBZtgDc" })
+        assertEquals(R.drawable.tile_hadikat_almarah, garden.iconRes)
 
         val songs = seed.first { it.id == "spacetoon" }
         assertEquals("Spacetoon أناشيد", songs.title)

@@ -2,7 +2,7 @@
 
 KiddyTube’s home grid is **one channel = one named show**. Generic mixes (Arabic Cartoons, Learn Arabic, Playtime, Islamic Kids) were retired in seed v6.
 
-Seed **v16** consolidates Dawood TV into **one** home tile (`dawood`) and adds **Kids Music** (بابا فين، ماما جابت بيبي، مابي أنام). Earlier multi-tile Dawood channels are retired on upgrade.
+Seed **v16** consolidates Dawood TV into **one** home tile (`dawood`) and adds **Kids Music** (بابا فين، ماما جابت بيبي، بنيتي الحبوبة). Earlier multi-tile Dawood channels are retired on upgrade.
 
 Each file below describes what ships in the app, audience fit (~ages 3–5 unless noted), and parent-facing clean / conservative notes. These docs are **not** packaged in the APK; edit the live catalog in the parent dashboard.
 
@@ -11,7 +11,9 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [omar_hana](omar_hana.md) | Omar & Hana | High | High | Islamic preschool series |
 | [mini_muslim](mini_muslim.md) | Mini Muslim | High | High | Islamic kids songs |
 | [dawood](dawood.md) | داوود | High | High | Single hub (Juz Amma playlist) |
-| [kids_music](kids_music.md) | Kids Music | High | High–Medium | بابا فين / ماما جابت بيبي / مابي أنام |
+| [kids_music](kids_music.md) | Kids Music | High | High–Medium | Toyor / Hala / Osratouna curated songs |
+| [babar](babar.md) | بابار | High | Medium–High | Treehouse Babar & Badou allowlist |
+| [hadikat_almarah](hadikat_almarah.md) | حديقة المرح | High | High | WildBrain Arabic Night Garden |
 | [spacetoon](spacetoon.md) | Spacetoon أناشيد | High | High | Expanded curated songs |
 | [moda_modi](moda_modi.md) | مودا مودي | High | High | Ramadan / Eid songs |
 | [smarta](smarta.md) | سمارتا وحقيبتها العجيبة | High | High | Spacetoon Arabic curated |

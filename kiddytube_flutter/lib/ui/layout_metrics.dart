@@ -56,15 +56,16 @@ class LayoutMetrics {
   }
 
   /// Kid-friendly tiles: large enough to tap/click, not one per row on TV.
+  /// Shows and Mix use the same column count so thumbnails stay equally large.
   int gridColumns({required bool isMix}) {
     if (isTvLike) {
-      return isMix ? (isLandscape ? 5 : 4) : (isLandscape ? 4 : 3);
+      return isLandscape ? 4 : 3;
     }
     if (isTablet) {
-      return isMix ? (isLandscape ? 4 : 3) : (isLandscape ? 4 : 3);
+      return isLandscape ? 4 : 3;
     }
     // Phone
-    return isMix ? (isLandscape ? 3 : 2) : (isLandscape ? 3 : 2);
+    return isLandscape ? 3 : 2;
   }
 
   int libraryColumns() {
