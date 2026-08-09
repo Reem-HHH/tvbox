@@ -1,8 +1,8 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 18.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 20.
 class DefaultChannels {
-  static const seedVersion = 18;
+  static const seedVersion = 20;
 
   static const _spacetoonUploadsPlaylist = 'UUuQKih3Ac3NABADQKQdeV6A';
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
@@ -477,6 +477,104 @@ class DefaultChannels {
             _yt('T1AlwoEdxGo', 'مغامرات منصور — مغامرات مشوقة الجزء 5'),
             _yt('l5LwMtanIg8', 'مغامرات منصور — مغامرات مشوقة الجزء 4'),
             _yt('qbrHu-vkXiI', 'مغامرات منصور — الحلقات المميزة ج7'),
+          ],
+        ),
+        _channel(
+          id: 'maruko',
+          title: 'ماروكو الصغيرة',
+          order: 42,
+          color: 0xFFEC407A,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('7Xf9nKYyAM4', 'شارة العمل — ماروكو الصغيرة | سبيستون'),
+            _yt('OMbPlfL2VMY', 'الحلقات الثلاث الأولى — ماروكو الصغيرة | سبيستون'),
+            _yt('vnwWjLlbYUQ', 'المقدمة الرسمية — ماروكو الصغيرة'),
+            _yt('_WgvHPmMYXo', 'مشاجرة الأختين — ماروكو الصغيرة'),
+            _yt('zZAQztwJGxg', 'بيع الساعة — ماروكو الصغيرة'),
+            _yt('3iKlvWdgQ2M', 'ماروكو الصغيرة تستغل الفرصة'),
+            _yt('KQidxkPZrOI', 'عالية مكانتي — ماروكو الصغيرة'),
+            _yt('OBPi512Q-0c', 'ماروكو الصغيرة واكتشافها'),
+          ],
+        ),
+        _channel(
+          id: 'live_makkah',
+          title: 'مكة مباشر',
+          order: 43,
+          color: 0xFF2E7D32,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('wawzF8i5yAo', 'بث مباشر — قناة القرآن الكريم | مكة'),
+          ],
+        ),
+        _channel(
+          id: 'live_quran',
+          title: 'القرآن مباشر',
+          order: 44,
+          color: 0xFF00695C,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('wawzF8i5yAo', 'بث مباشر — قناة القرآن الكريم'),
+          ],
+        ),
+        _channel(
+          id: 'masha_ar',
+          title: 'ماشا والدب',
+          order: 45,
+          color: 0xFFE53935,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('N9HG6_hdotI', 'ساعة من المرح — ماشا والدب'),
+            _yt('b_o6JWdrMB8', 'بيت بالمقلوب — ماشا والدب'),
+            _yt('KedRL7GrXo8', 'الحَمَل الجديدة — ماشا والدب'),
+            _yt('MZ_nL7BW4Wg', 'الطلاب المثاليون — ماشا والدب'),
+            _yt('BmtZ9zo8XYs', 'سباحة أنيقة — ماشا والدب'),
+            _yt('FFe8tPNw1AU', 'أكثر 10 حلقات مشاهدة — ماشا والدب'),
+          ],
+        ),
+        _channel(
+          id: 'blippi_ar',
+          title: 'بليبي بالعربي',
+          order: 46,
+          color: 0xFF039BE5,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('ZooIBL5z-s8', 'بليبي يزور ملعب داخلي'),
+            _yt('fKBp_i03wSE', 'بليبي يزور مصنع للشوكولاتة'),
+            _yt('XXyqtYoBXLg', 'بليبي يستكشف حيوانات الغابة'),
+            _yt('si138Y1-xs0', 'بلبي يتعلم مهارات السيرك'),
+            _yt('JE0MivjUzOc', 'قفزات بلبي على الترامبولين'),
+            _yt('uwLH7U-AJ5M', 'سيارات بليبي السريعة'),
+          ],
+        ),
+        _channel(
+          id: 'disney_songs',
+          title: 'Disney Songs',
+          order: 47,
+          color: 0xFF5C6BC0,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('L0MK7qz13bU', 'Let It Go — Sing-Along (Frozen)'),
+            _yt('kQDw88hEr2c', 'Love Is an Open Door — Sing-Along (Frozen)'),
+            _yt('r4KTqce-9Z0', "You're Welcome — Sing-Along (Moana)"),
+            _yt('RTWhvp_OD6s', 'Where You Are — Sing-Along (Moana)'),
+            _yt('ILRs2r6lcHY', 'I See the Light — Sing-Along (Tangled)'),
+            _yt('0fVcwXbAWtA', 'When Will My Life Begin? — Sing-Along (Tangled)'),
+            _yt('YRpvIiz9G8A', "We Don't Talk About Bruno — Sing-Along (Encanto)"),
+            _yt('uh4dTLJ9q9o', 'Lava — Official Lyric Video'),
+          ],
+        ),
+        _channel(
+          id: 'disney_songs_ar',
+          title: 'أغاني ديزني',
+          order: 48,
+          color: 0xFF7E57C2,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('pBTtPEVdf3k', 'أطلقي سركِ — ملكة الثلج | Disney Junior MENA'),
+            _yt('r7YUuTvOq7w', 'إظهري — ملكة الثلج ٢ | ديزني بالعربي'),
+            _yt('05NZT9vQfJE', 'في طريق مجهول — ملكة الثلج ٢ | ديزني بالعربي'),
+            _yt('J_7OroO4z2U', 'حاجات مش بتضيع — ملكة الثلج ٢ | ديزني بالعربي'),
+            _yt('eQVNPPRqe2Y', 'لأول يوم بعمري — ملكة الثلج | ديزني بالعربي'),
           ],
         ),
       ]);

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'content_title_filter.dart';
 import 'models.dart';
 
 /// YouTube Data API playlist sync (requires a parent-stored API key).
@@ -61,6 +62,9 @@ class YoutubeCatalogSource {
         final title = snippet['title'] as String? ?? 'Video';
         if (title.toLowerCase() == 'private video' ||
             title.toLowerCase() == 'deleted video') {
+          continue;
+        }
+        if (ContentTitleFilter.isBlocked(title)) {
           continue;
         }
         final thumbs =

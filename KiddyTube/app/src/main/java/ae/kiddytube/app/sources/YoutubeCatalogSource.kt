@@ -1,6 +1,7 @@
 package ae.kiddytube.app.sources
 
 import android.content.Context
+import ae.kiddytube.app.catalog.ContentTitleFilter
 import ae.kiddytube.app.catalog.VideoItem
 import ae.kiddytube.app.catalog.newestFirst
 import kotlinx.coroutines.Dispatchers
@@ -55,6 +56,7 @@ class YoutubeCatalogSource(
                     if (videoId.isNullOrBlank()) continue
                     val title = snippet.optString("title", "Video")
                     if (title.equals("Private video", true) || title.equals("Deleted video", true)) continue
+                    if (ContentTitleFilter.isBlocked(title)) continue
                     val thumbs = snippet.optJSONObject("thumbnails")
                     val thumb = thumbs?.optJSONObject("medium")?.optString("url")
                         ?: thumbs?.optJSONObject("default")?.optString("url")

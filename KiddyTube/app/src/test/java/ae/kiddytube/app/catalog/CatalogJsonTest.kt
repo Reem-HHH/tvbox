@@ -66,7 +66,14 @@ class CatalogJsonTest {
         "pocoyo",
         "cocomelon",
         "masha",
-        "mansour"
+        "mansour",
+        "maruko",
+        "live_makkah",
+        "live_quran",
+        "masha_ar",
+        "blippi_ar",
+        "disney_songs",
+        "disney_songs_ar"
     )
 
     @Test
@@ -76,7 +83,7 @@ class CatalogJsonTest {
         val decoded = CatalogJson.decode(json)
         assertEquals(seed.size, decoded.size)
         assertEquals("omar_hana", decoded.first().id)
-        assertEquals("mansour", decoded.last().id)
+        assertEquals("disney_songs_ar", decoded.last().id)
     }
 
     @Test
@@ -90,7 +97,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionSeventeenAddsTwirlywoosEpisodes() {
-        assertEquals(18, DefaultChannels.SEED_VERSION)
+        assertEquals(20, DefaultChannels.SEED_VERSION)
         val twirly = DefaultChannels.seed().first { it.id == "twirlywoos" }
         assertTrue(twirly.videos.any { it.id == "wAFiVXz1NNw" })
         assertTrue(twirly.videos.any { it.id == "Wg0JkKmQY6A" })
@@ -160,8 +167,15 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionEighteenEnablesDailyFollowAndNumberblocksSeason1() {
-        assertEquals(18, DefaultChannels.SEED_VERSION)
+        assertEquals(20, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
+        assertTrue(seed.any { it.id == "maruko" })
+        val maruko = seed.first { it.id == "maruko" }
+        assertEquals("ماروكو الصغيرة", maruko.title)
+        assertTrue(maruko.videos.any { it.id == "OMbPlfL2VMY" })
+        assertTrue(seed.any { it.id == "live_makkah" })
+        assertTrue(seed.any { it.id == "disney_songs" })
+        assertTrue(seed.any { it.id == "disney_songs_ar" })
         assertEquals(showIds, seed.map { it.id })
         retiredIds.forEach { id ->
             assertFalse(seed.any { it.id == id })

@@ -113,15 +113,12 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
-  Future<void> _toggleMode() async {
+  Future<void> _setHomeMode(HomeLibraryMode mode) async {
+    final current = _settings;
+    if (current == null || current.homeLibraryMode == mode) return;
     final unlocked = await ensureParentUnlocked(context, widget.repository);
     if (!unlocked || !mounted) return;
-    final current = _settings;
-    if (current == null) return;
-    final next = current.homeLibraryMode == HomeLibraryMode.channels
-        ? HomeLibraryMode.mixVideos
-        : HomeLibraryMode.channels;
-    await widget.repository.setHomeLibraryMode(next);
+    await widget.repository.setHomeLibraryMode(mode);
     await _reload();
   }
 
@@ -278,25 +275,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                           ),
-                          FocusTile(
-                            onActivated: _toggleMode,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: chipBg,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Text(
-                                isMix ? 'Mix' : 'Shows',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: accent,
-                                ),
-                              ),
-                            ),
+                          _HomeModeToggle(
+                            isMix: isMix,
+                            accent: accent,
+                            chipBg: chipBg,
+                            onSelectShows: () =>
+                                _setHomeMode(HomeLibraryMode.channels),
+                            onSelectMix: () =>
+                                _setHomeMode(HomeLibraryMode.mixVideos),
                           ),
                           const SizedBox(width: 8),
                           FocusTile(
@@ -423,6 +409,93 @@ class _HomeScreenState extends State<HomeScreen> {
     final cols = crossAxisCount.clamp(1, 8);
     final tileLogical = mq.size.width / cols;
     return (tileLogical * mq.devicePixelRatio).clamp(160.0, 480.0).round();
+  }
+}
+
+/// Side-by-side Shows | Mix control; selected segment is highlighted.
+class _HomeModeToggle extends StatelessWidget {
+  const _HomeModeToggle({
+    required this.isMix,
+    required this.accent,
+    required this.chipBg,
+    required this.onSelectShows,
+    required this.onSelectMix,
+  });
+
+  final bool isMix;
+  final Color accent;
+  final Color chipBg;
+  final VoidCallback onSelectShows;
+  final VoidCallback onSelectMix;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: chipBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _ModeSegment(
+              label: 'Shows',
+              selected: !isMix,
+              accent: accent,
+              onActivated: onSelectShows,
+            ),
+            _ModeSegment(
+              label: 'Mix',
+              selected: isMix,
+              accent: accent,
+              onActivated: onSelectMix,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModeSegment extends StatelessWidget {
+  const _ModeSegment({
+    required this.label,
+    required this.selected,
+    required this.accent,
+    required this.onActivated,
+  });
+
+  final String label;
+  final bool selected;
+  final Color accent;
+  final VoidCallback onActivated;
+
+  @override
+  Widget build(BuildContext context) {
+    final onAccent =
+        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+    return FocusTile(
+      onActivated: onActivated,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? accent : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: selected ? onAccent : accent,
+          ),
+        ),
+      ),
+    );
   }
 }
 

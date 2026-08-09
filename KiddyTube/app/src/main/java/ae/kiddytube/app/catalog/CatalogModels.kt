@@ -90,7 +90,7 @@ data class ContentChannel(
  */
 object DefaultChannels {
     /** Bump when seed playlist/video IDs change so existing installs merge updates once. */
-    const val SEED_VERSION = 18
+    const val SEED_VERSION = 20
 
     /** Former Spacetoon Arabic uploads feed — too broad for toddlers; cleared on upgrade. */
     private const val SPACETOON_UPLOADS_PLAYLIST = "UUuQKih3Ac3NABADQKQdeV6A"
@@ -590,6 +590,104 @@ object DefaultChannels {
                 yt("T1AlwoEdxGo", "مغامرات منصور — مغامرات مشوقة الجزء 5"),
                 yt("l5LwMtanIg8", "مغامرات منصور — مغامرات مشوقة الجزء 4"),
                 yt("qbrHu-vkXiI", "مغامرات منصور — الحلقات المميزة ج7")
+            )
+        ),
+        ContentChannel(
+            id = "maruko",
+            title = "ماروكو الصغيرة",
+            iconRes = R.drawable.tile_maruko,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 42,
+            videos = listOf(
+                yt("7Xf9nKYyAM4", "شارة العمل — ماروكو الصغيرة | سبيستون"),
+                yt("OMbPlfL2VMY", "الحلقات الثلاث الأولى — ماروكو الصغيرة | سبيستون"),
+                yt("vnwWjLlbYUQ", "المقدمة الرسمية — ماروكو الصغيرة"),
+                yt("_WgvHPmMYXo", "مشاجرة الأختين — ماروكو الصغيرة"),
+                yt("zZAQztwJGxg", "بيع الساعة — ماروكو الصغيرة"),
+                yt("3iKlvWdgQ2M", "ماروكو الصغيرة تستغل الفرصة"),
+                yt("KQidxkPZrOI", "عالية مكانتي — ماروكو الصغيرة"),
+                yt("OBPi512Q-0c", "ماروكو الصغيرة واكتشافها")
+            )
+        ),
+        ContentChannel(
+            id = "live_makkah",
+            title = "مكة مباشر",
+            iconRes = R.drawable.tile_live_makkah,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 43,
+            videos = listOf(
+                yt("wawzF8i5yAo", "بث مباشر — قناة القرآن الكريم | مكة")
+            )
+        ),
+        ContentChannel(
+            id = "live_quran",
+            title = "القرآن مباشر",
+            iconRes = R.drawable.tile_live_quran,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 44,
+            videos = listOf(
+                yt("wawzF8i5yAo", "بث مباشر — قناة القرآن الكريم")
+            )
+        ),
+        ContentChannel(
+            id = "masha_ar",
+            title = "ماشا والدب",
+            iconRes = R.drawable.tile_masha_ar,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 45,
+            videos = listOf(
+                yt("N9HG6_hdotI", "ساعة من المرح — ماشا والدب"),
+                yt("b_o6JWdrMB8", "بيت بالمقلوب — ماشا والدب"),
+                yt("KedRL7GrXo8", "الحَمَل الجديدة — ماشا والدب"),
+                yt("MZ_nL7BW4Wg", "الطلاب المثاليون — ماشا والدب"),
+                yt("BmtZ9zo8XYs", "سباحة أنيقة — ماشا والدب"),
+                yt("FFe8tPNw1AU", "أكثر 10 حلقات مشاهدة — ماشا والدب")
+            )
+        ),
+        ContentChannel(
+            id = "blippi_ar",
+            title = "بليبي بالعربي",
+            iconRes = R.drawable.tile_blippi_ar,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 46,
+            videos = listOf(
+                yt("ZooIBL5z-s8", "بليبي يزور ملعب داخلي"),
+                yt("fKBp_i03wSE", "بليبي يزور مصنع للشوكولاتة"),
+                yt("XXyqtYoBXLg", "بليبي يستكشف حيوانات الغابة"),
+                yt("si138Y1-xs0", "بلبي يتعلم مهارات السيرك"),
+                yt("JE0MivjUzOc", "قفزات بلبي على الترامبولين"),
+                yt("uwLH7U-AJ5M", "سيارات بليبي السريعة")
+            )
+        ),
+        ContentChannel(
+            id = "disney_songs",
+            title = "Disney Songs",
+            iconRes = R.drawable.tile_disney_songs,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 47,
+            videos = listOf(
+                yt("L0MK7qz13bU", "Let It Go — Sing-Along (Frozen)"),
+                yt("kQDw88hEr2c", "Love Is an Open Door — Sing-Along (Frozen)"),
+                yt("r4KTqce-9Z0", "You're Welcome — Sing-Along (Moana)"),
+                yt("RTWhvp_OD6s", "Where You Are — Sing-Along (Moana)"),
+                yt("ILRs2r6lcHY", "I See the Light — Sing-Along (Tangled)"),
+                yt("0fVcwXbAWtA", "When Will My Life Begin? — Sing-Along (Tangled)"),
+                yt("YRpvIiz9G8A", "We Don't Talk About Bruno — Sing-Along (Encanto)"),
+                yt("uh4dTLJ9q9o", "Lava — Official Lyric Video")
+            )
+        ),
+        ContentChannel(
+            id = "disney_songs_ar",
+            title = "أغاني ديزني",
+            iconRes = R.drawable.tile_disney_songs_ar,
+            sourceType = SourceType.YOUTUBE_VIDEO_LIST,
+            sortOrder = 48,
+            videos = listOf(
+                yt("pBTtPEVdf3k", "أطلقي سركِ — ملكة الثلج | Disney Junior MENA"),
+                yt("r7YUuTvOq7w", "إظهري — ملكة الثلج ٢ | ديزني بالعربي"),
+                yt("05NZT9vQfJE", "في طريق مجهول — ملكة الثلج ٢ | ديزني بالعربي"),
+                yt("J_7OroO4z2U", "حاجات مش بتضيع — ملكة الثلج ٢ | ديزني بالعربي"),
+                yt("eQVNPPRqe2Y", "لأول يوم بعمري — ملكة الثلج | ديزني بالعربي")
             )
         )
         )
