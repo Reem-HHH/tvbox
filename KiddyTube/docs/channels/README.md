@@ -43,7 +43,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [masha](masha.md) | Masha and the Bear | High | High | Classic slapstick preschool |
 | [mansour](mansour.md) | منصور | High | High | UAE kids adventure |
 | [maruko](maruko.md) | ماروكو الصغيرة | High | High–Medium | Curated Arabic Spacetoon / QToon starters |
-| [live_makkah](live_makkah.md) | مكة مباشر / القرآن مباشر | High | High | Saudi Quran TV live (IDs rotate) |
+| [live_makkah](live_makkah.md) | مكة مباشر / القرآن مباشر | High | High | Live + sleep Quran / ruqyah (IDs rotate for live) |
 | [masha_ar](masha_ar.md) | ماشا والدب | High | High | Arabic Masha (`@MashaBearARAB`) curated |
 | [blippi_ar](blippi_ar.md) | بليبي بالعربي | High | Medium–High | Arabic Blippi curated (no Follow) |
 | [disney_songs](disney_songs.md) | Disney Songs | High | Medium–High | EN sing-alongs + Clubhouse (no Follow) |

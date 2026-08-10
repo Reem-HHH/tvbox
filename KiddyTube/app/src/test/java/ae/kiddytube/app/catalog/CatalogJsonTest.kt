@@ -97,7 +97,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionSeventeenAddsTwirlywoosEpisodes() {
-        assertEquals(24, DefaultChannels.SEED_VERSION)
+        assertEquals(25, DefaultChannels.SEED_VERSION)
         val twirly = DefaultChannels.seed().first { it.id == "twirlywoos" }
         assertTrue(twirly.videos.any { it.id == "wAFiVXz1NNw" })
         assertTrue(twirly.videos.any { it.id == "Wg0JkKmQY6A" })
@@ -167,7 +167,7 @@ class CatalogJsonTest {
 
     @Test
     fun seedVersionEighteenEnablesDailyFollowAndNumberblocksSeason1() {
-        assertEquals(24, DefaultChannels.SEED_VERSION)
+        assertEquals(25, DefaultChannels.SEED_VERSION)
         val seed = DefaultChannels.seed()
         assertTrue(seed.any { it.id == "maruko" })
         val maruko = seed.first { it.id == "maruko" }

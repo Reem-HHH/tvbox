@@ -34,13 +34,13 @@ The older Kotlin TV app in `KiddyTube/` still exists for parity; day-to-day use 
 - **Continue watching** — resumes near where they left off.
 - Logo + lock open parent settings.
 
-### Channels kids get by default (seed v24 highlights)
+### Channels kids get by default (seed v25 highlights)
 
 Islamic / Arabic-first shows, preschool series, plus recent adds:
 
 | Tile | Notes |
 | --- | --- |
-| مكة مباشر / القرآن مباشر | Saudi Quran TV live (same feed today; live IDs can change) |
+| مكة مباشر / القرآن مباشر | Live + sleep Quran (black screen), ruqyah for home; live IDs can change |
 | ماشا والدب | Arabic Masha |
 | بليبي بالعربي | Arabic Blippi |
 | ماروكو الصغيرة | Arabic Maruko |

@@ -1,8 +1,8 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 24.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 25.
 class DefaultChannels {
-  static const seedVersion = 24;
+  static const seedVersion = 25;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -52,6 +52,10 @@ class DefaultChannels {
             _yt('iJtM9bzScJY', 'Omar & Hana — Dua & Salah (Acapella)'),
             _yt('HvzYeFB0lB4', 'Breakfasting — Omar & Hana'),
             _yt('AkSrzSwK2wE', 'Omar & Hana Arabic — Please Come Home Dad'),
+            _yt('T5b1d3xvh3c', 'Omar & Hana Arabic — مجموعة رسوم دينية'),
+            _yt('V9bIdfyiQYQ', 'Omar & Hana Arabic — مجموعة حلقات'),
+            _yt('_YMsrKhUnPs', 'Salam Scientist — Omar & Hana'),
+            _yt('icd_EkXP1Eo', "Dad's Magical Dish — Omar & Hana"),
           ],
         ),
         _channel(
@@ -64,6 +68,10 @@ class DefaultChannels {
             _yt('4VpiuY_C5Ok', 'Ramadan Around The World — MiniMuslims'),
             _yt('vB3ffnqdNVs', 'Islamic Songs for Kids (45 min) — MiniMuslims'),
             _yt('WyxekrpqcEQ', 'Islamic Songs for Kids (30 min) — MiniMuslims'),
+            _yt('8aABPaYMpUs', "Let's Count To 10 — MiniMuslims"),
+            _yt('sWk1Xyqv19Y', 'Mawlid Song — Salawatun Tayyibatun'),
+            _yt('HgREL4X7eUg', 'The Ants Go Marching — MiniMuslims'),
+            _yt('mVGnpSthYZQ', 'Mawlaya Burdah — MiniMuslims'),
           ],
         ),
         _channel(
@@ -115,6 +123,10 @@ class DefaultChannels {
               'XE4qklLOokQ',
               'أنا البندورة الحمراء — طيور الجنة',
             ),
+            _yt(
+              'ZUCS_cR9cY8',
+              'ساعة من أغاني أسرتنا — بدون إيقاع',
+            ),
           ],
         ),
         _channel(
@@ -150,6 +162,10 @@ class DefaultChannels {
             _yt('_SdwG5nE0Ik', 'مودا مودي — رمضان عاد'),
             _yt('7DUiKe_UneA', 'عائلة مودا مودي — رمضان تجلّى'),
             _yt('8cRwwgOzHF4', 'أغنية عيد الفطر من مودا مودي'),
+            _yt('iIg9QBsd-Rw', 'أنا مودو — مودا مودي | سبيستون'),
+            _yt('AWHJRkWISgs', 'هل تعلمين ماذا فعلت اليوم — مودا مودي'),
+            _yt('zYhbSoxUOIY', 'دعونا نبني — مودا مودي | سبيستون'),
+            _yt('hCFI7oi6XRc', 'دمتي أمي دمت يا أبي — مودا مودي'),
           ],
         ),
         _channel(
@@ -182,6 +198,10 @@ class DefaultChannels {
             _yt('FurzMF0L6QI', 'Animal Sounds Songs (68 min) — Adam & Mishmish'),
             _yt('docDippkI-Q', 'Farm Animal Songs — Adam & Mishmish'),
             _yt('etAPDF2i9s0', 'Arabic Letters with Animals — Adam & Mishmish'),
+            _yt('Sp85Q-qiqQw', 'أغاني عربية للأطفال 60 دقيقة — آدم ومشمش'),
+            _yt('w67-oHQNBVA', 'الأغاني المفضلة 60 دقيقة — آدم ومشمش'),
+            _yt('auSSr85LDbE', 'أغاني جديدة ممتعة — آدم ومشمش'),
+            _yt('IDP3sV9ZMEc', 'أغنية الرياضة والحركة — آدم ومشمش'),
           ],
         ),
         _channel(
@@ -196,6 +216,9 @@ class DefaultChannels {
             _yt('XCp_1eTPnrM', 'Arabic Numbers 1–10 — Zakaria'),
             _yt('0MGqhiLQbxI', 'Write Arabic Alphabet أ–ص — Zakaria'),
             _yt('5v7A2AXzCY0', 'Write Arabic Alphabet ض–ي — Zakaria'),
+            _yt('USW8_gV_Hnw', 'Colors with Street Vehicles — Zakaria'),
+            _yt('So5y8Sy8R6Y', 'Street Vehicles in Arabic — Zakaria'),
+            _yt('_pUf4xdBqxA', 'Counting with Cars 1–10 — Zakaria'),
           ],
         ),
         _channel(
@@ -206,6 +229,8 @@ class DefaultChannels {
           sourceType: SourceType.youtubeVideoList,
           videos: [
             _yt('EI3yLs6A-Qk', 'Learn Arabic Colors — Kiki wa Nadoush'),
+            _yt('2j8ScIsrYxg', 'Basic Phrases & Counting — Kiki wa Nadoush'),
+            _yt('e80_mbmSbC0', 'Colors Short Story — Kiki wa Nadoush'),
           ],
         ),
         _channel(
@@ -216,6 +241,10 @@ class DefaultChannels {
           sourceType: SourceType.youtubeVideoList,
           videos: [
             _yt('yPhFBBMWbPU', 'Shapes & Directions in Arabic — Rayan'),
+            _yt('hMXsohVaPGQ', 'خضار وفواكه وألوان وأرقام — ريان'),
+            _yt('csUnMp9Gdjo', 'الأرقام بالعربية — ريان'),
+            _yt('pfzBh3okwe0', 'أشكال وألوان وأحجام — ريان'),
+            _yt('ojfQ6yB_Liw', 'كلمات وألوان وفواكه — ريان'),
           ],
         ),
         _channel(
@@ -226,6 +255,11 @@ class DefaultChannels {
           sourceType: SourceType.youtubeVideoList,
           videos: [
             _yt('En3OJwCqHx8', 'Shapes, Colors & Numbers — Sweet Kalima'),
+            _yt('L3MaRZCKq20', 'أغاني تعليمية — الجزء 2 | Sweet Kalima'),
+            _yt('U2mZgNj-Ya0', 'أغاني تعليمية للأطفال | Sweet Kalima'),
+            _yt('sSAby5cLSbo', 'الروتين الصباحي — Sweet Kalima'),
+            _yt('R0asqLFXxzo', 'الفصول الأربعة — Sweet Kalima'),
+            _yt('8rbhv2iEohM', 'أغاني الفواكه — Sweet Kalima'),
           ],
         ),
         _channel(
@@ -236,6 +270,10 @@ class DefaultChannels {
           sourceType: SourceType.youtubeVideoList,
           videos: [
             _yt('sVtaIloYxvw', 'Arabic Alphabet with Chalk — Abata'),
+            _yt('AekHJ4m4dks', 'Sea Arabic Alphabet Song — Abata'),
+            _yt('xkvkf4LhQKU', 'Dancing Arabic Alphabet Song — Abata'),
+            _yt('cSQQ2JATO5I', 'Hijaiyah Puzzle — Abata'),
+            _yt('6JnixgqoLbQ', 'Learn ALIF Letters — Abata'),
           ],
         ),
         _channel(
@@ -248,6 +286,10 @@ class DefaultChannels {
             _yt('EOj_7ZYmCOI', 'Cheer Up Donkey — Sarah & Duck'),
             _yt('e69BdjwjDxk', 'Bouncy Ball — Sarah & Duck'),
             _yt('zGn6PwRkD7c', 'Sarah, Duck and the Penguins'),
+            _yt('tavYEmefXgI', '1 Hour Marathon — Sarah & Duck'),
+            _yt('F87fpmUgPUA', '30 mins Full Episodes — Sarah & Duck'),
+            _yt('wWxzi_obAUw', 'Strawberry Souffle — Sarah & Duck'),
+            _yt('_zHfVdvx6OA', 'Pipe Conductor — Sarah & Duck'),
           ],
         ),
         _channel(
@@ -282,6 +324,11 @@ class DefaultChannels {
             _yt('Zi5CQbSajXE', 'Learning Something New with Barney!'),
             _yt('gzw6-AbAbK4', "Let's Play Together! — Barney"),
             _yt('dIQCqktBrXc', 'A Friend Like You! — Barney'),
+            _yt('OUsNcAxAq8M', 'Full Episodes — Love — Barney'),
+            _yt('PDlcqXoOIFI', 'Good Manners & Best Behavior — Barney'),
+            _yt('-NpnkSB90-E', 'Up, Down, and Around! — Barney'),
+            _yt('4FwrbFxYOOQ', 'My Family and Me — Barney'),
+            _yt('pf93hIE1xBU', 'Splish! Splash! — Barney'),
           ],
         ),
         _channel(
@@ -309,6 +356,10 @@ class DefaultChannels {
             _yt('t7dTdE8Aqtw', 'Jumping in Muddy Puddles — Peppa Pig My First Album'),
             _yt('P5vlEeqdJN8', 'Peppa and George Love Jumping in Muddy Puddles!'),
             _yt('jbdck_y74ls', 'Peppa Pig Rides the TRAIN! — LEGO DUPLO'),
+            _yt('RafDio654Ws', "Peppa Pig's New Tree House"),
+            _yt('blQxZ73C_Vg', 'Tea Party in Her Tree House — Peppa Pig'),
+            _yt('e1WO60yYBtg', "Peppa's Magical Treehouse Adventure"),
+            _yt('xu1mfnnle0Q', "Peppa Pig's New Tree House (Official)"),
           ],
         ),
         _channel(
@@ -380,6 +431,10 @@ class DefaultChannels {
             _yt('-l5_ao_oxmg', 'شاكر والببغاء الشاطر — الصلوات'),
             _yt('iSuhEcI1HOQ', 'شاكر والببغاء الشاطر — المدينة المنورة'),
             _yt('QhAc8NS8J_M', 'شمّام — طيور بيبي'),
+            _yt('x6s8KLzbq28', 'الديك بيصحى (بدون إيقاع) — طيور بيبي'),
+            _yt('3pI5IhE1sSE', 'حمار جحا (بدون إيقاع) — طيور بيبي'),
+            _yt('ZgUCuW8aRCY', 'الليمونة والبرتقالة (بدون إيقاع) — طيور بيبي'),
+            _yt('j4ViMQxKY4A', 'الأرنب والثعلب (بدون إيقاع) — طيور بيبي'),
           ],
         ),
         _channel(
@@ -410,6 +465,10 @@ class DefaultChannels {
             _yt('9AfD-N9HK8s', 'Bath Time with Daniel Tiger — Full Episodes'),
             _yt('oloZANav_g8', 'Potty Training! — Daniel Tiger'),
             _yt('IGM-r8baTN4', 'Daniel Learns to Swing — Daniel Tiger'),
+            _yt('zvJAcFoFXxE', 'Learning Patience — Daniel Tiger'),
+            _yt('mnc6a3aA_yA', "Won't You Be My Neighbour? — Daniel Tiger"),
+            _yt('8p8ADCLz3Hk', 'Baby Margaret is My Best Friend — Daniel Tiger'),
+            _yt('5tb0ukBVbA0', 'Neighbourhood Jobs — Daniel Tiger'),
           ],
         ),
         _channel(
@@ -424,6 +483,10 @@ class DefaultChannels {
             _yt('RhMecZiUEiY', 'The Decorating Badge — Hey Duggee'),
             _yt('VVMjTvc8qbQ', 'The Key Badge — Hey Duggee'),
             _yt('6bxOoxBheb0', 'Feel-Good Happy Days With Duggee'),
+            _yt('BBleojshabk', 'The Recipe Badge — Hey Duggee'),
+            _yt('J0Jc0MSQglg', 'The Delivery Badge — Hey Duggee'),
+            _yt('dIoRncsoFm8', 'The Shopping Badge — Hey Duggee'),
+            _yt('l0L9WACaMCc', "Roly's First Day — Hey Duggee"),
           ],
         ),
         _channel(
@@ -455,6 +518,10 @@ class DefaultChannels {
             _yt('eDu9RdFhcg4', 'Magician Pocoyo — Pocoyo'),
             _yt('_b2U6PLIc_E', "Giving Loula a Bath — Pocoyo"),
             _yt('jO-AiyofVEI', "Pocoyo's New Toys — Pocoyo"),
+            _yt('swVI1aYW8E0', "It's Shopping Day — Pocoyo (89 min)"),
+            _yt('tqAf9tFW00Y', 'Super Babies — Pocoyo (94 min)'),
+            _yt('WDQl4w-n9IE', 'Playground Time — Pocoyo (99 min)'),
+            _yt('YFCWXJdo4N0', 'Learn The Alphabet — Pocoyo'),
           ],
         ),
         _channel(
@@ -470,6 +537,8 @@ class DefaultChannels {
             _yt('tgFynI0l06U', 'Old MacDonald Had A Farm + More — CoComelon'),
             _yt('hqehvbhky5k', 'On My Way To School — CoComelon'),
             _yt('wfwvrawZDs8', 'Happy Birthday Song — CoComelon'),
+            _yt('qXcMNBQnQMM', 'Songs For Kids Compilation — CoComelon'),
+            _yt('fdPu-wvl3KE', 'Peek A Boo — CoComelon'),
           ],
         ),
         _channel(
@@ -484,6 +553,9 @@ class DefaultChannels {
             _yt('g9CMF85dAt4', 'Laundry Day — Best Episodes Collection'),
             _yt('AV-UBYOGB_o', 'Why Should We Play Games? — Best Episodes'),
             _yt('R6Oh1xUmB3E', 'Honey Day — Cartoon Collection'),
+            _yt('erwBhzx3eok', 'أفضل طريقة لقضاء اليوم — ماشا والدب'),
+            _yt('EsGkXt6nneE', 'أميرة الأسنان الحلوة — ماشا والدب'),
+            _yt('INyR_Dl7rVk', 'طيف ظريف — ماشا والدب'),
           ],
         ),
         _channel(
@@ -498,6 +570,10 @@ class DefaultChannels {
             _yt('T1AlwoEdxGo', 'مغامرات منصور — مغامرات مشوقة الجزء 5'),
             _yt('l5LwMtanIg8', 'مغامرات منصور — مغامرات مشوقة الجزء 4'),
             _yt('qbrHu-vkXiI', 'مغامرات منصور — الحلقات المميزة ج7'),
+            _yt('FdUVdcfsHzY', 'مغامرات منصور — حلقات الاختراعات'),
+            _yt('dXeBoTInNcA', 'مغامرات منصور — العطلة مع منصور ج17'),
+            _yt('bJpAuVrcQgc', 'مغامرات منصور — جمعتنا مع منصور ج4'),
+            _yt('fpfSHyyhD2Q', 'مغامرات منصور — جمعتنا مع منصور ج12'),
           ],
         ),
         _channel(
@@ -533,6 +609,23 @@ class DefaultChannels {
           sourceType: SourceType.youtubeVideoList,
           videos: [
             _yt('wawzF8i5yAo', 'بث مباشر — قناة القرآن الكريم | مكة'),
+            _yt('3eAQvIImyTM', 'بث مباشر مكة المكرمة — الحرم المكي HD'),
+            _yt('tuOo0oPuc2Y', 'مكة مباشر — الحرم المكي'),
+            _yt('Rs7St51oDDc', 'بث مباشر — قناة السنة النبوية | المدينة'),
+            _yt('UMT2RvaOKrg', 'قرآن للنوم — جزء عم | شاشة سوداء'),
+            _yt('vfdU0VNJvJ0', 'جزء عم — ماهر المعيقلي | شاشة سوداء'),
+            _yt('WX2K1q0G9I4', 'سورة الملك للنوم — عمر هشام | شاشة سوداء'),
+            _yt('cEDlcpgBCMM', 'سورة الملك — ماهر المعيقلي | شاشة سوداء'),
+            _yt('SyYV7OVStLA', 'سورة الملك — مشاري العفاسي | شاشة سوداء'),
+            _yt('Nne9H-3Z-bM', 'سورة البقرة — ماهر المعيقلي | شاشة سوداء'),
+            _yt('HMAJn52hQqw', 'سورة البقرة كاملة — ماهر المعيقلي | شاشة سوداء'),
+            _yt('WFnpX2yMRK8', 'رقية المنزل — تحصين البيت والأولاد'),
+            _yt('Jkgu5vGjJz8', 'رقية البيت — البقرة وماهر المعيقلي'),
+            _yt('BhtzXGiPB5Y', 'رقية للبيت — سور مباركة'),
+            _yt('i4tggpG4rFI', 'الرقية الشرعية — ماهر المعيقلي'),
+            _yt('XmJu7Efsj0Y', 'الرقية الشرعية الشاملة — صوت هادئ'),
+            _yt('6hDV4sQiQNc', 'رقية شرعية للنوم — ماهر المعيقلي | شاشة سوداء'),
+            _yt('5v-P7gbDK9s', 'رقية شرعية شاشة سوداء — ماهر المعيقلي'),
           ],
         ),
         _channel(
@@ -543,6 +636,11 @@ class DefaultChannels {
           sourceType: SourceType.youtubeVideoList,
           videos: [
             _yt('wawzF8i5yAo', 'بث مباشر — قناة القرآن الكريم'),
+            _yt('TQ9R8-TIdV4', 'قرآن هادئ للنوم — 10 ساعات | شاشة سوداء'),
+            _yt('kXZgeu27BOo', 'قرآن للنوم — 10 ساعات | شاشة سوداء'),
+            _yt('HOREcsKsjcU', 'سورة الملك مكررة — شاشة سوداء'),
+            _yt('XqOhVxvooTY', 'رقية للبيت — عبد الرحمن السديس'),
+            _yt('zVLxK5Kn6mE', 'رقية العين والحسد — شاشة سوداء'),
           ],
         ),
         _channel(
@@ -558,6 +656,11 @@ class DefaultChannels {
             _yt('MZ_nL7BW4Wg', 'الطلاب المثاليون — ماشا والدب'),
             _yt('BmtZ9zo8XYs', 'سباحة أنيقة — ماشا والدب'),
             _yt('FFe8tPNw1AU', 'أكثر 10 حلقات مشاهدة — ماشا والدب'),
+            _yt('lF3wFRw1Qa4', 'رحلة الدب — ماشا والدب'),
+            _yt('ZYiKqKe4RYc', 'ما أجمل العمل — ماشا والدب'),
+            _yt('uXCGuus_U1k', 'يوم الفنون والحِرف — ماشا والدب'),
+            _yt('erwBhzx3eok', 'أفضل طريقة لقضاء اليوم — ماشا والدب'),
+            _yt('EsGkXt6nneE', 'أميرة الأسنان الحلوة — ماشا والدب'),
           ],
         ),
         _channel(
@@ -573,6 +676,10 @@ class DefaultChannels {
             _yt('si138Y1-xs0', 'بلبي يتعلم مهارات السيرك'),
             _yt('JE0MivjUzOc', 'قفزات بلبي على الترامبولين'),
             _yt('uwLH7U-AJ5M', 'سيارات بليبي السريعة'),
+            _yt('8CU7aJRXb7U', 'ملعب بلِّيبي الداخلي الملون'),
+            _yt('Ng2YGHBVRHw', 'اللعب بالصلصال مع بليبي'),
+            _yt('TAs1xWSDgzw', 'بليبي يكتشف سيارات غو كارت'),
+            _yt('cLGqn3nnuUk', 'اللعب بالصلصال مع بليبي — طين للأطفال'),
           ],
         ),
         _channel(
@@ -665,6 +772,9 @@ class DefaultChannels {
             _yt('rqmJ3-3kcEg', 'استيقظ إيجل بيجل — حديقة المرح'),
             _yt('DDhMUpA3CuA', 'حجر هوبزا هوب الخاصة — حديقة المرح'),
             _yt('fi1qBp_VNfY', '1 + 2 — حديقة المرح'),
+            _yt('oRmgEaQAyQc', 'بطانية — حديقة المرح'),
+            _yt('OA7fVAxkuxw', 'إخفاء — حديقة المرح'),
+            _yt('9A-Cy0m0NHA', 'حلقة 230 — حديقة المرح'),
           ],
         ),
       ]);
