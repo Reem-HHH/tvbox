@@ -87,6 +87,39 @@ class CloudClient {
     return PairResult.fromJson(map);
   }
 
+  /// Register with the family enroll secret (no pairing code).
+  Future<PairResult> enroll({
+    required String baseUrl,
+    required String secret,
+    required String name,
+    required String platform,
+  }) async {
+    final root = normalizeBaseUrl(baseUrl);
+    final uri = Uri.parse('$root/v1/devices/enroll');
+    final response = await _http
+        .post(
+          uri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'secret': secret.trim(),
+            'name': name.trim().isEmpty ? 'Device' : name.trim(),
+            'platform': platform,
+          }),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw CloudException(
+        _errorMessage(response) ?? 'Enroll failed (${response.statusCode})',
+        statusCode: response.statusCode,
+      );
+    }
+    final map = jsonDecode(response.body);
+    if (map is! Map<String, dynamic>) {
+      throw CloudException('Unexpected enroll response');
+    }
+    return PairResult.fromJson(map);
+  }
+
   Future<Map<String, dynamic>> fetchCatalog({
     required String baseUrl,
     required String token,

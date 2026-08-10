@@ -95,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _maybeDailySync() async {
+    await widget.repository.ensureCloudEnrolled();
     final cloudChanged = await widget.repository.maybePullCloudDaily();
     final youtubeChanged = await widget.repository.maybeRefreshDaily();
     var watchTouched = false;

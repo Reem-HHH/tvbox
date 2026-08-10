@@ -141,19 +141,25 @@ The app appears in the Android TV launcher (Leanback). Use the remote / D-pad to
 
 ---
 
-## 4. Pair each device to the family catalog
+## 4. Connect devices to the family catalog (auto)
 
-Do this once per TV / iPad (each device gets its own token).
+Preferred: bake cloud URL + enroll secret into the install so **no pairing code** is needed.
 
-1. Mac admin → **Devices** → **Generate pairing code** (6 digits, expires in ~10 minutes).
-2. On the device: open KiddyTube → parent unlock (PIN **2580**) → **Home & Sync**.
-3. **Cloud server URL** → e.g. `http://<mac-lan-ip>:8787`
-4. **Pair device** → enter the code → name the device (e.g. “Living room TV”).
-5. **Pull catalog from cloud**.
+1. In `local_defines.json` set:
+   - `CLOUD_BASE_URL` — e.g. `https://….onrender.com` or `http://<mac-lan-ip>:8787`
+   - `CLOUD_ENROLL_SECRET` — same as cloud `DEVICE_ENROLL_SECRET`
+2. Install with `--dart-define-from-file=local_defines.json`.
+3. Open the app once — it auto-registers, then pulls catalog / watch history.
+4. Parent → **Home & Sync** shows **Connected to family cloud**. Use **Pull catalog** anytime.
 
-After that, opening the app can pull the cloud catalog about once per day when paired. Use **Pull catalog from cloud** anytime for an immediate refresh.
+Admin → **Devices** lists each install. To remove one: **Revoke** in admin (and **Disconnect** in the app if needed).
 
-To remove a device: **Unpair this device** in the app, and **Revoke** it in the web admin.
+### Fallback: manual pairing
+
+Only when the build does **not** include cloud defines:
+
+1. Admin → **Generate pairing code**
+2. Parent → set **Cloud server URL** → **Pair device** → **Pull catalog**
 
 ---
 
@@ -170,10 +176,10 @@ To remove a device: **Unpair this device** in the app, and **Revoke** it in the 
 | Problem | What to try |
 |--------|-------------|
 | `flutter devices` empty | Wake/unlock device; reconnect USB; for TV run `adb devices`; for iPad trust the Mac |
-| Pair / pull fails | Mac + device on same Wi‑Fi; cloud started with `--host 0.0.0.0`; URL uses LAN IP not `127.0.0.1` on physical devices |
+| Enroll / pull fails | Same Wi‑Fi for LAN; cloud `--host 0.0.0.0`; physical devices need LAN IP not `127.0.0.1`; Render free tier may sleep (~30–60s first hit); secrets must match |
 | iPad blocks HTTP | App allows local networking (`NSAllowsLocalNetworking`); still use `http://` LAN IP |
 | Android cleartext | App allows cleartext for LAN testing (`usesCleartextTraffic`) |
-| Wrong catalog | Confirm you paired this device and pulled after editing the admin catalog |
+| Wrong catalog | Confirm this device is connected and pulled after editing the admin catalog |
 | Parent lock | Dev PIN is **2580** until you change it under **Security** |
 
 ---

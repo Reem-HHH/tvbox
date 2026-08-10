@@ -499,7 +499,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Unpair this device?'),
+        title: const Text('Disconnect this device?'),
         content: const Text(
           'Removes the local cloud token. Revoke it in the admin UI too if needed.',
         ),
@@ -510,7 +510,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Unpair'),
+            child: const Text('Disconnect'),
           ),
         ],
       ),
@@ -518,7 +518,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     if (ok != true) return;
     await widget.repository.unpairCloud();
     await _reloadCloud();
-    widget.toast('Device unpaired');
+    widget.toast('Device disconnected');
   }
 
   Future<void> _refreshPlaylists() async {
@@ -614,29 +614,30 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
           child: Column(
             children: [
               ListTile(
-                leading: const Icon(Icons.dns_outlined),
-                title: const Text('Cloud server URL'),
+                leading: Icon(
+                  cloud?.paired == true
+                      ? Icons.cloud_done_outlined
+                      : Icons.cloud_off_outlined,
+                  color: cloud?.paired == true ? scheme.primary : null,
+                ),
+                title: Text(
+                  cloud?.paired == true
+                      ? 'Connected to family cloud'
+                      : (cloud?.autoEnrollConfigured == true
+                          ? 'Connecting to family cloud…'
+                          : 'Not connected'),
+                ),
                 subtitle: Text(
                   cloud == null
                       ? '…'
-                      : (cloud.baseUrl.isEmpty
-                          ? 'Not set — e.g. http://192.168.x.x:8787'
-                          : cloud.baseUrl),
+                      : cloud.paired
+                          ? '${cloud.deviceName.isEmpty ? 'Device' : cloud.deviceName}'
+                              '${cloud.baseUrl.isEmpty ? '' : ' · ${cloud.baseUrl}'}'
+                              '${cloud.tokenPrefix.isEmpty ? '' : ' · ${cloud.tokenPrefix}…'}'
+                          : cloud.autoEnrollConfigured
+                              ? 'This install auto-connects on launch. Check Wi‑Fi if this sticks.'
+                              : 'Bake CLOUD_BASE_URL + CLOUD_ENROLL_SECRET into the build, or pair manually below.',
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _busy ? null : _editCloudUrl,
-              ),
-              const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.phonelink_setup_outlined),
-                title: Text(cloud?.paired == true ? 'Re-pair device' : 'Pair device'),
-                subtitle: Text(
-                  cloud?.paired == true
-                      ? 'Paired as ${cloud!.deviceName.isEmpty ? 'device' : cloud.deviceName}'
-                          '${cloud.tokenPrefix.isEmpty ? '' : ' · ${cloud.tokenPrefix}…'}'
-                      : 'Enter the 6-digit code from the web admin',
-                ),
-                onTap: _busy ? null : _pairDevice,
               ),
               const Divider(height: 1),
               ListTile(
@@ -650,7 +651,9 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                 title: const Text('Pull catalog from cloud'),
                 subtitle: Text(
                   cloud?.paired != true
-                      ? 'Pair first'
+                      ? (cloud?.autoEnrollConfigured == true
+                          ? 'Waiting for connection'
+                          : 'Connect first')
                       : cloud!.lastCloudSyncMs == 0
                           ? 'Never pulled'
                           : 'Last pull ${_formatRelative(cloud.lastCloudSyncMs)}'
@@ -664,7 +667,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                 title: const Text('Sync watch history'),
                 subtitle: Text(
                   cloud?.paired != true
-                      ? 'Pair first'
+                      ? 'Connect first'
                       : 'Upload Continue Watching to the cloud admin',
                 ),
                 onTap: _busy || cloud?.paired != true ? null : _syncWatch,
@@ -673,8 +676,42 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.link_off_outlined),
-                  title: const Text('Unpair this device'),
+                  title: const Text('Disconnect this device'),
+                  subtitle: Text(
+                    cloud?.autoEnrollConfigured == true
+                        ? 'Clears the local token. Next launch may reconnect with the build secret.'
+                        : 'Removes the local cloud token. Revoke it in the admin UI too if needed.',
+                  ),
                   onTap: _busy ? null : _unpair,
+                ),
+              ],
+              if (cloud?.autoEnrollConfigured != true) ...[
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.dns_outlined),
+                  title: const Text('Cloud server URL'),
+                  subtitle: Text(
+                    cloud == null
+                        ? '…'
+                        : (cloud.baseUrl.isEmpty
+                            ? 'Not set — e.g. https://….onrender.com'
+                            : cloud.baseUrl),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _busy ? null : _editCloudUrl,
+                ),
+                const Divider(height: 1),
+                ListTile(
+                  leading: const Icon(Icons.phonelink_setup_outlined),
+                  title: Text(
+                    cloud?.paired == true ? 'Re-pair device' : 'Pair device',
+                  ),
+                  subtitle: Text(
+                    cloud?.paired == true
+                        ? 'Paired as ${cloud!.deviceName.isEmpty ? 'device' : cloud.deviceName}'
+                        : 'Enter the 6-digit code from the web admin',
+                  ),
+                  onTap: _busy ? null : _pairDevice,
                 ),
               ],
             ],

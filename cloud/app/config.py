@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret-change-me"
     database_url: str = "sqlite:///./data/kiddytube.db"
     public_base_url: str = "http://127.0.0.1:8787"
+    # Shared with Flutter builds (CLOUD_ENROLL_SECRET). Empty = enroll disabled.
+    device_enroll_secret: str = ""
     pairing_code_ttl_seconds: int = 600
     session_cookie_name: str = "kt_admin_session"
     session_max_age_seconds: int = 60 * 60 * 12

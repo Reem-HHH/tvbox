@@ -67,19 +67,18 @@ flutter run --dart-define-from-file=local_defines.json -d <ipad-device-id>
 flutter run --release --dart-define-from-file=local_defines.json -d <android-tv-id>
 ```
 
-Copy `local_defines.json.example` → `local_defines.json` and paste your YouTube API key (file is gitignored). Parent settings can still override it. Never commit real keys.
+Copy `local_defines.json.example` → `local_defines.json` and set YouTube API key plus `CLOUD_BASE_URL` / `CLOUD_ENROLL_SECRET` (file is gitignored). Never commit real secrets.
 
 Default parent PIN for development: **2580**.
 
-### Pair a device to the cloud catalog
+### Auto-connect to the cloud catalog
 
-1. On the Mac: Admin → **Devices** → Generate pairing code  
-2. On the TV / iPad: Parent settings (PIN **2580**) → **Home & Sync**  
-3. Set **Cloud server URL** to `http://<mac-lan-ip>:8787`  
-4. **Pair device** → enter the 6-digit code  
-5. **Pull catalog from cloud**
+1. Set `DEVICE_ENROLL_SECRET` on the cloud (Render or local `.env`)  
+2. Put the same value in `local_defines.json` as `CLOUD_ENROLL_SECRET`, plus `CLOUD_BASE_URL`  
+3. Install with `--dart-define-from-file=local_defines.json`  
+4. First launch registers the device; Parent → **Home & Sync** shows **Connected**
 
-Devices and Mac must be on the same Wi‑Fi. iOS allows local HTTP; Android cleartext is enabled for LAN testing.
+Manual 6-digit pairing remains available only when cloud defines are omitted from the build.
 
 Playlist sync (separate from cloud) needs a YouTube Data API key (Parent settings → stored in secure storage). Synced titles that match the family blocklist are dropped automatically.
 
@@ -88,7 +87,7 @@ Playlist sync (separate from cloud) needs a YouTube Data API key (Parent setting
 ```
 lib/
   catalog/   models, seed v25, repository, sync + title filter, continue watching
-  cloud/     pair + pull client for ../cloud API
+  cloud/     enroll + pair + pull client for ../cloud API
   parent/    PIN, session, settings screen
   player/    YouTube iframe + video_player
   ui/        home (Shows|Mix), focus tiles, TV text dialogs

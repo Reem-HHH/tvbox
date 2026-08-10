@@ -66,7 +66,7 @@ This is title-based only — not a visual filter. New Disney / Blippi-style chan
 ```bash
 export PATH="/Users/reema/Documents/tv box /tvbox/.tools/flutter/bin:$PATH"
 cd "/Users/reema/Documents/tv box /tvbox/kiddytube_flutter"
-cp -n local_defines.json.example local_defines.json   # YouTube API key once
+cp -n local_defines.json.example local_defines.json   # YouTube key + cloud URL/secret once
 flutter devices
 flutter run --release --dart-define-from-file=local_defines.json -d <device-id>
 ```
@@ -77,16 +77,16 @@ Never commit `local_defines.json` (gitignored).
 
 1. **Channels** — enable shows, Follow uploads, seek, add/delete videos, playlist ID  
 2. **Security** — Change PIN, Release ready, Lock  
-3. **Home & Sync** — Shows/Mix, YouTube API key, refresh playlists, cloud URL / pair / pull, export catalog  
+3. **Home & Sync** — Shows/Mix, YouTube API key, refresh playlists, cloud status / pull, export catalog  
 
 ### Cloud catalog (optional shared house library)
 
-- Service: `cloud/` — FastAPI admin + per-device pairing codes  
+- Service: `cloud/` — FastAPI admin + auto-enroll / pairing  
 - Local: `uvicorn app.main:app --host 0.0.0.0 --port 8787`  
 - Production: **Render + Neon** — see [`../../cloud/DEPLOY_RENDER_NEON.md`](../../cloud/DEPLOY_RENDER_NEON.md)  
 - Admin UI: `http://127.0.0.1:8787/admin` (local) or `https://….onrender.com/admin`  
-- Devices: set **Cloud server URL** to that base URL, pair with 6-digit code, **Pull catalog**  
-- Watch history: Continue Watching syncs to Neon when paired (Admin → Devices)  
+- Installs: set `CLOUD_BASE_URL` + `CLOUD_ENROLL_SECRET` in `local_defines.json` (match Render `DEVICE_ENROLL_SECRET`) — first launch auto-connects  
+- Watch history: Continue Watching syncs to Neon when connected (Admin → Devices)  
 - Devices **pull** from admin; edits on a device stay local unless you re-import via admin  
 
 See [`../cloud/README.md`](../cloud/README.md) and [`RUN_TV_AND_IPAD.md`](RUN_TV_AND_IPAD.md).

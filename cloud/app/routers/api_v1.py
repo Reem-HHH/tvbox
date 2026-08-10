@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from ..auth import get_current_device, pair_device
+from ..auth import enroll_device, get_current_device, pair_device
 from ..catalog_service import get_catalog_document
 from ..config import get_settings
 from ..db import get_db
@@ -18,6 +18,12 @@ router = APIRouter(prefix="/v1", tags=["device-api"])
 
 class PairRequest(BaseModel):
     code: str = Field(min_length=4, max_length=8)
+    name: str = Field(default="Device", max_length=120)
+    platform: str = Field(default="unknown", max_length=40)
+
+
+class EnrollRequest(BaseModel):
+    secret: str = Field(min_length=8, max_length=200)
     name: str = Field(default="Device", max_length=120)
     platform: str = Field(default="unknown", max_length=40)
 
@@ -41,6 +47,26 @@ class DeviceInfo(BaseModel):
 def pair(body: PairRequest, db: Session = Depends(get_db)):
     settings = get_settings()
     device, token = pair_device(db, body.code, body.name, body.platform)
+    return PairResponse(
+        device_id=device.id,
+        name=device.name,
+        platform=device.platform,
+        token=token,
+        catalog_url=f"{settings.public_base_url.rstrip('/')}/v1/catalog",
+    )
+
+
+@router.post("/devices/enroll", response_model=PairResponse)
+def enroll(body: EnrollRequest, db: Session = Depends(get_db)):
+    """Auto-register builds that embed CLOUD_ENROLL_SECRET (no pairing code)."""
+    settings = get_settings()
+    device, token = enroll_device(
+        db,
+        settings,
+        body.secret,
+        body.name,
+        body.platform,
+    )
     return PairResponse(
         device_id=device.id,
         name=device.name,

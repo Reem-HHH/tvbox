@@ -131,6 +131,38 @@ def pair_device(
     return device, raw_token
 
 
+def enroll_device(
+    db: Session,
+    settings: Settings,
+    secret: str,
+    name: str,
+    platform: str,
+) -> Tuple[Device, str]:
+    """Register a device that was built with the family enroll secret (no pairing code)."""
+    expected = (settings.device_enroll_secret or "").strip()
+    if not expected:
+        raise HTTPException(status_code=503, detail="Device enroll is not configured")
+    provided = (secret or "").strip()
+    # Hash first so unequal lengths still compare in constant time.
+    if not provided or not secrets.compare_digest(
+        hashlib.sha256(provided.encode("utf-8")).digest(),
+        hashlib.sha256(expected.encode("utf-8")).digest(),
+    ):
+        raise HTTPException(status_code=403, detail="Invalid enroll secret")
+
+    raw_token = new_device_token()
+    device = Device(
+        name=(name or "Device").strip()[:120] or "Device",
+        platform=(platform or "unknown").strip()[:40],
+        token_hash=hash_token(raw_token),
+        token_prefix=raw_token[:8],
+    )
+    db.add(device)
+    db.commit()
+    db.refresh(device)
+    return device, raw_token
+
+
 def mount_session_middleware(app, settings: Settings) -> None:
     app.add_middleware(
         SessionMiddleware,

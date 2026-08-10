@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../cloud/cloud_client.dart';
+import '../cloud/cloud_defaults.dart';
 import '../parent/parent_pin.dart';
 import '../parent/release_pin_policy.dart';
 import 'media_ids.dart';
@@ -22,6 +23,7 @@ class CloudLinkStatus {
     this.deviceName = '',
     this.lastCloudSyncMs = 0,
     this.lastRevision,
+    this.autoEnrollConfigured = false,
   });
 
   final String baseUrl;
@@ -30,6 +32,8 @@ class CloudLinkStatus {
   final String deviceName;
   final int lastCloudSyncMs;
   final int? lastRevision;
+  /// Build embeds CLOUD_BASE_URL + CLOUD_ENROLL_SECRET.
+  final bool autoEnrollConfigured;
 }
 
 class CatalogSettings {
@@ -618,13 +622,18 @@ class CatalogRepository {
     final prefix = (token != null && token.isNotEmpty)
         ? token.substring(0, token.length.clamp(0, 8))
         : '';
+    final storedUrl = _prefs!.getString(_cloudBaseUrlKey) ?? '';
+    final baseUrl = storedUrl.isNotEmpty
+        ? storedUrl
+        : (CloudDefaults.baseUrl ?? '');
     return CloudLinkStatus(
-      baseUrl: _prefs!.getString(_cloudBaseUrlKey) ?? '',
+      baseUrl: baseUrl,
       paired: paired,
       tokenPrefix: prefix,
       deviceName: _prefs!.getString(_cloudDeviceNameKey) ?? '',
       lastCloudSyncMs: _prefs!.getInt(_lastCloudSyncKey) ?? 0,
       lastRevision: _prefs!.getInt(_lastCloudRevisionKey),
+      autoEnrollConfigured: CloudDefaults.canAutoEnroll,
     );
   }
 
@@ -647,6 +656,52 @@ class CatalogRepository {
     return 'unknown';
   }
 
+  static String defaultCloudDeviceName() {
+    if (Platform.isIOS) return 'iPad';
+    if (Platform.isAndroid) return 'Android TV';
+    return 'Flutter device';
+  }
+
+  /// If this build has cloud defaults and no token yet, register automatically.
+  /// Returns true when the device has a cloud token afterward.
+  Future<bool> ensureCloudEnrolled({String? deviceName}) async {
+    await _ensurePrefs();
+    final status = await cloudStatus();
+    if (status.paired) {
+      if ((_prefs!.getString(_cloudBaseUrlKey) ?? '').isEmpty &&
+          status.baseUrl.isNotEmpty) {
+        await _prefs!.setString(
+          _cloudBaseUrlKey,
+          CloudClient.normalizeBaseUrl(status.baseUrl),
+        );
+      }
+      return true;
+    }
+    if (!CloudDefaults.canAutoEnroll) return false;
+    final url = CloudClient.normalizeBaseUrl(CloudDefaults.baseUrl!);
+    final secret = CloudDefaults.enrollSecret!;
+    final name = (deviceName?.trim().isNotEmpty ?? false)
+        ? deviceName!.trim()
+        : defaultCloudDeviceName();
+    try {
+      final result = await _cloud.enroll(
+        baseUrl: url,
+        secret: secret,
+        name: name,
+        platform: defaultCloudPlatform(),
+      );
+      await _prefs!.setString(_cloudBaseUrlKey, url);
+      await _prefs!.setString(_cloudDeviceNameKey, result.name);
+      await _secrets.writeCloudDeviceToken(result.token);
+      try {
+        await syncWatchWithCloud();
+      } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Register this device with a 6-digit pairing code from the cloud admin.
   Future<String> pairWithCloud({
     required String code,
@@ -657,13 +712,13 @@ class CatalogRepository {
     await _ensurePrefs();
     final url = (baseUrl?.trim().isNotEmpty ?? false)
         ? CloudClient.normalizeBaseUrl(baseUrl!)
-        : (_prefs!.getString(_cloudBaseUrlKey) ?? '');
+        : (_prefs!.getString(_cloudBaseUrlKey) ?? CloudDefaults.baseUrl ?? '');
     if (url.isEmpty) {
       throw CloudException('Set the cloud server URL first');
     }
     final name = (deviceName?.trim().isNotEmpty ?? false)
         ? deviceName!.trim()
-        : 'Flutter device';
+        : defaultCloudDeviceName();
     final result = await _cloud.pair(
       baseUrl: url,
       code: code,
@@ -724,9 +779,12 @@ class CatalogRepository {
 
   Future<String> pullCloudCatalog({bool force = false}) async {
     await _ensurePrefs();
+    await ensureCloudEnrolled();
     final status = await cloudStatus();
     if (!status.paired) {
-      return 'Pair this device first.';
+      return status.autoEnrollConfigured
+          ? 'Could not connect to cloud. Check network / Render sleep.'
+          : 'Pair this device first.';
     }
     if (status.baseUrl.isEmpty) {
       return 'Set the cloud server URL first.';
@@ -747,6 +805,7 @@ class CatalogRepository {
   }
 
   Future<bool> maybePullCloudDaily() async {
+    await ensureCloudEnrolled();
     final status = await cloudStatus();
     if (!status.paired || status.baseUrl.isEmpty) return false;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -807,8 +866,13 @@ class CatalogRepository {
 
   /// Push local history, pull remote, merge by newest timestamp.
   Future<String> syncWatchWithCloud() async {
+    await ensureCloudEnrolled();
     final status = await cloudStatus();
-    if (!status.paired) return 'Pair this device first.';
+    if (!status.paired) {
+      return status.autoEnrollConfigured
+          ? 'Could not connect to cloud. Check network / Render sleep.'
+          : 'Pair this device first.';
+    }
     if (status.baseUrl.isEmpty) return 'Set the cloud server URL first.';
     final token = await _secrets.readCloudDeviceToken();
     if (token == null || token.isEmpty) return 'Pair this device first.';

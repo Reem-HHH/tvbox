@@ -6,7 +6,8 @@ Single-admin cloud catalog for your household. You edit content in a **web admin
 
 - Admin login (email/password from `.env`)
 - Catalog management: add/delete channels & YouTube videos, enable/disable, import app `exportJson`
-- Device pairing: generate 6-digit code → device calls `POST /v1/devices/pair` → stores token
+- Device auto-enroll: builds with `CLOUD_ENROLL_SECRET` call `POST /v1/devices/enroll` (no pairing code)
+- Device pairing (optional): generate 6-digit code → `POST /v1/devices/pair` → stores token
 - Revoke any device from the admin UI
 - `GET /v1/catalog` (Bearer device token) returns JSON compatible with Flutter catalog export shape
 - Watch history: `PUT/GET /v1/watch` per device; admin Devices page shows recent plays
@@ -19,7 +20,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-# edit ADMIN_EMAIL, ADMIN_PASSWORD, SECRET_KEY
+# edit ADMIN_EMAIL, ADMIN_PASSWORD, SECRET_KEY, DEVICE_ENROLL_SECRET
 mkdir -p data
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
 ```
@@ -28,16 +29,29 @@ Open [http://127.0.0.1:8787/admin](http://127.0.0.1:8787/admin).
 
 ## Production: Render + Neon (free)
 
-Host the admin + API on the public internet so TV/iPad can pair from anywhere:
+Host the admin + API on the public internet so TV/iPad can auto-enroll from anywhere:
 
 → **[DEPLOY_RENDER_NEON.md](DEPLOY_RENDER_NEON.md)** step-by-step (Neon Postgres + Render Web Service).
 
-Summary: Neon for `DATABASE_URL`, Render runs `uvicorn` from `cloud/`, set `PUBLIC_BASE_URL` to your `https://….onrender.com`, then paste that URL into each device’s Parent → Home & Sync.
+Summary: Neon for `DATABASE_URL`, Render runs `uvicorn` from `cloud/`, set `PUBLIC_BASE_URL` and `DEVICE_ENROLL_SECRET`, bake the same secret + URL into Flutter via `local_defines.json`.
 
-## Device registration (B)
+## Device registration (auto-enroll)
+
+Preferred for household installs:
+
+```http
+POST /v1/devices/enroll
+Content-Type: application/json
+
+{"secret":"<DEVICE_ENROLL_SECRET>","name":"Living room TV","platform":"android"}
+```
+
+Response includes a one-time `token`. Store it securely on the device.
+
+### Optional: pairing code
 
 1. Admin → **Devices** → **Generate pairing code**
-2. On the device (future app UI), call:
+2. On the device:
 
 ```http
 POST /v1/devices/pair
@@ -45,8 +59,6 @@ Content-Type: application/json
 
 {"code":"123456","name":"Living room TV","platform":"android_tv"}
 ```
-
-Response includes a one-time `token`. Store it securely on the device.
 
 3. Fetch catalog:
 
