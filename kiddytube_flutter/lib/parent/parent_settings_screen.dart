@@ -309,44 +309,46 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     if (!widget.sessionOk()) return;
     final controller =
         TextEditingController(text: widget.settings.youtubeApiKey ?? '');
+    var cleared = false;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TvTextDialog(
         title: const Text('YouTube API key'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'AIza… (stored securely)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () async {
-              await widget.repository.setYoutubeApiKey(null);
-              if (ctx.mounted) Navigator.pop(ctx, true);
-            },
-            child: const Text('Clear'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
+        submitLabel: 'Save',
+        secondaryLabel: 'Clear',
+        onCancel: () => Navigator.pop(ctx, false),
+        onSecondary: () {
+          cleared = true;
+          Navigator.pop(ctx, true);
+        },
+        onSubmit: () => Navigator.pop(ctx, true),
+        fieldBuilder: (context, fieldFocus, submitFromField) {
+          return TextField(
+            controller: controller,
+            focusNode: fieldFocus,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText: 'AIza… (stored securely)',
+              border: OutlineInputBorder(),
+              helperText: 'Press Down for Save',
+            ),
+            onSubmitted: (_) => submitFromField(),
+          );
+        },
       ),
     );
     if (ok != true) return;
-    final value = controller.text.trim();
-    if (value.isNotEmpty) {
-      await widget.repository.setYoutubeApiKey(value);
+    if (cleared) {
+      await widget.repository.setYoutubeApiKey(null);
+    } else {
+      final value = controller.text.trim();
+      if (value.isNotEmpty) {
+        await widget.repository.setYoutubeApiKey(value);
+      }
     }
     await widget.onChanged();
-    widget.toast('API key saved');
+    widget.toast(cleared ? 'API key cleared' : 'API key saved');
   }
 
   Future<void> _editCloudUrl() async {
@@ -355,28 +357,26 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     final controller = TextEditingController(text: current);
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TvTextDialog(
         title: const Text('Cloud server URL'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: TextInputType.url,
-          decoration: const InputDecoration(
-            hintText: 'http://192.168.1.10:8787',
-            border: OutlineInputBorder(),
-            helperText: 'Mac running cloud/ on the same Wi‑Fi',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
+        submitLabel: 'Save',
+        onCancel: () => Navigator.pop(ctx, false),
+        onSubmit: () => Navigator.pop(ctx, true),
+        fieldBuilder: (context, fieldFocus, submitFromField) {
+          return TextField(
+            controller: controller,
+            focusNode: fieldFocus,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText: 'http://192.168.1.10:8787',
+              border: OutlineInputBorder(),
+              helperText: 'Press Down for Save · Mac on same Wi‑Fi',
+            ),
+            onSubmitted: (_) => submitFromField(),
+          );
+        },
       ),
     );
     if (ok != true) return;
@@ -399,45 +399,55 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     );
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TvTextDialog(
         title: const Text('Pair this device'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: codeController,
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(6),
-              ],
-              decoration: const InputDecoration(
-                labelText: '6-digit code',
-                hintText: 'From cloud admin → Devices',
-                border: OutlineInputBorder(),
-              ),
+        submitLabel: 'Pair',
+        onCancel: () => Navigator.pop(ctx, false),
+        onSubmit: () => Navigator.pop(ctx, true),
+        fieldBuilder: (context, fieldFocus, submitFromField) {
+          final codeFocus = FocusNode(
+            onKeyEvent: (node, event) => handleTvTextFieldKeys(
+              event,
+              moveNext: () => fieldFocus.requestFocus(),
+              onSubmit: () => fieldFocus.requestFocus(),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Device name',
-                border: OutlineInputBorder(),
+          );
+          return _DisposableFocusColumn(
+            focusNodes: [codeFocus],
+            children: [
+              TextField(
+                controller: codeController,
+                focusNode: codeFocus,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(6),
+                ],
+                decoration: const InputDecoration(
+                  labelText: '6-digit code',
+                  hintText: 'From cloud admin → Devices',
+                  border: OutlineInputBorder(),
+                  helperText: 'Down → device name',
+                ),
+                onSubmitted: (_) => fieldFocus.requestFocus(),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Pair'),
-          ),
-        ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: nameController,
+                focusNode: fieldFocus,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'Device name',
+                  border: OutlineInputBorder(),
+                  helperText: 'Press Down for Pair',
+                ),
+                onSubmitted: (_) => submitFromField(),
+              ),
+            ],
+          );
+        },
       ),
     );
     if (ok != true) return;
@@ -1066,42 +1076,44 @@ class _ChannelDetailPane extends StatelessWidget {
     final controller = TextEditingController(
       text: channel.youtubePlaylistId ?? '',
     );
-    final result = await showDialog<String?>(
+    var cleared = false;
+    final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TvTextDialog(
         title: const Text('Playlist ID'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            hintText: 'PL… or YouTube playlist URL',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, ''),
-            child: const Text('Clear'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
+        submitLabel: 'Save',
+        secondaryLabel: 'Clear',
+        onCancel: () => Navigator.pop(ctx, false),
+        onSecondary: () {
+          cleared = true;
+          Navigator.pop(ctx, true);
+        },
+        onSubmit: () => Navigator.pop(ctx, true),
+        fieldBuilder: (context, fieldFocus, submitFromField) {
+          return TextField(
+            controller: controller,
+            focusNode: fieldFocus,
+            autofocus: true,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText: 'PL… or YouTube playlist URL',
+              border: OutlineInputBorder(),
+              helperText: 'Press Down for Save',
+            ),
+            onSubmitted: (_) => submitFromField(),
+          );
+        },
       ),
     );
-    if (result == null) return;
+    if (result != true) return;
+    final value = cleared ? '' : controller.text.trim();
     try {
       await repository.setPlaylistId(
         channel.id,
-        result.isEmpty ? null : result,
+        value.isEmpty ? null : value,
       );
       await onChanged();
-      toast(result.isEmpty ? 'Playlist cleared' : 'Playlist updated');
+      toast(value.isEmpty ? 'Playlist cleared' : 'Playlist updated');
     } catch (e) {
       toast('$e');
     }
@@ -1118,27 +1130,27 @@ class _ChannelDetailPane extends StatelessWidget {
     final controller = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TvTextDialog(
         title: const Text('Add YouTube videos'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 4,
-          decoration: const InputDecoration(
-            hintText: 'Paste video IDs or YouTube URLs\n(one or comma-separated)',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Add'),
-          ),
-        ],
+        submitLabel: 'Add',
+        onCancel: () => Navigator.pop(ctx, false),
+        onSubmit: () => Navigator.pop(ctx, true),
+        fieldBuilder: (context, fieldFocus, submitFromField) {
+          return TextField(
+            controller: controller,
+            focusNode: fieldFocus,
+            autofocus: true,
+            maxLines: 4,
+            textInputAction: TextInputAction.done,
+            decoration: const InputDecoration(
+              hintText:
+                  'Paste video IDs or YouTube URLs\n(one or comma-separated)',
+              border: OutlineInputBorder(),
+              helperText: 'Press Down for Add',
+            ),
+            onSubmitted: (_) => submitFromField(),
+          );
+        },
       ),
     );
     if (ok != true) return;
@@ -1154,39 +1166,49 @@ class _ChannelDetailPane extends StatelessWidget {
     final url = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => TvTextDialog(
         title: const Text('Add direct media'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: title,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                border: OutlineInputBorder(),
-              ),
+        submitLabel: 'Add',
+        onCancel: () => Navigator.pop(ctx, false),
+        onSubmit: () => Navigator.pop(ctx, true),
+        fieldBuilder: (context, fieldFocus, submitFromField) {
+          final titleFocus = FocusNode(
+            onKeyEvent: (node, event) => handleTvTextFieldKeys(
+              event,
+              moveNext: () => fieldFocus.requestFocus(),
+              onSubmit: () => fieldFocus.requestFocus(),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: url,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'HTTPS URL (.mp4 / .m3u8 / .mpd)',
-                border: OutlineInputBorder(),
+          );
+          return _DisposableFocusColumn(
+            focusNodes: [titleFocus],
+            children: [
+              TextField(
+                controller: title,
+                focusNode: titleFocus,
+                autofocus: true,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                  helperText: 'Down → URL',
+                ),
+                onSubmitted: (_) => fieldFocus.requestFocus(),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Add'),
-          ),
-        ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: url,
+                focusNode: fieldFocus,
+                textInputAction: TextInputAction.done,
+                decoration: const InputDecoration(
+                  labelText: 'HTTPS URL (.mp4 / .m3u8 / .mpd)',
+                  border: OutlineInputBorder(),
+                  helperText: 'Press Down for Add',
+                ),
+                onSubmitted: (_) => submitFromField(),
+              ),
+            ],
+          );
+        },
       ),
     );
     if (ok != true) return;
@@ -1413,6 +1435,39 @@ class _VideoThumb extends StatelessWidget {
                 ),
               ),
       ),
+    );
+  }
+}
+
+/// Owns extra [FocusNode]s created inside dialog builders so they are disposed.
+class _DisposableFocusColumn extends StatefulWidget {
+  const _DisposableFocusColumn({
+    required this.focusNodes,
+    required this.children,
+  });
+
+  final List<FocusNode> focusNodes;
+  final List<Widget> children;
+
+  @override
+  State<_DisposableFocusColumn> createState() => _DisposableFocusColumnState();
+}
+
+class _DisposableFocusColumnState extends State<_DisposableFocusColumn> {
+  @override
+  void dispose() {
+    for (final node in widget.focusNodes) {
+      node.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: widget.children,
     );
   }
 }

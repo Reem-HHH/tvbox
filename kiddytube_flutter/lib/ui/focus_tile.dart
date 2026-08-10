@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 /// Focusable tile that scales on TV/D-pad focus and works with touch.
+/// Focus ring matches YouTube TV (white outline).
 class FocusTile extends StatefulWidget {
   const FocusTile({
     super.key,
@@ -48,19 +49,28 @@ class _FocusTileState extends State<FocusTile> {
       child: GestureDetector(
         onTap: widget.onActivated,
         child: AnimatedScale(
-          scale: _focused ? 1.04 : 1.0,
-          duration: const Duration(milliseconds: 80),
+          scale: _focused ? 1.06 : 1.0,
+          duration: const Duration(milliseconds: 90),
           curve: Curves.easeOut,
           child: DecoratedBox(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: _focused ? const Color(0xFF1565C0) : Colors.transparent,
+                color: _focused ? Colors.white : Colors.transparent,
                 width: 3,
               ),
+              boxShadow: _focused
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(11),
               child: widget.child,
             ),
           ),

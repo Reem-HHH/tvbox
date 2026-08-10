@@ -10,7 +10,7 @@ Single-admin cloud catalog for your household. You edit content in a **web admin
 - Revoke any device from the admin UI
 - `GET /v1/catalog` (Bearer device token) returns JSON compatible with Flutter/native catalog export shape
 
-## Quick start
+## Quick start (local)
 
 ```bash
 cd cloud
@@ -24,6 +24,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
 ```
 
 Open [http://127.0.0.1:8787/admin](http://127.0.0.1:8787/admin).
+
+## Production: Render + Neon (free)
+
+Host the admin + API on the public internet so TV/iPad can pair from anywhere:
+
+→ **[DEPLOY_RENDER_NEON.md](DEPLOY_RENDER_NEON.md)** step-by-step (Neon Postgres + Render Web Service).
+
+Summary: Neon for `DATABASE_URL`, Render runs `uvicorn` from `cloud/`, set `PUBLIC_BASE_URL` to your `https://….onrender.com`, then paste that URL into each device’s Parent → Home & Sync.
 
 ## Device registration (B)
 
@@ -89,6 +97,8 @@ You can paste an export from the current app into **Catalog → Import**.
 
 ## Production notes
 
-- Put TLS in front (Caddy/nginx) and set `PUBLIC_BASE_URL` to your https URL
-- Switch `DATABASE_URL` to Postgres when deploying
+- Prefer **[DEPLOY_RENDER_NEON.md](DEPLOY_RENDER_NEON.md)** (Render Web Service + Neon Postgres)
+- Put TLS in front if you self-host; set `PUBLIC_BASE_URL` to your https URL
+- `DATABASE_URL` accepts Neon `postgresql://…?sslmode=require` (auto-rewritten for psycopg3)
 - Change `ADMIN_PASSWORD` and `SECRET_KEY` before exposing the server
+- Free Render sleeps when idle — first wake can be slow; optional uptime ping on `/health`

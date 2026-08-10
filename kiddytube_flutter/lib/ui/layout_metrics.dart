@@ -73,4 +73,7 @@ class LayoutMetrics {
     if (isTablet) return isLandscape ? 4 : 3;
     return isLandscape ? 3 : 2;
   }
+
+  /// Grid cell: 16:9 image + title block under.
+  double get youtubeCardAspect => 16 / 12.2;
 }

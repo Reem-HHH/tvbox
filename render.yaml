@@ -1,0 +1,30 @@
+# Render Blueprint — deploy KiddyTube Cloud from this monorepo.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# 1) Create a Neon Postgres DB and copy the connection string.
+# 2) In Render: New → Blueprint → connect this GitHub repo → apply this file.
+# 3) Set secret env vars in the Render dashboard (see cloud/DEPLOY_RENDER_NEON.md).
+
+services:
+  - type: web
+    name: kiddytube-cloud
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: cloud
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false

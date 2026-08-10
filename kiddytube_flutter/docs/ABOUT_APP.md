@@ -82,9 +82,10 @@ Never commit `local_defines.json` (gitignored).
 ### Cloud catalog (optional shared house library)
 
 - Service: `cloud/` — FastAPI admin + per-device pairing codes  
-- Start: `uvicorn app.main:app --host 0.0.0.0 --port 8787`  
-- Admin UI: `http://127.0.0.1:8787/admin`  
-- Devices: set **Cloud server URL** to `http://<your-mac-lan-ip>:8787`, pair with 6-digit code, **Pull catalog**  
+- Local: `uvicorn app.main:app --host 0.0.0.0 --port 8787`  
+- Production: **Render + Neon** — see [`../../cloud/DEPLOY_RENDER_NEON.md`](../../cloud/DEPLOY_RENDER_NEON.md)  
+- Admin UI: `http://127.0.0.1:8787/admin` (local) or `https://….onrender.com/admin`  
+- Devices: set **Cloud server URL** to that base URL, pair with 6-digit code, **Pull catalog**  
 - Devices **pull** from admin; edits on a device stay local unless you re-import via admin  
 
 See [`../cloud/README.md`](../cloud/README.md) and [`RUN_TV_AND_IPAD.md`](RUN_TV_AND_IPAD.md).

@@ -18,27 +18,54 @@ class KiddyTubeApp extends StatelessWidget {
 
   final CatalogRepository repository;
 
-  static const _seed = Color(0xFF1E88E5);
+  /// YouTube-inspired red.
+  static const _ytRed = Color(0xFFFF0000);
+  static const _ytBg = Color(0xFF0F0F0F);
+  static const _ytSurface = Color(0xFF212121);
 
   @override
   Widget build(BuildContext context) {
+    final darkScheme = ColorScheme.fromSeed(
+      seedColor: _ytRed,
+      brightness: Brightness.dark,
+    ).copyWith(
+      primary: _ytRed,
+      onPrimary: Colors.white,
+      surface: _ytBg,
+      onSurface: Colors.white,
+      onSurfaceVariant: const Color(0xFFAAAAAA),
+      surfaceContainerHighest: _ytSurface,
+      surfaceContainerLow: const Color(0xFF181818),
+      outline: const Color(0xFF3F3F3F),
+    );
+
+    final lightScheme = ColorScheme.fromSeed(
+      seedColor: _ytRed,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: _ytRed,
+    );
+
     return MaterialApp(
       title: 'KiddyTube',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
+      // Consistent YouTube-like chrome on TV and phones.
+      themeMode: ThemeMode.dark,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: _seed,
-          brightness: Brightness.light,
-        ),
+        colorScheme: lightScheme,
         useMaterial3: true,
+        scaffoldBackgroundColor: Colors.white,
       ),
       darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: _seed,
-          brightness: Brightness.dark,
-        ),
+        colorScheme: darkScheme,
         useMaterial3: true,
+        scaffoldBackgroundColor: _ytBg,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: _ytBg,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
       ),
       home: HomeScreen(repository: repository),
     );
