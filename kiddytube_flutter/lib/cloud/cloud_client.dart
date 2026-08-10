@@ -113,6 +113,69 @@ class CloudClient {
     return map;
   }
 
+  /// Upsert watch rows; returns server list (newest first).
+  Future<List<Map<String, dynamic>>> upsertWatch({
+    required String baseUrl,
+    required String token,
+    required List<Map<String, dynamic>> items,
+  }) async {
+    final root = normalizeBaseUrl(baseUrl);
+    final uri = Uri.parse('$root/v1/watch');
+    final response = await _http
+        .put(
+          uri,
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'items': items}),
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw CloudException(
+        _errorMessage(response) ??
+            'Watch sync failed (${response.statusCode})',
+        statusCode: response.statusCode,
+      );
+    }
+    return _parseWatchItems(response.body);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchWatch({
+    required String baseUrl,
+    required String token,
+  }) async {
+    final root = normalizeBaseUrl(baseUrl);
+    final uri = Uri.parse('$root/v1/watch');
+    final response = await _http
+        .get(
+          uri,
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 20));
+    if (response.statusCode != 200) {
+      throw CloudException(
+        _errorMessage(response) ??
+            'Watch pull failed (${response.statusCode})',
+        statusCode: response.statusCode,
+      );
+    }
+    return _parseWatchItems(response.body);
+  }
+
+  List<Map<String, dynamic>> _parseWatchItems(String body) {
+    final map = jsonDecode(body);
+    if (map is! Map<String, dynamic>) {
+      throw CloudException('Unexpected watch response');
+    }
+    final items = map['items'];
+    if (items is! List) return const [];
+    return items
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+  }
+
   String? _errorMessage(http.Response response) {
     try {
       final map = jsonDecode(response.body);

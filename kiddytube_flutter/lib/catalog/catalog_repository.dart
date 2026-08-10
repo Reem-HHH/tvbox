@@ -673,6 +673,9 @@ class CatalogRepository {
     await _prefs!.setString(_cloudBaseUrlKey, url);
     await _prefs!.setString(_cloudDeviceNameKey, result.name);
     await _secrets.writeCloudDeviceToken(result.token);
+    try {
+      await syncWatchWithCloud();
+    } catch (_) {}
     return 'Paired as ${result.name}';
   }
 
@@ -750,11 +753,102 @@ class CatalogRepository {
     if (now - status.lastCloudSyncMs < syncTtlMs) return false;
     try {
       final summary = await pullCloudCatalog(force: true);
+      await syncWatchWithCloud();
       return summary.startsWith('Applied');
     } catch (_) {
       return false;
     }
   }
+
+  /// Local continue-watching + optional cloud upsert (when paired).
+  Future<void> recordWatch({
+    required String channelId,
+    required VideoItem video,
+    int positionMs = 0,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await recentWatch.record(
+      channelId: channelId,
+      video: video,
+      positionMs: positionMs,
+    );
+    try {
+      await pushWatchToCloud(
+        items: [
+          RecentWatchItem(
+            channelId: channelId,
+            videoId: video.id,
+            title: video.title,
+            youtubeVideoId: video.youtubeVideoId,
+            directUrl: video.directUrl,
+            positionMs: positionMs,
+            updatedAtMs: now,
+          ),
+        ],
+      );
+    } catch (_) {
+      // Offline / unpaired — local store is enough.
+    }
+  }
+
+  Future<void> pushWatchToCloud({List<RecentWatchItem>? items}) async {
+    final status = await cloudStatus();
+    if (!status.paired || status.baseUrl.isEmpty) return;
+    final token = await _secrets.readCloudDeviceToken();
+    if (token == null || token.isEmpty) return;
+    final payload = items ?? await recentWatch.load();
+    if (payload.isEmpty) return;
+    await _cloud.upsertWatch(
+      baseUrl: status.baseUrl,
+      token: token,
+      items: payload.map(_watchToApi).toList(),
+    );
+  }
+
+  /// Push local history, pull remote, merge by newest timestamp.
+  Future<String> syncWatchWithCloud() async {
+    final status = await cloudStatus();
+    if (!status.paired) return 'Pair this device first.';
+    if (status.baseUrl.isEmpty) return 'Set the cloud server URL first.';
+    final token = await _secrets.readCloudDeviceToken();
+    if (token == null || token.isEmpty) return 'Pair this device first.';
+
+    final local = await recentWatch.load();
+    if (local.isNotEmpty) {
+      await _cloud.upsertWatch(
+        baseUrl: status.baseUrl,
+        token: token,
+        items: local.map(_watchToApi).toList(),
+      );
+    }
+    final remoteMaps = await _cloud.fetchWatch(
+      baseUrl: status.baseUrl,
+      token: token,
+    );
+    final remote = remoteMaps.map(_watchFromApi).toList();
+    final merged = await recentWatch.mergeFromCloud(remote);
+    return 'Synced ${merged.length} watch item(s)';
+  }
+
+  Map<String, dynamic> _watchToApi(RecentWatchItem item) => {
+        'channel_id': item.channelId,
+        'video_id': item.videoId,
+        'title': item.title,
+        if (item.youtubeVideoId != null) 'youtube_video_id': item.youtubeVideoId,
+        if (item.directUrl != null) 'direct_url': item.directUrl,
+        'position_ms': item.positionMs,
+        'updated_at_ms': item.updatedAtMs,
+      };
+
+  RecentWatchItem _watchFromApi(Map<String, dynamic> json) => RecentWatchItem(
+        channelId: json['channel_id'] as String? ?? '',
+        videoId: json['video_id'] as String? ?? '',
+        title: json['title'] as String? ?? 'Video',
+        youtubeVideoId: json['youtube_video_id'] as String?,
+        directUrl: json['direct_url'] as String?,
+        positionMs: (json['position_ms'] as num?)?.toInt() ?? 0,
+        updatedAtMs: (json['updated_at_ms'] as num?)?.toInt() ?? 0,
+      );
 
   /// Refresh playlist-backed channels that have Follow uploads enabled.
   /// Returns a human-readable summary.

@@ -481,6 +481,19 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     }
   }
 
+  Future<void> _syncWatch() async {
+    if (!widget.sessionOk()) return;
+    setState(() => _busy = true);
+    try {
+      final summary = await widget.repository.syncWatchWithCloud();
+      widget.toast(summary);
+    } catch (e) {
+      widget.toast('$e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _unpair() async {
     if (!widget.sessionOk()) return;
     final ok = await showDialog<bool>(
@@ -644,6 +657,17 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                               '${cloud.lastRevision == null ? '' : ' · rev ${cloud.lastRevision}'}',
                 ),
                 onTap: _busy || cloud?.paired != true ? null : _pullCloud,
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.history),
+                title: const Text('Sync watch history'),
+                subtitle: Text(
+                  cloud?.paired != true
+                      ? 'Pair first'
+                      : 'Upload Continue Watching to the cloud admin',
+                ),
+                onTap: _busy || cloud?.paired != true ? null : _syncWatch,
               ),
               if (cloud?.paired == true) ...[
                 const Divider(height: 1),

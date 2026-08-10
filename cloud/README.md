@@ -8,7 +8,8 @@ Single-admin cloud catalog for your household. You edit content in a **web admin
 - Catalog management: add/delete channels & YouTube videos, enable/disable, import app `exportJson`
 - Device pairing: generate 6-digit code → device calls `POST /v1/devices/pair` → stores token
 - Revoke any device from the admin UI
-- `GET /v1/catalog` (Bearer device token) returns JSON compatible with Flutter/native catalog export shape
+- `GET /v1/catalog` (Bearer device token) returns JSON compatible with Flutter catalog export shape
+- Watch history: `PUT/GET /v1/watch` per device; admin Devices page shows recent plays
 
 ## Quick start (local)
 
@@ -91,7 +92,7 @@ You can paste an export from the current app into **Catalog → Import**.
 
 ## Next app integration (not in this folder yet)
 
-- Flutter / native: settings screen “Pair device” (enter code) + persist token
+- Flutter: settings screen “Pair device” (enter code) + persist token
 - On launch / parent Refresh: `GET /v1/catalog` → write into local `CatalogRepository`
 - Keep local seed as offline fallback when cloud unreachable
 

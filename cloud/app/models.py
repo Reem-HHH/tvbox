@@ -96,3 +96,23 @@ class VideoRow(Base):
     allow_seek: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_index: Mapped[int] = mapped_column(Integer, default=0)
     channel: Mapped[ChannelRow] = relationship(back_populates="videos")
+
+
+class WatchHistoryRow(Base):
+    """Per-device continue-watching row (synced from Flutter RecentWatchStore)."""
+
+    __tablename__ = "watch_history"
+    __table_args__ = (
+        UniqueConstraint("device_id", "channel_id", "video_id", name="uq_watch_device_video"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    device_id: Mapped[int] = mapped_column(ForeignKey("devices.id", ondelete="CASCADE"), index=True)
+    channel_id: Mapped[str] = mapped_column(String(80), index=True)
+    video_id: Mapped[str] = mapped_column(String(120), index=True)
+    title: Mapped[str] = mapped_column(String(300), default="Video")
+    youtube_video_id: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    direct_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    position_ms: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+    device: Mapped[Device] = relationship()

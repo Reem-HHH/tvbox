@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kiddytube/catalog/catalog_repository.dart';
+import 'package:kiddytube/catalog/models.dart';
+import 'package:kiddytube/catalog/recent_watch.dart';
 import 'package:kiddytube/cloud/cloud_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -59,5 +61,44 @@ void main() {
     final status = await repo.cloudStatus();
     expect(status.lastRevision, 3);
     expect(status.lastCloudSyncMs, greaterThan(0));
+  });
+
+  test('RecentWatchStore mergeFromCloud keeps newest per video', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final store = RecentWatchStore(prefs);
+    await store.record(
+      channelId: 'peppa',
+      video: const VideoItem(
+        id: 'vid1',
+        title: 'Local',
+        youtubeVideoId: 'aaaaaaaaaaa',
+      ),
+      positionMs: 1000,
+    );
+    final local = await store.load();
+    expect(local, isNotEmpty);
+
+    final merged = await store.mergeFromCloud([
+      RecentWatchItem(
+        channelId: 'peppa',
+        videoId: 'vid1',
+        title: 'Remote newer',
+        youtubeVideoId: 'aaaaaaaaaaa',
+        positionMs: 9000,
+        updatedAtMs: local.first.updatedAtMs + 5000,
+      ),
+      const RecentWatchItem(
+        channelId: 'barney',
+        videoId: 'vid2',
+        title: 'Other',
+        youtubeVideoId: 'bbbbbbbbbbb',
+        positionMs: 0,
+        updatedAtMs: 1,
+      ),
+    ]);
+    expect(merged.length, 2);
+    expect(merged.first.title, 'Remote newer');
+    expect(merged.first.positionMs, 9000);
   });
 }

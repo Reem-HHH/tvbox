@@ -14,7 +14,7 @@ from ..auth import create_pairing_code, ensure_admin, verify_password
 from ..catalog_service import import_catalog_json, persist_catalog_document
 from ..config import get_settings
 from ..db import get_db
-from ..models import AdminUser, ChannelRow, Device, PairingCode, VideoRow, utcnow
+from ..models import AdminUser, ChannelRow, Device, PairingCode, VideoRow, WatchHistoryRow, utcnow
 
 router = APIRouter(prefix="/admin", tags=["admin-web"])
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).resolve().parents[1] / "templates"))
@@ -109,6 +109,13 @@ def devices_page(request: Request, db: Session = Depends(get_db)):
         .order_by(PairingCode.created_at.desc())
         .all()
     )
+    recent_watch = (
+        db.query(WatchHistoryRow)
+        .order_by(WatchHistoryRow.updated_at.desc())
+        .limit(40)
+        .all()
+    )
+    device_by_id = {d.id: d for d in devices}
     return TEMPLATES.TemplateResponse(
         "devices.html",
         {
@@ -116,6 +123,8 @@ def devices_page(request: Request, db: Session = Depends(get_db)):
             "admin": admin,
             "devices": devices,
             "active_codes": active_codes,
+            "recent_watch": recent_watch,
+            "device_by_id": device_by_id,
             "flash": request.query_params.get("flash"),
             "public_base_url": get_settings().public_base_url,
         },

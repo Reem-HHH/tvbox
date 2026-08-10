@@ -110,6 +110,30 @@ class RecentWatchStore {
     await _ensure();
     await _prefs!.remove(_key);
   }
+
+  /// Merge cloud rows with local; keep newest per channel+video, cap [maxItems].
+  Future<List<RecentWatchItem>> mergeFromCloud(
+    List<RecentWatchItem> remote,
+  ) async {
+    await _ensure();
+    final local = await load();
+    final byKey = <String, RecentWatchItem>{};
+    for (final item in [...local, ...remote]) {
+      final key = '${item.channelId}::${item.videoId}';
+      final existing = byKey[key];
+      if (existing == null || item.updatedAtMs >= existing.updatedAtMs) {
+        byKey[key] = item;
+      }
+    }
+    final merged = byKey.values.toList()
+      ..sort((a, b) => b.updatedAtMs.compareTo(a.updatedAtMs));
+    final next = merged.take(maxItems).toList();
+    await _prefs!.setString(
+      _key,
+      jsonEncode(next.map((e) => e.toJson()).toList()),
+    );
+    return next;
+  }
 }
 
 /// Clamp resume position like Kotlin [PlayerActivity.clampedResumePosition].

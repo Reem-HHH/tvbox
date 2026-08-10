@@ -87,4 +87,10 @@ After that, edit catalog on the website → **Pull catalog** on devices (or wait
 
 ## Next (watch history)
 
-Catalog sync is live after this deploy. Per-device watch history (Continue Watching in the DB + admin view) is the next feature on top of the same Neon database — say when you want that built.
+Per-device Continue Watching sync is implemented:
+
+- Device API: `PUT /v1/watch` (upsert), `GET /v1/watch` (list for this device)
+- Flutter: uploads on playback progress when paired; merges on launch / **Sync watch history**
+- Admin → **Devices** → **Recent watch history** table
+
+After redeploying Render, play a video on a paired device, then refresh the Devices page.

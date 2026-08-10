@@ -14,7 +14,7 @@ KiddyTube is a kids video browser with a locked parent area. Kids see only the c
 | Kids + parents | Android phone/tablet, Android TV (Google TV), iPad/iOS |
 | Not supported | Apple TV (tvOS) |
 
-The older Kotlin TV app in `KiddyTube/` still exists for parity; day-to-day use is Flutter.
+Day-to-day use is this Flutter app. The older Kotlin Android TV app was moved out of this repo into the sibling archive `KiddyTube-kotlin-archive/` (frozen; not maintained here).
 
 ---
 
@@ -50,7 +50,7 @@ Islamic / Arabic-first shows, preschool series, plus recent adds:
 | حديقة المرح | WildBrain Arabic Night Garden |
 | داوود، عمر وهنا، سبيستون أناشيد، … | Existing seed library |
 
-Full dossiers: [`../KiddyTube/docs/channels/`](../KiddyTube/docs/channels/).
+Full dossiers: [`channels/`](channels/).
 
 ### Family content rules
 
@@ -86,6 +86,7 @@ Never commit `local_defines.json` (gitignored).
 - Production: **Render + Neon** — see [`../../cloud/DEPLOY_RENDER_NEON.md`](../../cloud/DEPLOY_RENDER_NEON.md)  
 - Admin UI: `http://127.0.0.1:8787/admin` (local) or `https://….onrender.com/admin`  
 - Devices: set **Cloud server URL** to that base URL, pair with 6-digit code, **Pull catalog**  
+- Watch history: Continue Watching syncs to Neon when paired (Admin → Devices)  
 - Devices **pull** from admin; edits on a device stay local unless you re-import via admin  
 
 See [`../cloud/README.md`](../cloud/README.md) and [`RUN_TV_AND_IPAD.md`](RUN_TV_AND_IPAD.md).
@@ -102,7 +103,7 @@ Live YouTube IDs **rotate**. If مكة/قرآن مباشر stop working:
 
 - Seed upgrades (`SEED_VERSION`) merge new channels into existing installs once.  
 - Prefer curated video lists for family-sensitive brands (Disney, Blippi).  
-- Channel write-ups live under `KiddyTube/docs/channels/`.
+- Channel write-ups live under `docs/channels/`.
 
 ### Branch / shipping
 
@@ -125,4 +126,4 @@ Live YouTube IDs **rotate**. If مكة/قرآن مباشر stop working:
 | [README.md](../README.md) | Flutter project overview + setup |
 | [RUN_TV_AND_IPAD.md](RUN_TV_AND_IPAD.md) | Install / pair checklist |
 | [../cloud/README.md](../cloud/README.md) | Cloud admin API |
-| [../KiddyTube/docs/channels/README.md](../KiddyTube/docs/channels/README.md) | Per-show notes |
+| [channels/README.md](channels/README.md) | Per-show notes |

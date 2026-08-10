@@ -129,7 +129,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     final snap = await _progressSnapshot();
     if (snap == null) return;
     final item = _current;
-    await widget.repository.recentWatch.record(
+    await widget.repository.recordWatch(
       channelId: item.channelId,
       video: item.video,
       positionMs: clampedResumePosition(snap.pos, snap.dur),
@@ -173,7 +173,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     });
 
     final item = _current;
-    await widget.repository.recentWatch.record(
+    await widget.repository.recordWatch(
       channelId: item.channelId,
       video: item.video,
       positionMs: startMs,

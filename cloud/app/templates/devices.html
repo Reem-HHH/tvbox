@@ -57,4 +57,29 @@
   </table>
   {% endif %}
 </section>
+
+<section class="card">
+  <h2>Recent watch history</h2>
+  <p class="muted">Synced from paired devices (Continue Watching). Newest first.</p>
+  {% if not recent_watch %}
+  <p class="muted">No watch history yet. Play something on a paired device.</p>
+  {% else %}
+  <table>
+    <thead>
+      <tr><th>When</th><th>Device</th><th>Title</th><th>Position</th><th>Channel</th></tr>
+    </thead>
+    <tbody>
+      {% for w in recent_watch %}
+      <tr>
+        <td class="muted">{{ w.updated_at }}</td>
+        <td>{% if device_by_id.get(w.device_id) %}{{ device_by_id[w.device_id].name }}{% else %}#{{ w.device_id }}{% endif %}</td>
+        <td><strong>{{ w.title }}</strong><div class="muted"><code>{{ w.video_id }}</code></div></td>
+        <td>{% if w.position_ms > 0 %}{{ (w.position_ms // 60000) }}m {{ ((w.position_ms // 1000) % 60) }}s{% else %}start{% endif %}</td>
+        <td class="muted"><code>{{ w.channel_id }}</code></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
 {% endblock %}

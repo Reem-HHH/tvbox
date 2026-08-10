@@ -6,11 +6,11 @@ Cross-platform kids browser for:
 - **Android TV** (Leanback launcher + D-pad focus)
 - **iPad / iOS**
 
-**Apple TV (tvOS)** is intentionally out of scope. The production Kotlin app in [`../KiddyTube`](../KiddyTube) remains available for parity; **Flutter** (`kiddytube_flutter/`) is the app to run day-to-day on phone, iPad, and Google TV.
+**Apple TV (tvOS)** is intentionally out of scope. This Flutter app is the day-to-day product for phone, iPad, and Google TV. The old native Kotlin Android TV app is archived outside this repo (see sibling folder `KiddyTube-kotlin-archive/`).
 
 ## Features (current)
 
-- Catalog seed parity with Kotlin `SEED_VERSION` **25**
+- Curated catalog seed **v25** (allowlisted channels / videos)
 - Home **Shows | Mix** side-by-side toggle (selected mode highlighted; change gated behind parent PIN)
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel; seek scrub overlay when allowed)
 - Continue watching with **periodic resume progress** (clamped near start/end)
@@ -30,7 +30,7 @@ Cross-platform kids browser for:
 | **[About the app](docs/ABOUT_APP.md)** | You (admin) + household: PIN, home modes, channels, cloud, live Makkah, limits |
 | **[Install & pair on TV / iPad](docs/RUN_TV_AND_IPAD.md)** | Step-by-step install, ADB, pairing |
 | **[Cloud README](../cloud/README.md)** | Admin API + device tokens |
-| **[Channel dossiers](../KiddyTube/docs/channels/README.md)** | Per-show notes / clean-fit |
+| **[Channel dossiers](docs/channels/README.md)** | Per-show notes / clean-fit |
 
 ## Setup
 

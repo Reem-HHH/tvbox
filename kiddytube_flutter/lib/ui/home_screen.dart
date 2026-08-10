@@ -97,7 +97,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _maybeDailySync() async {
     final cloudChanged = await widget.repository.maybePullCloudDaily();
     final youtubeChanged = await widget.repository.maybeRefreshDaily();
-    if ((cloudChanged || youtubeChanged) && mounted) {
+    var watchTouched = false;
+    try {
+      await widget.repository.syncWatchWithCloud();
+      watchTouched = true;
+    } catch (_) {}
+    if ((cloudChanged || youtubeChanged || watchTouched) && mounted) {
       await _reloadAfterSync();
     }
   }

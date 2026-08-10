@@ -27,7 +27,7 @@ Open the **Flutter project folder**, not a single file:
 `/Users/reema/Documents/tv box /tvbox/kiddytube_flutter`
 
 1. Android Studio → **File → Open** → select the `kiddytube_flutter` folder.
-2. Do **not** open only `android/`, and do **not** open the old native app at `KiddyTube/` — those are not this Flutter project.
+2. Do **not** open only `android/` inside Flutter as a standalone native project — open the whole `kiddytube_flutter` folder. The old Kotlin app is archived outside this repo (`KiddyTube-kotlin-archive/`).
 3. Wait for Gradle/Flutter indexing to finish (bottom status bar).
 4. Install the **Flutter** and **Dart** plugins if prompted (**Settings → Plugins**).
 5. In the device dropdown (top toolbar), pick your **Android TV / Google TV**, then click **Run**.
