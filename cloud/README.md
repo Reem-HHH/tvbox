@@ -22,10 +22,14 @@ pip install -r requirements.txt
 cp .env.example .env
 # edit ADMIN_EMAIL, ADMIN_PASSWORD, SECRET_KEY, DEVICE_ENROLL_SECRET
 mkdir -p data
+# Schema migrations run automatically on startup (Alembic). Manual:
+#   alembic upgrade head
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8787
 ```
 
 Open [http://127.0.0.1:8787/admin](http://127.0.0.1:8787/admin).
+
+New schema changes: add a revision under `alembic/versions/`, then `alembic upgrade head` (also runs on app start / Render boot).
 
 ## Production: Render + Neon (free)
 
@@ -33,25 +37,14 @@ Host the admin + API on the public internet so TV/iPad can auto-enroll from anyw
 
 → **[DEPLOY_RENDER_NEON.md](DEPLOY_RENDER_NEON.md)** step-by-step (Neon Postgres + Render Web Service).
 
-Summary: Neon for `DATABASE_URL`, Render runs `uvicorn` from `cloud/`, set `PUBLIC_BASE_URL` and `DEVICE_ENROLL_SECRET`, bake the same secret + URL into Flutter via `local_defines.json`.
+Summary: Neon for `DATABASE_URL`, Render runs `uvicorn` from `cloud/`, set `PUBLIC_BASE_URL`. Prefer pairing codes for devices; optional `DEVICE_ENROLL_SECRET` only if you enable Flutter `CLOUD_AUTO_ENROLL`.
 
-## Device registration (auto-enroll)
+## Device registration (pairing first)
 
-Preferred for household installs:
-
-```http
-POST /v1/devices/enroll
-Content-Type: application/json
-
-{"secret":"<DEVICE_ENROLL_SECRET>","name":"Living room TV","platform":"android"}
-```
-
-Response includes a one-time `token`. Store it securely on the device.
-
-### Optional: pairing code
+Preferred for household installs — **no enroll secret in the APK**:
 
 1. Admin → **Devices** → **Generate pairing code**
-2. On the device:
+2. On the device (Parent → Home & Sync → Pair), or:
 
 ```http
 POST /v1/devices/pair
@@ -69,6 +62,18 @@ Authorization: Bearer <device_token>
 
 4. To remove a device: Admin → Devices → **Revoke**.
 
+### Optional: auto-enroll
+
+Requires baking `CLOUD_ENROLL_SECRET` into the app **and** `CLOUD_AUTO_ENROLL=true`. Prefer pairing instead.
+
+```http
+POST /v1/devices/enroll
+Content-Type: application/json
+
+{"secret":"<DEVICE_ENROLL_SECRET>","name":"Living room TV","platform":"android"}
+```
+
+Response includes a one-time `token`. Store it securely on the device.
 ## Catalog JSON shape
 
 Matches Flutter `CatalogRepository.exportJson()`:
@@ -114,4 +119,7 @@ You can paste an export from the current app into **Catalog → Import**.
 - Put TLS in front if you self-host; set `PUBLIC_BASE_URL` to your https URL
 - `DATABASE_URL` accepts Neon `postgresql://…?sslmode=require` (auto-rewritten for psycopg3)
 - Change `ADMIN_PASSWORD` and `SECRET_KEY` before exposing the server
+- Production (`https://` `PUBLIC_BASE_URL`) refuses default admin password / secret key
+- Pair / enroll / login are rate-limited; admin session cookies are `Secure` on HTTPS
+- Run API tests: `pip install -r requirements.txt && pytest` from `cloud/`
 - Free Render sleeps when idle — first wake can be slow; optional uptime ping on `/health`

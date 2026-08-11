@@ -3,18 +3,25 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 
-from ..auth import create_pairing_code, ensure_admin, verify_password
+from ..auth import (
+    DUMMY_PASSWORD_HASH,
+    create_pairing_code,
+    ensure_admin,
+    verify_password,
+)
 from ..catalog_service import import_catalog_json, persist_catalog_document
 from ..config import get_settings
+from ..csrf import ensure_csrf_token, require_csrf
 from ..db import get_db
 from ..models import AdminUser, ChannelRow, Device, PairingCode, VideoRow, WatchHistoryRow, utcnow
+from ..rate_limit import auth_limiter
 
 router = APIRouter(prefix="/admin", tags=["admin-web"])
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).resolve().parents[1] / "templates"))
@@ -41,12 +48,14 @@ def _extract_video_id(raw: str) -> Optional[str]:
     return vid if re.fullmatch(r"[\w-]{11}", vid) else None
 
 
+def _page(request: Request, template: str, status_code: int = 200, **ctx: Any):
+    payload = {"request": request, "csrf_token": ensure_csrf_token(request), **ctx}
+    return TEMPLATES.TemplateResponse(template, payload, status_code=status_code)
+
+
 @router.get("/login", response_class=HTMLResponse)
 def login_page(request: Request):
-    return TEMPLATES.TemplateResponse(
-        "login.html",
-        {"request": request, "error": None},
-    )
+    return _page(request, "login.html", error=None)
 
 
 @router.post("/login")
@@ -54,23 +63,41 @@ def login_submit(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
+    csrf_token: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    require_csrf(request, csrf_token)
     settings = get_settings()
+    ip = (request.client.host if request.client else None) or "unknown"
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        ip = forwarded.split(",")[0].strip() or ip
+    if not auth_limiter.allow(f"login:ip:{ip}", limit=12, window_seconds=60):
+        return _page(
+            request,
+            "login.html",
+            status_code=429,
+            error="Too many attempts; try again later",
+        )
     ensure_admin(db, settings)
     user = db.query(AdminUser).filter(AdminUser.email == email.lower().strip()).first()
-    if user is None or not verify_password(password, user.password_hash):
-        return TEMPLATES.TemplateResponse(
+    # Always verify against a hash so missing emails are not cheaper than bcrypt.
+    password_hash = user.password_hash if user is not None else DUMMY_PASSWORD_HASH
+    ok = verify_password(password, password_hash) and user is not None
+    if not ok:
+        return _page(
+            request,
             "login.html",
-            {"request": request, "error": "Invalid email or password"},
             status_code=401,
+            error="Invalid email or password",
         )
     request.session["admin_id"] = user.id
     return RedirectResponse("/admin", status_code=303)
 
 
 @router.post("/logout")
-def logout(request: Request):
+def logout(request: Request, csrf_token: str = Form("")):
+    require_csrf(request, csrf_token)
     request.session.clear()
     return RedirectResponse("/admin/login", status_code=303)
 
@@ -84,16 +111,14 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     channels = db.query(ChannelRow).count()
     videos = db.query(VideoRow).count()
     devices = db.query(Device).filter(Device.revoked.is_(False)).count()
-    return TEMPLATES.TemplateResponse(
+    return _page(
+        request,
         "dashboard.html",
-        {
-            "request": request,
-            "admin": admin,
-            "channel_count": channels,
-            "video_count": videos,
-            "device_count": devices,
-            "public_base_url": get_settings().public_base_url,
-        },
+        admin=admin,
+        channel_count=channels,
+        video_count=videos,
+        device_count=devices,
+        public_base_url=get_settings().public_base_url,
     )
 
 
@@ -116,18 +141,16 @@ def devices_page(request: Request, db: Session = Depends(get_db)):
         .all()
     )
     device_by_id = {d.id: d for d in devices}
-    return TEMPLATES.TemplateResponse(
+    return _page(
+        request,
         "devices.html",
-        {
-            "request": request,
-            "admin": admin,
-            "devices": devices,
-            "active_codes": active_codes,
-            "recent_watch": recent_watch,
-            "device_by_id": device_by_id,
-            "flash": request.query_params.get("flash"),
-            "public_base_url": get_settings().public_base_url,
-        },
+        admin=admin,
+        devices=devices,
+        active_codes=active_codes,
+        recent_watch=recent_watch,
+        device_by_id=device_by_id,
+        flash=request.query_params.get("flash"),
+        public_base_url=get_settings().public_base_url,
     )
 
 
@@ -135,8 +158,10 @@ def devices_page(request: Request, db: Session = Depends(get_db)):
 def create_code(
     request: Request,
     device_name: str = Form(""),
+    csrf_token: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
@@ -148,7 +173,13 @@ def create_code(
 
 
 @router.post("/devices/{device_id}/revoke")
-def revoke_device(device_id: int, request: Request, db: Session = Depends(get_db)):
+def revoke_device(
+    device_id: int,
+    request: Request,
+    csrf_token: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
@@ -170,15 +201,13 @@ def catalog_page(request: Request, db: Session = Depends(get_db)):
         .order_by(ChannelRow.sort_order.asc(), ChannelRow.id.asc())
         .all()
     )
-    return TEMPLATES.TemplateResponse(
+    return _page(
+        request,
         "catalog.html",
-        {
-            "request": request,
-            "admin": admin,
-            "channels": channels,
-            "flash": request.query_params.get("flash"),
-            "error": request.query_params.get("error"),
-        },
+        admin=admin,
+        channels=channels,
+        flash=request.query_params.get("flash"),
+        error=request.query_params.get("error"),
     )
 
 
@@ -188,8 +217,10 @@ def add_channel(
     channel_key: str = Form(...),
     title: str = Form(...),
     playlist_id: str = Form(""),
+    csrf_token: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
@@ -215,7 +246,13 @@ def add_channel(
 
 
 @router.post("/catalog/channels/{channel_id}/toggle")
-def toggle_channel(channel_id: int, request: Request, db: Session = Depends(get_db)):
+def toggle_channel(
+    channel_id: int,
+    request: Request,
+    csrf_token: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
@@ -228,7 +265,13 @@ def toggle_channel(channel_id: int, request: Request, db: Session = Depends(get_
 
 
 @router.post("/catalog/channels/{channel_id}/delete")
-def delete_channel(channel_id: int, request: Request, db: Session = Depends(get_db)):
+def delete_channel(
+    channel_id: int,
+    request: Request,
+    csrf_token: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
@@ -246,8 +289,10 @@ def add_video(
     request: Request,
     video_input: str = Form(...),
     title: str = Form(""),
+    csrf_token: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
@@ -280,7 +325,13 @@ def add_video(
 
 
 @router.post("/catalog/videos/{video_id}/delete")
-def delete_video(video_id: int, request: Request, db: Session = Depends(get_db)):
+def delete_video(
+    video_id: int,
+    request: Request,
+    csrf_token: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
@@ -296,8 +347,10 @@ def delete_video(video_id: int, request: Request, db: Session = Depends(get_db))
 def import_json(
     request: Request,
     catalog_json: str = Form(...),
+    csrf_token: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)

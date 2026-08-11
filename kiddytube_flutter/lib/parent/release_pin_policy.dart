@@ -28,10 +28,11 @@ class ReleasePinPolicy {
     if (salt == null || salt.isEmpty || hash == null || hash.isEmpty) {
       return false;
     }
-    final expected =
-        ParentPinManager.hashPin(ParentPinManager.defaultDevPin, salt);
-    if (expected == null) return false;
-    return expected.toLowerCase() == hash.toLowerCase();
+    return ParentPinManager().verifyPin(
+      ParentPinManager.defaultDevPin,
+      salt,
+      hash,
+    );
   }
 
   static ({bool pinChangedFromDefault, bool releaseReady}) sanitizePinFlags({

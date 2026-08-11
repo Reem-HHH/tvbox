@@ -141,25 +141,22 @@ The app appears in the Android TV launcher (Leanback). Use the remote / D-pad to
 
 ---
 
-## 4. Connect devices to the family catalog (auto)
+## 4. Connect devices to the family catalog
 
-Preferred: bake cloud URL + enroll secret into the install so **no pairing code** is needed.
+**Preferred — pairing:**
 
-1. In `local_defines.json` set:
-   - `CLOUD_BASE_URL` — e.g. `https://….onrender.com` or `http://<mac-lan-ip>:8787`
-   - `CLOUD_ENROLL_SECRET` — same as cloud `DEVICE_ENROLL_SECRET`
+1. Optional: set `CLOUD_BASE_URL` in `local_defines.json` (or enter the URL in Parent → Home & Sync).
+2. Admin → **Generate pairing code**
+3. Parent → **Pair device** → **Pull catalog**
+
+**Optional — auto-enroll** (silent register on first launch):
+
+1. In `local_defines.json` set `CLOUD_BASE_URL`, `CLOUD_ENROLL_SECRET` (same as cloud `DEVICE_ENROLL_SECRET`), and `"CLOUD_AUTO_ENROLL": "true"`.
 2. Install with `--dart-define-from-file=local_defines.json`.
 3. Open the app once — it auto-registers, then pulls catalog / watch history.
-4. Parent → **Home & Sync** shows **Connected to family cloud**. Use **Pull catalog** anytime.
+4. Parent → **Home & Sync** shows **Connected to family cloud**.
 
 Admin → **Devices** lists each install. To remove one: **Revoke** in admin (and **Disconnect** in the app if needed).
-
-### Fallback: manual pairing
-
-Only when the build does **not** include cloud defines:
-
-1. Admin → **Generate pairing code**
-2. Parent → set **Cloud server URL** → **Pair device** → **Pull catalog**
 
 ---
 

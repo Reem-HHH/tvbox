@@ -1,10 +1,16 @@
+import '../catalog/media_ids.dart';
+
 /// Kid-safe YouTube iframe HTML (nocookie host, minimal chrome).
 /// Mirrors Kotlin [PlayerActivity.playYoutube] bridge contract.
 String youtubeIframeHtml({
   required String videoId,
   double startSec = 0,
 }) {
-  final safeId = videoId.replaceAll(r'\', r'\\').replaceAll("'", r"\'");
+  if (!MediaIds.isValidVideoId(videoId)) {
+    throw ArgumentError.value(videoId, 'videoId', 'Invalid YouTube video id');
+  }
+  // Allowlisted charset only — safe to embed without further escaping.
+  final safeId = videoId.trim();
   final start = startSec < 0 ? 0 : startSec;
   return '''
 <!DOCTYPE html>

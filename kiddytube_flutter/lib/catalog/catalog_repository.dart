@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Platform;
 
@@ -8,12 +9,14 @@ import '../cloud/cloud_client.dart';
 import '../cloud/cloud_defaults.dart';
 import '../parent/parent_pin.dart';
 import '../parent/release_pin_policy.dart';
+import 'catalog_sanitize.dart';
 import 'media_ids.dart';
 import 'models.dart';
 import 'recent_watch.dart';
 import 'seed.dart';
 import 'youtube_api_defaults.dart';
 import 'youtube_sync.dart';
+
 
 class CloudLinkStatus {
   const CloudLinkStatus({
@@ -32,7 +35,7 @@ class CloudLinkStatus {
   final String deviceName;
   final int lastCloudSyncMs;
   final int? lastRevision;
-  /// Build embeds CLOUD_BASE_URL + CLOUD_ENROLL_SECRET.
+  /// True when this build has CLOUD_AUTO_ENROLL + URL + enroll secret.
   final bool autoEnrollConfigured;
 }
 
@@ -210,8 +213,8 @@ class CatalogRepository {
   final YoutubeCatalogSource _youtube;
   final CloudClient _cloud;
 
-  
   CatalogSettings? _cached;
+  Future<void>? _updateChain;
 
   /// Stable for the process lifetime (mirrors Kotlin home shuffle seeds).
   final int channelShuffleSeed = DateTime.now().microsecondsSinceEpoch;
@@ -230,6 +233,7 @@ class CatalogRepository {
   static const _cloudDeviceNameKey = 'cloud_device_name';
   static const _lastCloudSyncKey = 'last_cloud_sync_ms';
   static const _lastCloudRevisionKey = 'last_cloud_revision';
+  static const _cloudAutoEnrollOptOutKey = 'cloud_auto_enroll_opt_out';
   static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
@@ -333,34 +337,45 @@ class CatalogRepository {
   Future<CatalogSettings> update(
     CatalogSettings Function(CatalogSettings) transform,
   ) async {
-    final current = _cached ?? await load();
-    var next = transform(current);
-    final sanitized = ReleasePinPolicy.sanitizePinFlags(
-      pinSalt: next.pinSalt,
-      pinHash: next.pinHash,
-      pinChangedFromDefault: next.pinChangedFromDefault,
-      releaseReady: next.releaseReady,
-    );
-    next = next.copyWith(
-      pinChangedFromDefault: sanitized.pinChangedFromDefault,
-      releaseReady: sanitized.releaseReady,
-    );
-    await _persistChannels(next.channels);
-    await _ensurePrefs();
-    await _prefs!.setString(_modeKey, next.homeLibraryMode.storageName);
-    await _prefs!.setInt(_seedKey, next.seedVersion);
-    await _persistLockout(next.failCount, next.lockedUntilMs);
-    await _prefs!.setBool(_pinChangedKey, next.pinChangedFromDefault);
-    await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
-    await _prefs!.setInt(_lastSyncKey, next.lastSyncMs);
-    if (next.youtubeApiKey != current.youtubeApiKey) {
-      await _secrets.writeApiKey(next.youtubeApiKey);
+    final previous = _updateChain;
+    final done = Completer<void>();
+    _updateChain = done.future;
+    try {
+      if (previous != null) await previous;
+      final current = _cached ?? await load();
+      var next = transform(current);
+      final sanitized = ReleasePinPolicy.sanitizePinFlags(
+        pinSalt: next.pinSalt,
+        pinHash: next.pinHash,
+        pinChangedFromDefault: next.pinChangedFromDefault,
+        releaseReady: next.releaseReady,
+      );
+      next = next.copyWith(
+        pinChangedFromDefault: sanitized.pinChangedFromDefault,
+        releaseReady: sanitized.releaseReady,
+      );
+      await _persistChannels(next.channels);
+      await _ensurePrefs();
+      await _prefs!.setString(_modeKey, next.homeLibraryMode.storageName);
+      await _prefs!.setInt(_seedKey, next.seedVersion);
+      await _persistLockout(next.failCount, next.lockedUntilMs);
+      await _prefs!.setBool(_pinChangedKey, next.pinChangedFromDefault);
+      await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
+      await _prefs!.setInt(_lastSyncKey, next.lastSyncMs);
+      if (next.youtubeApiKey != current.youtubeApiKey) {
+        await _secrets.writeApiKey(next.youtubeApiKey);
+      }
+      if (next.pinSalt != current.pinSalt || next.pinHash != current.pinHash) {
+        await _secrets.writePin(next.pinSalt, next.pinHash);
+      }
+      _cached = next;
+      return next;
+    } finally {
+      done.complete();
+      if (identical(_updateChain, done.future)) {
+        _updateChain = null;
+      }
     }
-    if (next.pinSalt != current.pinSalt || next.pinHash != current.pinHash) {
-      await _secrets.writePin(next.pinSalt, next.pinHash);
-    }
-    _cached = next;
-    return next;
   }
 
   Future<void> setHomeLibraryMode(HomeLibraryMode mode) async {
@@ -615,6 +630,7 @@ class CatalogRepository {
     });
   }
 
+
   Future<CloudLinkStatus> cloudStatus() async {
     await _ensurePrefs();
     final token = await _secrets.readCloudDeviceToken();
@@ -666,6 +682,9 @@ class CatalogRepository {
   /// Returns true when the device has a cloud token afterward.
   Future<bool> ensureCloudEnrolled({String? deviceName}) async {
     await _ensurePrefs();
+    if (_prefs!.getBool(_cloudAutoEnrollOptOutKey) == true) {
+      return false;
+    }
     final status = await cloudStatus();
     if (status.paired) {
       if ((_prefs!.getString(_cloudBaseUrlKey) ?? '').isEmpty &&
@@ -693,6 +712,7 @@ class CatalogRepository {
       await _prefs!.setString(_cloudBaseUrlKey, url);
       await _prefs!.setString(_cloudDeviceNameKey, result.name);
       await _secrets.writeCloudDeviceToken(result.token);
+      await _prefs!.remove(_cloudAutoEnrollOptOutKey);
       try {
         await syncWatchWithCloud();
       } catch (_) {}
@@ -728,6 +748,7 @@ class CatalogRepository {
     await _prefs!.setString(_cloudBaseUrlKey, url);
     await _prefs!.setString(_cloudDeviceNameKey, result.name);
     await _secrets.writeCloudDeviceToken(result.token);
+    await _prefs!.remove(_cloudAutoEnrollOptOutKey);
     try {
       await syncWatchWithCloud();
     } catch (_) {}
@@ -740,19 +761,22 @@ class CatalogRepository {
     await _prefs!.remove(_cloudDeviceNameKey);
     await _prefs!.remove(_lastCloudSyncKey);
     await _prefs!.remove(_lastCloudRevisionKey);
+    // Stick disconnect: do not auto-enroll again until pair/enroll succeeds.
+    await _prefs!.setBool(_cloudAutoEnrollOptOutKey, true);
   }
 
-  /// Replace local catalog from cloud/export JSON map.
+  /// Re-hash a verified PIN with the current KDF when the stored hash is legacy.
   Future<String> applyCatalogPayload(Map<String, dynamic> payload) async {
     final rawChannels = payload['channels'];
     if (rawChannels is! List) {
       throw ArgumentError('Catalog JSON must include a channels array');
     }
-    final channels = rawChannels
+    final parsed = rawChannels
         .map(
           (e) => ContentChannel.fromJson(Map<String, dynamic>.from(e as Map)),
         )
         .toList();
+    final channels = CatalogSanitize.channels(parsed);
     final mode = HomeLibraryMode.fromStored(
       payload['homeLibraryMode'] as String?,
     );
@@ -916,6 +940,21 @@ class CatalogRepository {
 
   /// Refresh playlist-backed channels that have Follow uploads enabled.
   /// Returns a human-readable summary.
+
+  Future<void> upgradePinHashIfNeeded(String pin) async {
+    final settings = _cached ?? await load();
+    if (!ParentPinManager.isLegacyHash(settings.pinHash)) return;
+    if (!ParentPinManager().verifyPin(pin, settings.pinSalt, settings.pinHash)) {
+      return;
+    }
+    final salt = settings.pinSalt;
+    if (salt == null || salt.isEmpty) return;
+    final hash = ParentPinManager.hashPin(pin, salt);
+    if (hash == null) return;
+    await update((s) => s.copyWith(pinHash: hash));
+  }
+
+  /// Replace local catalog from cloud/export JSON map.
   Future<String> refreshAllPlaylists({bool force = false}) async {
     final settings = await load();
     final apiKey = settings.youtubeApiKey?.trim();

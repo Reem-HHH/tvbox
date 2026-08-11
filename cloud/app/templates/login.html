@@ -6,6 +6,7 @@
   <p class="muted">Sign in to manage the shared catalog and registered devices.</p>
   {% if error %}<p class="error">{{ error }}</p>{% endif %}
   <form method="post" action="/admin/login" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
     <label>Email
       <input type="email" name="email" required autocomplete="username" />
     </label>

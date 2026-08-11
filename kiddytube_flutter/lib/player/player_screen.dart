@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
@@ -596,7 +594,8 @@ class _PlayerScreenState extends State<PlayerScreen>
                         top: 4,
                         left: 4,
                         child: Focus(
-                          autofocus: !kIsWeb && Platform.isAndroid,
+                          // Outer player Focus owns seek shortcuts; Back must
+                          // not steal initial autofocus on Android TV.
                           child: IconButton(
                             icon: const Icon(
                               Icons.arrow_back,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class CloudException implements Exception {
@@ -41,16 +42,58 @@ class CloudClient {
 
   final http.Client _http;
 
+  /// True for loopback / RFC1918 / link-local hosts (LAN cloud allowed over HTTP).
+  static bool isPrivateOrLoopbackHost(String host) {
+    final h = host.trim().toLowerCase();
+    if (h.isEmpty) return false;
+    if (h == 'localhost' || h == '::1') return true;
+    final ip = Uri.parse('http://$h').host;
+    final parts = ip.split('.');
+    if (parts.length == 4) {
+      final a = int.tryParse(parts[0]);
+      final b = int.tryParse(parts[1]);
+      if (a == null || b == null) return false;
+      if (a == 127) return true;
+      if (a == 10) return true;
+      if (a == 192 && b == 168) return true;
+      if (a == 172 && b >= 16 && b <= 31) return true;
+      if (a == 169 && b == 254) return true;
+    }
+    return false;
+  }
+
+  /// Normalize cloud base URL.
+  ///
+  /// Missing scheme → `http://` for private/LAN hosts, otherwise `https://`.
+  /// Public `http://` hosts are rejected (tokens must not travel in cleartext).
   static String normalizeBaseUrl(String raw) {
     var url = raw.trim();
     if (url.isEmpty) {
       throw CloudException('Cloud server URL is required');
     }
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'http://$url';
+      final hostPart = url.split('/').first.split(':').first;
+      final scheme =
+          isPrivateOrLoopbackHost(hostPart) ? 'http://' : 'https://';
+      url = '$scheme$url';
     }
     while (url.endsWith('/')) {
       url = url.substring(0, url.length - 1);
+    }
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.host.isEmpty) {
+      throw CloudException('Invalid cloud server URL');
+    }
+    if (uri.scheme == 'http' && !isPrivateOrLoopbackHost(uri.host)) {
+      throw CloudException(
+        'HTTPS is required for cloud URL (HTTP only allowed on local LAN)',
+      );
+    }
+    // Release builds: still allow LAN HTTP for household local cloud.
+    if (kReleaseMode &&
+        uri.scheme == 'http' &&
+        !isPrivateOrLoopbackHost(uri.host)) {
+      throw CloudException('HTTPS is required in release builds');
     }
     return url;
   }

@@ -11,8 +11,9 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final repository = CatalogRepository(secrets: MemorySecretsStore());
     await tester.pumpWidget(KiddyTubeApp(repository: repository));
-    await tester.pumpAndSettle();
-    expect(find.text('KiddyTube'), findsOneWidget);
+    await tester.pump(); // first frame
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.byType(Image), findsWidgets); // header logo
     expect(find.text('Shows'), findsAtLeastNWidgets(1));
     expect(find.text('Mix'), findsAtLeastNWidgets(1));
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);

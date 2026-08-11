@@ -8,16 +8,26 @@ from fastapi.staticfiles import StaticFiles
 
 from .auth import ensure_admin, mount_session_middleware
 from .catalog_service import get_catalog_document
-from .config import get_settings
-from .db import Base, SessionLocal, engine
+from .config import get_settings, validate_settings
+from .db import SessionLocal
+from .migrate import ensure_schema
 from .routers import admin_web, api_v1
 
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    validate_settings(settings)
     Path("data").mkdir(parents=True, exist_ok=True)
 
-    app = FastAPI(title="KiddyTube Cloud", version="0.1.0")
+    docs = None if settings.is_production else "/docs"
+    redoc = None if settings.is_production else "/redoc"
+    app = FastAPI(
+        title="KiddyTube Cloud",
+        version="0.1.0",
+        docs_url=docs,
+        redoc_url=redoc,
+        openapi_url=None if settings.is_production else "/openapi.json",
+    )
     mount_session_middleware(app, settings)
 
     static_dir = Path(__file__).resolve().parent / "static"
@@ -28,7 +38,7 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     def _startup() -> None:
-        Base.metadata.create_all(bind=engine)
+        ensure_schema()
         db = SessionLocal()
         try:
             ensure_admin(db, settings)

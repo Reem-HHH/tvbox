@@ -8,6 +8,7 @@
 <section class="card">
   <h2>Add channel</h2>
   <form method="post" action="/admin/catalog/channels" class="row wrap">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
     <label>Id
       <input name="channel_key" required placeholder="peppa" />
     </label>
@@ -34,15 +35,18 @@
     </div>
     <div class="row">
       <form method="post" action="/admin/catalog/channels/{{ ch.id }}/toggle">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <button type="submit">{{ "Disable" if ch.enabled else "Enable" }}</button>
       </form>
       <form method="post" action="/admin/catalog/channels/{{ ch.id }}/delete" onsubmit="return confirm('Delete channel and its videos?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <button type="submit" class="danger">Delete</button>
       </form>
     </div>
   </div>
 
   <form method="post" action="/admin/catalog/channels/{{ ch.id }}/videos" class="row wrap">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
     <label class="grow">YouTube id or URL
       <input name="video_input" required placeholder="dQw4w9WgXcQ or https://youtu.be/…" />
     </label>
@@ -61,6 +65,7 @@
         <div class="muted"><code>{{ v.video_key }}</code>{% if v.manual %} · manual{% endif %}</div>
       </div>
       <form method="post" action="/admin/catalog/videos/{{ v.id }}/delete" onsubmit="return confirm('Remove this video?');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <button type="submit" class="danger">Remove</button>
       </form>
     </li>
@@ -78,6 +83,7 @@
   <h2>Import catalog JSON</h2>
   <p class="muted">Paste Flutter/native <code>exportJson</code> output to replace the cloud catalog.</p>
   <form method="post" action="/admin/catalog/import" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
     <textarea name="catalog_json" rows="10" placeholder='{"seedVersion":18,"homeLibraryMode":"channels","channels":[...]}'></textarea>
     <button type="submit">Import &amp; replace</button>
   </form>

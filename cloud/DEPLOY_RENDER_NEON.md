@@ -50,7 +50,7 @@ The app rewrites `postgresql://` → `postgresql+psycopg://` automatically.
 2. Root directory: `cloud`
 3. Runtime: Python  
    Build: `pip install -r requirements.txt`  
-   Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   Start: `alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 4. Same env vars as above.
 5. Health check path: `/health`
 

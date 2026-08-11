@@ -4,6 +4,7 @@ import 'package:kiddytube/catalog/models.dart';
 import 'package:kiddytube/catalog/recent_watch.dart';
 import 'package:kiddytube/catalog/seed.dart';
 import 'package:kiddytube/parent/parent_pin.dart';
+import 'package:kiddytube/parent/parent_session.dart';
 import 'package:kiddytube/parent/release_pin_policy.dart';
 
 void main() {
@@ -382,9 +383,35 @@ void main() {
     final salt = ParentPinManager.newSaltHex();
     final hash = ParentPinManager.hashPin(ParentPinManager.defaultDevPin, salt);
     expect(hash, isNotNull);
+    expect(hash, startsWith('pbkdf2-sha256\$'));
     final manager = ParentPinManager();
     expect(manager.verifyPin('2580', salt, hash), isTrue);
     expect(manager.verifyPin('0000', salt, hash), isFalse);
+  });
+
+  test('ParentPinManager verifies legacy SHA-256 hashes', () {
+    final salt = ParentPinManager.newSaltHex();
+    final legacy = ParentPinManager.legacyHashPin(
+      ParentPinManager.defaultDevPin,
+      salt,
+    );
+    expect(legacy, isNotNull);
+    expect(ParentPinManager.isLegacyHash(legacy), isTrue);
+    final manager = ParentPinManager();
+    expect(manager.verifyPin('2580', salt, legacy), isTrue);
+    expect(manager.verifyPin('0000', salt, legacy), isFalse);
+  });
+
+  test('ParentSession touch slides TTL while active', () {
+    ParentSession.clear();
+    ParentSession.grant(1_000_000);
+    expect(ParentSession.isActive(1_000_000 + 1000), isTrue);
+    ParentSession.touch(1_000_000 + 1000);
+    expect(
+      ParentSession.isActive(1_000_000 + 1000 + ParentSession.unlockTtlMs - 1),
+      isTrue,
+    );
+    ParentSession.clear();
   });
 
   test('ParentPinManager lockout after failures', () {

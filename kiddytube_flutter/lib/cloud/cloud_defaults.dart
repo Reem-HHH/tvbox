@@ -1,11 +1,12 @@
 /// Baked-in cloud connection for household installs.
 ///
-/// Use `--dart-define` / `local_defines.json` so installs auto-enroll — no
-/// typing URL or pairing code on the TV. Values are never committed to git.
+/// Prefer **pairing codes** from the web admin (no secret in the APK).
+/// Auto-enroll is opt-in: set `CLOUD_AUTO_ENROLL=true` plus URL + secret.
 ///
 /// ```bash
 /// cp local_defines.json.example local_defines.json
-/// # set CLOUD_BASE_URL + CLOUD_ENROLL_SECRET (match Render DEVICE_ENROLL_SECRET)
+/// # Pairing-first: only CLOUD_BASE_URL (enter code in Parent settings)
+/// # Or auto-enroll: CLOUD_BASE_URL + CLOUD_ENROLL_SECRET + CLOUD_AUTO_ENROLL=true
 /// flutter run --dart-define-from-file=local_defines.json -d <device>
 /// ```
 class CloudDefaults {
@@ -21,6 +22,12 @@ class CloudDefaults {
     defaultValue: '',
   );
 
+  /// Must be explicitly enabled — baking the enroll secret alone is not enough.
+  static const allowAutoEnroll = bool.fromEnvironment(
+    'CLOUD_AUTO_ENROLL',
+    defaultValue: false,
+  );
+
   static String? get baseUrl {
     final v = bundledBaseUrl.trim();
     return v.isEmpty ? null : v;
@@ -31,7 +38,10 @@ class CloudDefaults {
     return v.isEmpty ? null : v;
   }
 
-  /// True when this binary can auto-register with the family cloud.
+  /// True when this binary may auto-register (pairing is still preferred).
   static bool get canAutoEnroll =>
-      baseUrl != null && enrollSecret != null && enrollSecret!.length >= 8;
+      allowAutoEnroll &&
+      baseUrl != null &&
+      enrollSecret != null &&
+      enrollSecret!.length >= 8;
 }

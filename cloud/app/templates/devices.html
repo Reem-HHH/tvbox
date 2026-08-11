@@ -8,6 +8,7 @@
   <h2>Pair a new device</h2>
   <p class="muted">Create a 6-digit code on this page, then enter it on the TV / phone / iPad within 10 minutes. Each device gets its own token (option B).</p>
   <form method="post" action="/admin/devices/pair-code" class="row">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
     <label class="grow">Optional name hint
       <input name="device_name" placeholder="Living room TV" />
     </label>
@@ -45,6 +46,7 @@
         <td>
           {% if not d.revoked %}
           <form method="post" action="/admin/devices/{{ d.id }}/revoke" onsubmit="return confirm('Revoke this device?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
             <button type="submit" class="danger">Revoke</button>
           </form>
           {% else %}

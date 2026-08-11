@@ -67,18 +67,15 @@ flutter run --dart-define-from-file=local_defines.json -d <ipad-device-id>
 flutter run --release --dart-define-from-file=local_defines.json -d <android-tv-id>
 ```
 
-Copy `local_defines.json.example` → `local_defines.json` and set YouTube API key plus `CLOUD_BASE_URL` / `CLOUD_ENROLL_SECRET` (file is gitignored). Never commit real secrets.
+Copy `local_defines.json.example` → `local_defines.json` and set YouTube API key plus optional `CLOUD_BASE_URL` (file is gitignored). Prefer pairing codes; only set `CLOUD_ENROLL_SECRET` with `CLOUD_AUTO_ENROLL=true` if you want silent enroll. Never commit real secrets.
 
 Default parent PIN for development: **2580**.
 
-### Auto-connect to the cloud catalog
+### Connect to the cloud catalog
 
-1. Set `DEVICE_ENROLL_SECRET` on the cloud (Render or local `.env`)  
-2. Put the same value in `local_defines.json` as `CLOUD_ENROLL_SECRET`, plus `CLOUD_BASE_URL`  
-3. Install with `--dart-define-from-file=local_defines.json`  
-4. First launch registers the device; Parent → **Home & Sync** shows **Connected**
+**Preferred — pairing:** set `CLOUD_BASE_URL` (optional), open Parent → Home & Sync → Pair, enter the 6-digit admin code.
 
-Manual 6-digit pairing remains available only when cloud defines are omitted from the build.
+**Optional — auto-enroll:** set `DEVICE_ENROLL_SECRET` on the cloud, matching `CLOUD_ENROLL_SECRET` plus `"CLOUD_AUTO_ENROLL": "true"` in `local_defines.json`, then install with `--dart-define-from-file=local_defines.json`.
 
 Playlist sync (separate from cloud) needs a YouTube Data API key (Parent settings → stored in secure storage). Synced titles that match the family blocklist are dropped automatically.
 

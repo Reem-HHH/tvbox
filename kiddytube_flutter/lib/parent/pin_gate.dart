@@ -33,9 +33,10 @@ Future<bool> ensureParentUnlocked(
     return false;
   }
 
-  // Prefer Face ID / fingerprint / device credential when available.
+  // Prefer Face ID / fingerprint only after the factory PIN has been changed.
+  // Device unlock PIN must never open parent settings.
   final biometrics = ParentBiometrics();
-  if (await biometrics.canAuthenticate()) {
+  if (settings.pinChangedFromDefault && await biometrics.canAuthenticate()) {
     final bioOk = await biometrics.authenticate();
     if (bioOk) {
       pinManager.registerSuccess();
@@ -120,6 +121,7 @@ class _PinDialogState extends State<_PinDialog> {
     if (matchesHash && !blockedDefault) {
       manager.registerSuccess();
       await widget.repository.clearPinFailures();
+      await widget.repository.upgradePinHashIfNeeded(pin);
       if (mounted) Navigator.of(context).pop(true);
       return;
     }

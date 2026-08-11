@@ -13,6 +13,15 @@ def utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def as_utc(dt: Optional[datetime]) -> datetime:
+    """Normalize DB/API datetimes for safe compare (SQLite may strip tzinfo)."""
+    if dt is None:
+        return utcnow()
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 class AdminUser(Base):
     __tablename__ = "admin_users"
 

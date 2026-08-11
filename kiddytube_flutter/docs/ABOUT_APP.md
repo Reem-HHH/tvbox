@@ -86,7 +86,7 @@ Never commit `local_defines.json` (gitignored).
 - Local: `uvicorn app.main:app --host 0.0.0.0 --port 8787`  
 - Production: **Render + Neon** — see [`../../cloud/DEPLOY_RENDER_NEON.md`](../../cloud/DEPLOY_RENDER_NEON.md)  
 - Admin UI: `http://127.0.0.1:8787/admin` (local) or `https://….onrender.com/admin`  
-- Installs: set `CLOUD_BASE_URL` + `CLOUD_ENROLL_SECRET` in `local_defines.json` (match Render `DEVICE_ENROLL_SECRET`) — first launch auto-connects  
+- Installs: prefer pairing codes from the cloud admin. Optional auto-enroll needs `CLOUD_AUTO_ENROLL=true` plus URL/secret in `local_defines.json`.  
 - Watch history: Continue Watching syncs to Neon when connected (Admin → Devices)  
 - Devices **pull** from admin; edits on a device stay local unless you re-import via admin  
 

@@ -1,3 +1,4 @@
+import 'catalog_sanitize.dart';
 import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
@@ -48,7 +49,8 @@ class DefaultChannels {
     'dawood_juz_26',
   };
 
-  static List<ContentChannel> seed() => [
+  static List<ContentChannel> seed() {
+    final channels = [
         _channel(
           id: 'omar_hana',
           title: 'Omar & Hana',
@@ -782,7 +784,10 @@ class DefaultChannels {
             _yt('9A-Cy0m0NHA', 'حلقة 230 — حديقة المرح'),
           ],
         ),
-      ];
+    ];
+    // Drop blocked titles even from the built-in seed.
+    return CatalogSanitize.channels(channels);
+  }
 
   /// Merge newer seed defaults onto an existing catalog without wiping parent toggles.
   static List<ContentChannel> mergeSeedUpdates(List<ContentChannel> existing) {
@@ -894,7 +899,7 @@ class DefaultChannels {
 
     final merged = byId.values.toList()
       ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
-    return merged;
+    return CatalogSanitize.channels(merged);
   }
 
   static ContentChannel _channel({

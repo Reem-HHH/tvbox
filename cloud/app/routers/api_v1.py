@@ -1,19 +1,36 @@
 from __future__ import annotations
 
 import json
+from datetime import datetime, timezone
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..auth import enroll_device, get_current_device, pair_device
 from ..catalog_service import get_catalog_document
 from ..config import get_settings
 from ..db import get_db
-from ..models import Device, WatchHistoryRow, utcnow
+from ..models import Device, WatchHistoryRow, as_utc, utcnow
+from ..rate_limit import auth_limiter
 
 router = APIRouter(prefix="/v1", tags=["device-api"])
+
+
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip() or "unknown"
+    if request.client and request.client.host:
+        return request.client.host
+    return "unknown"
+
+
+def _rate_limit_or_429(key: str, *, limit: int, window_seconds: float) -> None:
+    if not auth_limiter.allow(key, limit=limit, window_seconds=window_seconds):
+        raise HTTPException(status_code=429, detail="Too many attempts; try again later")
 
 
 class PairRequest(BaseModel):
@@ -44,7 +61,10 @@ class DeviceInfo(BaseModel):
 
 
 @router.post("/devices/pair", response_model=PairResponse)
-def pair(body: PairRequest, db: Session = Depends(get_db)):
+def pair(body: PairRequest, request: Request, db: Session = Depends(get_db)):
+    ip = _client_ip(request)
+    _rate_limit_or_429(f"pair:ip:{ip}", limit=20, window_seconds=60)
+    _rate_limit_or_429(f"pair:code:{body.code.strip()}", limit=8, window_seconds=600)
     settings = get_settings()
     device, token = pair_device(db, body.code, body.name, body.platform)
     return PairResponse(
@@ -57,8 +77,10 @@ def pair(body: PairRequest, db: Session = Depends(get_db)):
 
 
 @router.post("/devices/enroll", response_model=PairResponse)
-def enroll(body: EnrollRequest, db: Session = Depends(get_db)):
+def enroll(body: EnrollRequest, request: Request, db: Session = Depends(get_db)):
     """Auto-register builds that embed CLOUD_ENROLL_SECRET (no pairing code)."""
+    ip = _client_ip(request)
+    _rate_limit_or_429(f"enroll:ip:{ip}", limit=10, window_seconds=60)
     settings = get_settings()
     device, token = enroll_device(
         db,
@@ -127,16 +149,14 @@ class WatchListResponse(BaseModel):
     items: list[WatchItemOut]
 
 
-def _ms_to_dt(ms: int):
-    from datetime import datetime, timezone
-
+def _ms_to_dt(ms: int) -> datetime:
     if ms <= 0:
         return utcnow()
     return datetime.fromtimestamp(ms / 1000.0, tz=timezone.utc)
 
 
-def _dt_to_ms(dt) -> int:
-    return int(dt.timestamp() * 1000)
+def _dt_to_ms(dt: datetime) -> int:
+    return int(as_utc(dt).timestamp() * 1000)
 
 
 def _row_to_out(row: WatchHistoryRow) -> WatchItemOut:
@@ -176,30 +196,53 @@ def upsert_watch(
 ):
     """Upsert watch rows; newer updated_at_ms wins."""
     for item in body.items:
-        updated = _ms_to_dt(item.updated_at_ms)
+        updated = as_utc(_ms_to_dt(item.updated_at_ms))
+        channel_id = item.channel_id.strip()[:80]
+        video_id = item.video_id.strip()[:120]
         existing = (
             db.query(WatchHistoryRow)
             .filter(
                 WatchHistoryRow.device_id == device.id,
-                WatchHistoryRow.channel_id == item.channel_id.strip(),
-                WatchHistoryRow.video_id == item.video_id.strip(),
+                WatchHistoryRow.channel_id == channel_id,
+                WatchHistoryRow.video_id == video_id,
             )
             .first()
         )
         if existing is None:
-            db.add(
-                WatchHistoryRow(
-                    device_id=device.id,
-                    channel_id=item.channel_id.strip()[:80],
-                    video_id=item.video_id.strip()[:120],
-                    title=(item.title or "Video").strip()[:300],
-                    youtube_video_id=item.youtube_video_id,
-                    direct_url=item.direct_url,
-                    position_ms=item.position_ms,
-                    updated_at=updated,
+            try:
+                with db.begin_nested():
+                    db.add(
+                        WatchHistoryRow(
+                            device_id=device.id,
+                            channel_id=channel_id,
+                            video_id=video_id,
+                            title=(item.title or "Video").strip()[:300],
+                            youtube_video_id=item.youtube_video_id,
+                            direct_url=item.direct_url,
+                            position_ms=item.position_ms,
+                            updated_at=updated,
+                        )
+                    )
+                    db.flush()
+            except IntegrityError:
+                existing = (
+                    db.query(WatchHistoryRow)
+                    .filter(
+                        WatchHistoryRow.device_id == device.id,
+                        WatchHistoryRow.channel_id == channel_id,
+                        WatchHistoryRow.video_id == video_id,
+                    )
+                    .first()
                 )
-            )
-        elif existing.updated_at <= updated:
+                if existing is not None and as_utc(existing.updated_at) <= updated:
+                    existing.title = (item.title or existing.title).strip()[:300]
+                    existing.youtube_video_id = (
+                        item.youtube_video_id or existing.youtube_video_id
+                    )
+                    existing.direct_url = item.direct_url or existing.direct_url
+                    existing.position_ms = item.position_ms
+                    existing.updated_at = updated
+        elif as_utc(existing.updated_at) <= updated:
             existing.title = (item.title or existing.title).strip()[:300]
             existing.youtube_video_id = item.youtube_video_id or existing.youtube_video_id
             existing.direct_url = item.direct_url or existing.direct_url

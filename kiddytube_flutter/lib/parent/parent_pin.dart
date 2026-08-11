@@ -1,10 +1,12 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
-import 'dart:convert';
 
-/// Parent unlock: salted SHA-256 PIN verification + temporary rate limiting.
-/// Parity with Kotlin [ParentPinManager].
+/// Parent unlock: salted PIN verification + temporary rate limiting.
+///
+/// New hashes use PBKDF2-HMAC-SHA256 (`pbkdf2-sha256$iters$hex`).
+/// Legacy single-round SHA-256 hashes still verify and are upgraded on unlock.
 class ParentPinManager {
   ParentPinManager({
     int failureCount = 0,
@@ -17,6 +19,10 @@ class ParentPinManager {
   static const maxPinLength = 8;
   static const maxFailuresBeforeLockout = 5;
   static const baseLockoutMs = 30000;
+
+  /// KDF id + iteration count embedded in stored hash strings.
+  static const kdfId = 'pbkdf2-sha256';
+  static const kdfIterations = 100000;
 
   int failureCount;
   int lockedUntilMs;
@@ -44,9 +50,21 @@ class ParentPinManager {
         expectedHashHex.isEmpty) {
       return false;
     }
+    final expected = expectedHashHex.trim();
+    if (isLegacyHash(expected)) {
+      final legacy = legacyHashPin(pin, saltHex);
+      if (legacy == null) return false;
+      return _constantTimeEquals(legacy, expected);
+    }
     final actual = hashPin(pin, saltHex);
     if (actual == null) return false;
-    return actual.toLowerCase() == expectedHashHex.toLowerCase();
+    return _constantTimeEquals(actual, expected);
+  }
+
+  /// True when [hash] is the old single-round SHA-256 format (no KDF prefix).
+  static bool isLegacyHash(String? hash) {
+    if (hash == null || hash.isEmpty) return false;
+    return !hash.startsWith('$kdfId\$');
   }
 
   /// Returns true when this failure triggered a lockout.
@@ -79,7 +97,25 @@ class ParentPinManager {
     return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
   }
 
+  /// Hash for newly stored PINs (PBKDF2-HMAC-SHA256).
   static String? hashPin(String pin, String saltHex) {
+    try {
+      final salt = _fromHex(saltHex);
+      final dk = _pbkdf2HmacSha256(
+        utf8.encode(pin),
+        salt,
+        kdfIterations,
+        32,
+      );
+      final hex = dk.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+      return '$kdfId\$$kdfIterations\$$hex';
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Legacy single-round SHA-256 (salt || pin). Used only for verify/migrate.
+  static String? legacyHashPin(String pin, String saltHex) {
     try {
       final salt = _fromHex(saltHex);
       final digest = sha256.convert([...salt, ...utf8.encode(pin)]);
@@ -89,6 +125,57 @@ class ParentPinManager {
     } catch (_) {
       return null;
     }
+  }
+
+  static bool _constantTimeEquals(String a, String b) {
+    final left = a.toLowerCase();
+    final right = b.toLowerCase();
+    if (left.length != right.length) return false;
+    var diff = 0;
+    for (var i = 0; i < left.length; i++) {
+      diff |= left.codeUnitAt(i) ^ right.codeUnitAt(i);
+    }
+    return diff == 0;
+  }
+
+  static List<int> _pbkdf2HmacSha256(
+    List<int> password,
+    List<int> salt,
+    int iterations,
+    int dkLen,
+  ) {
+    const hLen = 32;
+    final blockCount = (dkLen + hLen - 1) ~/ hLen;
+    final out = <int>[];
+    for (var block = 1; block <= blockCount; block++) {
+      out.addAll(_pbkdf2Block(password, salt, iterations, block));
+    }
+    return out.sublist(0, dkLen);
+  }
+
+  static List<int> _pbkdf2Block(
+    List<int> password,
+    List<int> salt,
+    int iterations,
+    int blockIndex,
+  ) {
+    final hmac = Hmac(sha256, password);
+    final first = <int>[
+      ...salt,
+      (blockIndex >> 24) & 0xff,
+      (blockIndex >> 16) & 0xff,
+      (blockIndex >> 8) & 0xff,
+      blockIndex & 0xff,
+    ];
+    var u = hmac.convert(first).bytes;
+    final result = List<int>.from(u);
+    for (var i = 1; i < iterations; i++) {
+      u = hmac.convert(u).bytes;
+      for (var j = 0; j < result.length; j++) {
+        result[j] ^= u[j];
+      }
+    }
+    return result;
   }
 
   static List<int> _fromHex(String hex) {

@@ -26,10 +26,29 @@ class Settings(BaseSettings):
     pairing_code_ttl_seconds: int = 600
     session_cookie_name: str = "kt_admin_session"
     session_max_age_seconds: int = 60 * 60 * 12
+    # When true (or inferred from https PUBLIC_BASE_URL), refuse insecure defaults.
+    production: bool = False
 
     @property
     def sqlalchemy_database_url(self) -> str:
         return normalize_database_url(self.database_url)
+
+    @property
+    def is_production(self) -> bool:
+        if self.production:
+            return True
+        base = self.public_base_url.strip().lower()
+        return base.startswith("https://") and "127.0.0.1" not in base and "localhost" not in base
+
+
+def validate_settings(settings: Settings) -> None:
+    """Refuse to boot a public deploy with known-insecure defaults."""
+    if not settings.is_production:
+        return
+    if settings.admin_password in {"", "change-me-now"}:
+        raise RuntimeError("ADMIN_PASSWORD must be set to a strong value in production")
+    if settings.secret_key in {"", "dev-secret-change-me"}:
+        raise RuntimeError("SECRET_KEY must be set to a strong value in production")
 
 
 @lru_cache
