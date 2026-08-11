@@ -18,6 +18,15 @@ import 'layout_metrics.dart';
 
 const _ytRed = Color(0xFFFF0000);
 
+/// Tiny header stamp so you can tell debug vs release on the TV.
+/// `flutter run` → D·… ; `flutter run --release` / release APK → R·…
+String get kiddyTubeBuildStamp {
+  const ver = '0.1.0';
+  if (kReleaseMode) return 'R·$ver';
+  if (kProfileMode) return 'P·$ver';
+  return 'D·$ver';
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.repository});
 
@@ -98,14 +107,42 @@ class _HomeScreenState extends State<HomeScreen> {
     await widget.repository.ensureCloudEnrolled();
     final cloudChanged = await widget.repository.maybePullCloudDaily();
     final youtubeChanged = await widget.repository.maybeRefreshDaily();
-    var watchTouched = false;
+    var watchChanged = false;
     try {
+      final before = await widget.repository.recentWatch.load();
       await widget.repository.syncWatchWithCloud();
-      watchTouched = true;
+      final after = await widget.repository.recentWatch.load();
+      watchChanged = !_sameRecentIds(before, after);
     } catch (_) {}
-    if ((cloudChanged || youtubeChanged || watchTouched) && mounted) {
+    if (!mounted) return;
+    if (cloudChanged || youtubeChanged) {
       await _reloadAfterSync();
+    } else if (watchChanged) {
+      await _reloadRecentOnly();
     }
+  }
+
+  static bool _sameRecentIds(
+    List<RecentWatchItem> a,
+    List<RecentWatchItem> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].videoId != b[i].videoId ||
+          a[i].positionMs != b[i].positionMs ||
+          a[i].updatedAtMs != b[i].updatedAtMs) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  Future<void> _reloadRecentOnly() async {
+    try {
+      final recent = await widget.repository.recentWatch.load();
+      if (!mounted) return;
+      setState(() => _recent = recent);
+    } catch (_) {}
   }
 
   Future<void> _reloadAfterSync() async {
@@ -148,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => LibraryScreen(
           channel: channel,
           repository: widget.repository,
-          onPlayed: _reload,
+          onPlayed: _reloadRecentOnly,
         ),
       ),
     );
@@ -204,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-    await _reload();
+    await _reloadRecentOnly();
   }
 
   @override
@@ -248,14 +285,33 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Row(
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            'assets/kiddytube_logo_header.png',
-                            height: layout.logoSize,
-                            fit: BoxFit.contain,
-                            filterQuality: FilterQuality.medium,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.asset(
+                                'assets/kiddytube_logo_header.png',
+                                height: layout.logoSize,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.medium,
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2, left: 2),
+                              child: Text(
+                                kiddyTubeBuildStamp,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  height: 1,
+                                  letterSpacing: 0.4,
+                                  fontWeight: FontWeight.w500,
+                                  color: scheme.onSurface.withValues(alpha: 0.38),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                         const Spacer(),
                         HomeModeToggle(

@@ -18,7 +18,7 @@ class _ChannelsTabState extends State<_ChannelsTab> {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
         event.logicalKey == LogicalKeyboardKey.tab) {
-      // TextField eats ArrowDown for caret movement; move to the channel list.
+      SystemChannels.textInput.invokeMethod('TextInput.hide');
       if (_firstChannelFocus.canRequestFocus) {
         _firstChannelFocus.requestFocus();
       } else {
@@ -344,10 +344,10 @@ class _ChannelDetailPane extends StatelessWidget {
           Navigator.pop(ctx, true);
         },
         onSubmit: () => Navigator.pop(ctx, true),
-        fieldBuilder: (context, fieldFocus, submitFromField) {
+        fieldBuilder: (context, focuses, submitFromField) {
           return TextField(
             controller: controller,
-            focusNode: fieldFocus,
+            focusNode: focuses.first,
             autofocus: true,
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
@@ -390,10 +390,10 @@ class _ChannelDetailPane extends StatelessWidget {
         submitLabel: 'Add',
         onCancel: () => Navigator.pop(ctx, false),
         onSubmit: () => Navigator.pop(ctx, true),
-        fieldBuilder: (context, fieldFocus, submitFromField) {
+        fieldBuilder: (context, focuses, submitFromField) {
           return TextField(
             controller: controller,
-            focusNode: fieldFocus,
+            focusNode: focuses.first,
             autofocus: true,
             maxLines: 4,
             textInputAction: TextInputAction.done,
@@ -424,40 +424,35 @@ class _ChannelDetailPane extends StatelessWidget {
       builder: (ctx) => TvTextDialog(
         title: const Text('Add direct media'),
         submitLabel: 'Add',
+        fieldCount: 2,
         onCancel: () => Navigator.pop(ctx, false),
         onSubmit: () => Navigator.pop(ctx, true),
-        fieldBuilder: (context, fieldFocus, submitFromField) {
-          final titleFocus = FocusNode(
-            onKeyEvent: (node, event) => handleTvTextFieldKeys(
-              event,
-              moveNext: () => fieldFocus.requestFocus(),
-              onSubmit: () => fieldFocus.requestFocus(),
-            ),
-          );
-          return _DisposableFocusColumn(
-            focusNodes: [titleFocus],
+        fieldBuilder: (context, focuses, submitFromField) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: title,
-                focusNode: titleFocus,
+                focusNode: focuses[0],
                 autofocus: true,
                 textInputAction: TextInputAction.next,
                 decoration: const InputDecoration(
                   labelText: 'Title',
                   border: OutlineInputBorder(),
-                  helperText: 'Down → URL',
+                  helperText: 'Down → URL · Up to go back',
                 ),
-                onSubmitted: (_) => fieldFocus.requestFocus(),
+                onSubmitted: (_) => focuses[1].requestFocus(),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: url,
-                focusNode: fieldFocus,
+                focusNode: focuses[1],
                 textInputAction: TextInputAction.done,
                 decoration: const InputDecoration(
                   labelText: 'HTTPS URL (.mp4 / .m3u8 / .mpd)',
                   border: OutlineInputBorder(),
-                  helperText: 'Press Down for Add',
+                  helperText: 'Down → Cancel/Add · Up → title',
                 ),
                 onSubmitted: (_) => submitFromField(),
               ),
@@ -690,39 +685,6 @@ class _VideoThumb extends StatelessWidget {
                 ),
               ),
       ),
-    );
-  }
-}
-
-/// Owns extra [FocusNode]s created inside dialog builders so they are disposed.
-class _DisposableFocusColumn extends StatefulWidget {
-  const _DisposableFocusColumn({
-    required this.focusNodes,
-    required this.children,
-  });
-
-  final List<FocusNode> focusNodes;
-  final List<Widget> children;
-
-  @override
-  State<_DisposableFocusColumn> createState() => _DisposableFocusColumnState();
-}
-
-class _DisposableFocusColumnState extends State<_DisposableFocusColumn> {
-  @override
-  void dispose() {
-    for (final node in widget.focusNodes) {
-      node.dispose();
-    }
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: widget.children,
     );
   }
 }

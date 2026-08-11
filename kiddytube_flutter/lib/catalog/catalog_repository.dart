@@ -248,7 +248,9 @@ class CatalogRepository {
         seedVersion: DefaultChannels.seedVersion,
       );
 
-  Future<CatalogSettings> load() async {
+  Future<CatalogSettings> load({bool force = false}) async {
+    if (!force && _cached != null) return _cached!;
+
     await _ensurePrefs();
     final mode = HomeLibraryMode.fromStored(_prefs!.getString(_modeKey));
     final storedSeed = _prefs!.getInt(_seedKey) ?? 0;

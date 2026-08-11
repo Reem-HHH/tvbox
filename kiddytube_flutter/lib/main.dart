@@ -7,6 +7,9 @@ import 'ui/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Bound decoded-image cache for Android TV RAM / Mix scrolling.
+  PaintingBinding.instance.imageCache.maximumSize = 120;
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 80 << 20;
   // Portrait + landscape; no upside-down (matches iOS Info.plist).
   await SystemChrome.setPreferredOrientations(kBrowseOrientations);
   final repository = CatalogRepository();

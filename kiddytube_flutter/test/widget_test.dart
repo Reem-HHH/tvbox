@@ -14,6 +14,7 @@ void main() {
     await tester.pump(); // first frame
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.byType(Image), findsWidgets); // header logo
+    expect(find.text('D·0.1.0'), findsOneWidget); // debug build stamp
     expect(find.text('Shows'), findsAtLeastNWidgets(1));
     expect(find.text('Mix'), findsAtLeastNWidgets(1));
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);

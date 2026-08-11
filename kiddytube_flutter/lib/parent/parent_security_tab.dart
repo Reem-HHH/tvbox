@@ -28,10 +28,10 @@ class _SecurityTab extends StatelessWidget {
         submitLabel: 'Save',
         onCancel: () => Navigator.pop(ctx, false),
         onSubmit: () => Navigator.pop(ctx, true),
-        fieldBuilder: (context, fieldFocus, submitFromField) {
+        fieldBuilder: (context, focuses, submitFromField) {
           return TextField(
             controller: controller,
-            focusNode: fieldFocus,
+            focusNode: focuses.first,
             obscureText: true,
             autofocus: true,
             keyboardType: TextInputType.number,

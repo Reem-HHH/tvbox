@@ -147,19 +147,18 @@ class _PinDialogState extends State<_PinDialog> {
     return TvTextDialog(
       title: const Text('Parent PIN'),
       submitLabel: 'Unlock',
-      submitEnabled: !_busy,
       onCancel: () {
         if (!_busy) Navigator.of(context).pop(false);
       },
       onSubmit: _submit,
-      fieldBuilder: (context, fieldFocus, submitFromField) {
+      fieldBuilder: (context, focuses, submitFromField) {
         return Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _controller,
-              focusNode: fieldFocus,
+              focusNode: focuses.first,
               autofocus: true,
               obscureText: true,
               keyboardType: TextInputType.number,

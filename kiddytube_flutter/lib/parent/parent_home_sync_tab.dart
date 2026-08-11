@@ -33,10 +33,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
           Navigator.pop(ctx, true);
         },
         onSubmit: () => Navigator.pop(ctx, true),
-        fieldBuilder: (context, fieldFocus, submitFromField) {
+        fieldBuilder: (context, focuses, submitFromField) {
           return TextField(
             controller: controller,
-            focusNode: fieldFocus,
+            focusNode: focuses.first,
             autofocus: true,
             textInputAction: TextInputAction.done,
             decoration: const InputDecoration(
@@ -73,10 +73,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
         submitLabel: 'Save',
         onCancel: () => Navigator.pop(ctx, false),
         onSubmit: () => Navigator.pop(ctx, true),
-        fieldBuilder: (context, fieldFocus, submitFromField) {
+        fieldBuilder: (context, focuses, submitFromField) {
           return TextField(
             controller: controller,
-            focusNode: fieldFocus,
+            focusNode: focuses.first,
             autofocus: true,
             keyboardType: TextInputType.url,
             textInputAction: TextInputAction.done,
@@ -113,22 +113,17 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
       builder: (ctx) => TvTextDialog(
         title: const Text('Pair this device'),
         submitLabel: 'Pair',
+        fieldCount: 2,
         onCancel: () => Navigator.pop(ctx, false),
         onSubmit: () => Navigator.pop(ctx, true),
-        fieldBuilder: (context, fieldFocus, submitFromField) {
-          final codeFocus = FocusNode(
-            onKeyEvent: (node, event) => handleTvTextFieldKeys(
-              event,
-              moveNext: () => fieldFocus.requestFocus(),
-              onSubmit: () => fieldFocus.requestFocus(),
-            ),
-          );
-          return _DisposableFocusColumn(
-            focusNodes: [codeFocus],
+        fieldBuilder: (context, focuses, submitFromField) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               TextField(
                 controller: codeController,
-                focusNode: codeFocus,
+                focusNode: focuses[0],
                 autofocus: true,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
@@ -140,19 +135,19 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                   labelText: '6-digit code',
                   hintText: 'From cloud admin → Devices',
                   border: OutlineInputBorder(),
-                  helperText: 'Down → device name',
+                  helperText: 'Down → device name · Up to go back',
                 ),
-                onSubmitted: (_) => fieldFocus.requestFocus(),
+                onSubmitted: (_) => focuses[1].requestFocus(),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: nameController,
-                focusNode: fieldFocus,
+                focusNode: focuses[1],
                 textInputAction: TextInputAction.done,
                 decoration: const InputDecoration(
                   labelText: 'Device name',
                   border: OutlineInputBorder(),
-                  helperText: 'Press Down for Pair',
+                  helperText: 'Down → Cancel/Pair · Up → code',
                 ),
                 onSubmitted: (_) => submitFromField(),
               ),
@@ -270,10 +265,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
           submitLabel: 'Import',
           onCancel: () => Navigator.pop(ctx),
           onSubmit: () => Navigator.pop(ctx, controller.text),
-          fieldBuilder: (context, fieldFocus, submitFromField) {
+          fieldBuilder: (context, focuses, submitFromField) {
             return TextField(
               controller: controller,
-              focusNode: fieldFocus,
+              focusNode: focuses.first,
               autofocus: true,
               maxLines: 8,
               decoration: const InputDecoration(
@@ -415,7 +410,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                           : 'Last pull ${_formatRelative(cloud.lastCloudSyncMs)}'
                               '${cloud.lastRevision == null ? '' : ' · rev ${cloud.lastRevision}'}',
                 ),
-                onTap: _busy || cloud?.paired != true ? null : _pullCloud,
+                onTap: () {
+                  if (_busy || cloud?.paired != true) return;
+                  _pullCloud();
+                },
               ),
               const Divider(height: 1),
               ListTile(
@@ -426,7 +424,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                       ? 'Connect first'
                       : 'Upload Continue Watching to the cloud admin',
                 ),
-                onTap: _busy || cloud?.paired != true ? null : _syncWatch,
+                onTap: () {
+                  if (_busy || cloud?.paired != true) return;
+                  _syncWatch();
+                },
               ),
               if (cloud?.paired == true) ...[
                 const Divider(height: 1),
@@ -436,7 +437,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                   subtitle: const Text(
                     'Clears the local token and disables auto-enroll until you pair again.',
                   ),
-                  onTap: _busy ? null : _unpair,
+                  onTap: () {
+                    if (_busy) return;
+                    _unpair();
+                  },
                 ),
               ],
               if (cloud?.autoEnrollConfigured != true) ...[
@@ -452,7 +456,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                             : cloud.baseUrl),
                   ),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: _busy ? null : _editCloudUrl,
+                  onTap: () {
+                    if (_busy) return;
+                    _editCloudUrl();
+                  },
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -465,7 +472,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                         ? 'Paired as ${cloud!.deviceName.isEmpty ? 'device' : cloud.deviceName}'
                         : 'Enter the 6-digit code from the web admin',
                   ),
-                  onTap: _busy ? null : _pairDevice,
+                  onTap: () {
+                    if (_busy) return;
+                    _pairDevice();
+                  },
                 ),
               ],
             ],
@@ -508,7 +518,10 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                 subtitle: const Text(
                   'Pull Follow-on channels (up to once forced)',
                 ),
-                onTap: _busy ? null : _refreshPlaylists,
+                onTap: () {
+                  if (_busy) return;
+                  _refreshPlaylists();
+                },
               ),
               const Divider(height: 1),
               ListTile(

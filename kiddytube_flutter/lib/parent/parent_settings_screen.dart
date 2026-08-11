@@ -51,6 +51,11 @@ class _ParentSettingsScreenState extends State<ParentSettingsScreen>
     if (_tabs.indexIsChanging) return;
     ParentSession.touch();
     setState(() {});
+    // Move D-pad focus into the newly visible tab body (not stuck on the chip).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      FocusScope.of(context).focusInDirection(TraversalDirection.down);
+    });
   }
 
   @override

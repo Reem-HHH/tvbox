@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 KeyEventResult handleTvTextFieldKeys(
   KeyEvent event, {
   required VoidCallback moveNext,
+  VoidCallback? movePrevious,
   VoidCallback? onSubmit,
 }) {
   if (event is! KeyDownEvent) return KeyEventResult.ignored;
@@ -12,6 +13,11 @@ KeyEventResult handleTvTextFieldKeys(
   if (key == LogicalKeyboardKey.arrowDown || key == LogicalKeyboardKey.tab) {
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     moveNext();
+    return KeyEventResult.handled;
+  }
+  if (movePrevious != null && key == LogicalKeyboardKey.arrowUp) {
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    movePrevious();
     return KeyEventResult.handled;
   }
   if (onSubmit != null &&
@@ -34,22 +40,24 @@ class TvTextDialog extends StatefulWidget {
     required this.fieldBuilder,
     required this.onCancel,
     required this.onSubmit,
+    this.fieldCount = 1,
     this.submitLabel = 'Save',
     this.cancelLabel = 'Cancel',
     this.submitEnabled = true,
     this.secondaryLabel,
     this.onSecondary,
-  });
+  }) : assert(fieldCount >= 1);
 
   final Widget title;
 
-  /// Build the input. Use [fieldFocus] on the *last* (or only) TextField and call
-  /// [submitFromField] from `onSubmitted` so remote Enter / IME Done works.
-  /// For extra fields above, create FocusNodes with [handleTvTextFieldKeys]
-  /// that move focus downward toward [fieldFocus].
+  /// Number of text fields. Dialog owns stable [FocusNode]s for each.
+  final int fieldCount;
+
+  /// Build inputs. Use [fieldFocuses] in order (index 0 = first field).
+  /// Call [submitFromField] from the last field's `onSubmitted`.
   final Widget Function(
     BuildContext context,
-    FocusNode fieldFocus,
+    List<FocusNode> fieldFocuses,
     VoidCallback submitFromField,
   ) fieldBuilder;
 
@@ -68,28 +76,51 @@ class TvTextDialog extends StatefulWidget {
 }
 
 class _TvTextDialogState extends State<TvTextDialog> {
-  late final FocusNode _fieldFocus = FocusNode(
-    onKeyEvent: (node, event) => handleTvTextFieldKeys(
-      event,
-      moveNext: _focusSubmit,
-      onSubmit: _submit,
-    ),
-  );
+  late final List<FocusNode> _fieldFocuses;
   late final FocusNode _cancelFocus = FocusNode(onKeyEvent: _onActionKey);
   late final FocusNode _secondaryFocus = FocusNode(onKeyEvent: _onActionKey);
   late final FocusNode _submitFocus = FocusNode(onKeyEvent: _onActionKey);
 
   @override
+  void initState() {
+    super.initState();
+    _fieldFocuses = List.generate(widget.fieldCount, _createFieldFocus);
+  }
+
+  FocusNode _createFieldFocus(int index) {
+    return FocusNode(
+      onKeyEvent: (node, event) => handleTvTextFieldKeys(
+        event,
+        moveNext: () => _moveFromField(index, forward: true),
+        movePrevious: () => _moveFromField(index, forward: false),
+        onSubmit: index == widget.fieldCount - 1 ? _submit : null,
+      ),
+    );
+  }
+
+  void _moveFromField(int index, {required bool forward}) {
+    if (forward) {
+      if (index + 1 < _fieldFocuses.length) {
+        _fieldFocuses[index + 1].requestFocus();
+      } else {
+        _cancelFocus.requestFocus();
+      }
+      return;
+    }
+    if (index > 0) {
+      _fieldFocuses[index - 1].requestFocus();
+    }
+  }
+
+  @override
   void dispose() {
-    _fieldFocus.dispose();
+    for (final node in _fieldFocuses) {
+      node.dispose();
+    }
     _cancelFocus.dispose();
     _secondaryFocus.dispose();
     _submitFocus.dispose();
     super.dispose();
-  }
-
-  void _focusSubmit() {
-    _submitFocus.requestFocus();
   }
 
   void _submit() {
@@ -99,7 +130,7 @@ class _TvTextDialogState extends State<TvTextDialog> {
   KeyEventResult _onActionKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-      _fieldFocus.requestFocus();
+      _fieldFocuses.last.requestFocus();
       return KeyEventResult.handled;
     }
     return KeyEventResult.ignored;
@@ -119,7 +150,7 @@ class _TvTextDialogState extends State<TvTextDialog> {
           children: [
             FocusTraversalOrder(
               order: const NumericFocusOrder(1),
-              child: widget.fieldBuilder(context, _fieldFocus, _submit),
+              child: widget.fieldBuilder(context, _fieldFocuses, _submit),
             ),
             const SizedBox(height: 20),
             FocusTraversalOrder(
@@ -143,7 +174,8 @@ class _TvTextDialogState extends State<TvTextDialog> {
                   FilledButton(
                     focusNode: _submitFocus,
                     autofocus: false,
-                    onPressed: widget.submitEnabled ? _submit : null,
+                    // Keep focusable while busy; [_submit] no-ops if disabled.
+                    onPressed: _submit,
                     child: Text(widget.submitLabel),
                   ),
                 ],
