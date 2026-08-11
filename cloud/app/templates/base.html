@@ -5,14 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{% block title %}KiddyTube Admin{% endblock %}</title>
   <link rel="stylesheet" href="/static/admin.css" />
+  <script>
+    async function copyText(text, btn) {
+      try {
+        await navigator.clipboard.writeText(text);
+        if (btn) {
+          const prev = btn.textContent;
+          btn.textContent = "Copied";
+          setTimeout(() => { btn.textContent = prev; }, 1400);
+        }
+      } catch (_) {
+        if (btn) btn.textContent = "Copy failed";
+      }
+    }
+  </script>
 </head>
 <body>
   {% if admin is defined and admin %}
+  {% set path = request.url.path.rstrip("/") or "/admin" %}
   <header class="top">
-    <a class="brand" href="/admin">KiddyTube Cloud</a>
-    <nav>
-      <a href="/admin/catalog">Catalog</a>
-      <a href="/admin/devices">Devices</a>
+    <a class="brand" href="/admin">
+      <span class="brand-mark" aria-hidden="true">KT</span>
+      KiddyTube Cloud
+    </a>
+    <nav class="nav" aria-label="Admin">
+      <a class="nav-link{% if path == '/admin' %} is-active{% endif %}" href="/admin">Dashboard</a>
+      <a class="nav-link{% if path.startswith('/admin/catalog') %} is-active{% endif %}" href="/admin/catalog">Catalog</a>
+      <a class="nav-link{% if path.startswith('/admin/devices') %} is-active{% endif %}" href="/admin/devices">Devices</a>
       <form method="post" action="/admin/logout" class="inline">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <button type="submit">Log out</button>

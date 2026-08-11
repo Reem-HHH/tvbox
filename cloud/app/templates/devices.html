@@ -1,87 +1,147 @@
 {% extends "base.html" %}
 {% block title %}Devices · KiddyTube Admin{% endblock %}
 {% block content %}
-<h1>Devices</h1>
-{% if flash %}<p class="ok">{{ flash }}</p>{% endif %}
+<header class="page-head">
+  <div>
+    <h1>Devices</h1>
+    <p class="lede">Create a 6-digit code here, enter it on the TV / phone / iPad within 10 minutes. Each device gets its own token.</p>
+  </div>
+</header>
 
-<section class="card">
-  <h2>Pair a new device</h2>
-  <p class="muted">Create a 6-digit code on this page, then enter it on the TV / phone / iPad within 10 minutes. Each device gets its own token (option B).</p>
-  <form method="post" action="/admin/devices/pair-code" class="row">
+{% if flash %}<div class="banner ok" role="status">{{ flash }}</div>{% endif %}
+
+<section class="card hero-pair">
+  <div class="card-head">
+    <h2>Pair a new device</h2>
+  </div>
+  <form method="post" action="/admin/devices/pair-code" class="row wrap">
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
     <label class="grow">Optional name hint
-      <input name="device_name" placeholder="Living room TV" />
+      <span class="hint">Shown on this page until the device pairs</span>
+      <input name="device_name" placeholder="Living room TV" autocomplete="off" />
     </label>
     <button type="submit">Generate pairing code</button>
   </form>
+
   {% if active_codes %}
-  <ul class="codes">
+  <ul class="codes" aria-label="Active pairing codes">
     {% for c in active_codes %}
     <li>
-      <strong class="code">{{ c.code }}</strong>
-      <span class="muted">expires {{ c.expires_at }}{% if c.device_name_hint %} · {{ c.device_name_hint }}{% endif %}</span>
+      <div>
+        <div class="code" id="pair-code-{{ loop.index }}">{{ c.code }}</div>
+        <div class="code-meta">
+          Expires {{ c.expires_at }}{% if c.device_name_hint %} · {{ c.device_name_hint }}{% endif %}
+        </div>
+      </div>
+      <button
+        type="button"
+        class="secondary copy-btn"
+        onclick="copyText(document.getElementById('pair-code-{{ loop.index }}').textContent.trim(), this)"
+      >Copy code</button>
     </li>
     {% endfor %}
   </ul>
+  {% else %}
+  <div class="empty" style="padding-top:20px">
+    <strong>No active codes</strong>
+    Generate one, then open Parent → Home &amp; Sync → Pair on the device.
+  </div>
   {% endif %}
-  <p class="muted">Pair endpoint: <code>POST {{ public_base_url }}/v1/devices/pair</code></p>
 </section>
 
 <section class="card">
-  <h2>Registered devices</h2>
+  <div class="card-head">
+    <h2>Registered devices</h2>
+    <span class="muted small">{{ devices|length }} total</span>
+  </div>
   {% if not devices %}
-  <p class="muted">No devices yet.</p>
+  <div class="empty">
+    <strong>No devices yet</strong>
+    Pair your first TV or tablet with a code above.
+  </div>
   {% else %}
-  <table>
-    <thead>
-      <tr><th>Name</th><th>Platform</th><th>Token</th><th>Last seen</th><th></th></tr>
-    </thead>
-    <tbody>
-      {% for d in devices %}
-      <tr class="{% if d.revoked %}revoked{% endif %}">
-        <td>{{ d.name }}</td>
-        <td>{{ d.platform }}</td>
-        <td><code>{{ d.token_prefix }}…</code></td>
-        <td>{{ d.last_seen_at or "—" }}</td>
-        <td>
-          {% if not d.revoked %}
-          <form method="post" action="/admin/devices/{{ d.id }}/revoke" onsubmit="return confirm('Revoke this device?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-            <button type="submit" class="danger">Revoke</button>
-          </form>
-          {% else %}
-          <span class="muted">revoked</span>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Platform</th>
+          <th>Status</th>
+          <th>Token</th>
+          <th>Last seen</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in devices %}
+        <tr class="{% if d.revoked %}revoked{% endif %}">
+          <td><strong>{{ d.name }}</strong></td>
+          <td>{{ d.platform }}</td>
+          <td>
+            {% if d.revoked %}
+            <span class="badge revoked">Revoked</span>
+            {% else %}
+            <span class="badge on">Active</span>
+            {% endif %}
+          </td>
+          <td><code>{{ d.token_prefix }}…</code></td>
+          <td class="muted">{{ d.last_seen_at or "—" }}</td>
+          <td>
+            {% if not d.revoked %}
+            <form method="post" action="/admin/devices/{{ d.id }}/revoke" onsubmit="return confirm('Revoke this device? It will stop syncing until paired again.');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <button type="submit" class="danger">Revoke</button>
+            </form>
+            {% else %}
+            <span class="muted small">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% endif %}
 </section>
 
 <section class="card">
-  <h2>Recent watch history</h2>
-  <p class="muted">Synced from paired devices (Continue Watching). Newest first.</p>
+  <div class="card-head">
+    <h2>Recent watch history</h2>
+    <span class="muted small">Newest first · Continue Watching sync</span>
+  </div>
   {% if not recent_watch %}
-  <p class="muted">No watch history yet. Play something on a paired device.</p>
+  <div class="empty">
+    <strong>No plays yet</strong>
+    Watch something on a paired device to see it here.
+  </div>
   {% else %}
-  <table>
-    <thead>
-      <tr><th>When</th><th>Device</th><th>Title</th><th>Position</th><th>Channel</th></tr>
-    </thead>
-    <tbody>
-      {% for w in recent_watch %}
-      <tr>
-        <td class="muted">{{ w.updated_at }}</td>
-        <td>{% if device_by_id.get(w.device_id) %}{{ device_by_id[w.device_id].name }}{% else %}#{{ w.device_id }}{% endif %}</td>
-        <td><strong>{{ w.title }}</strong><div class="muted"><code>{{ w.video_id }}</code></div></td>
-        <td>{% if w.position_ms > 0 %}{{ (w.position_ms // 60000) }}m {{ ((w.position_ms // 1000) % 60) }}s{% else %}start{% endif %}</td>
-        <td class="muted"><code>{{ w.channel_id }}</code></td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Device</th>
+          <th>Title</th>
+          <th>Position</th>
+          <th>Channel</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for w in recent_watch %}
+        <tr>
+          <td class="muted">{{ w.updated_at }}</td>
+          <td>{% if device_by_id.get(w.device_id) %}{{ device_by_id[w.device_id].name }}{% else %}#{{ w.device_id }}{% endif %}</td>
+          <td>
+            <strong>{{ w.title }}</strong>
+            <div class="muted small"><code>{{ w.video_id }}</code></div>
+          </td>
+          <td>{% if w.position_ms > 0 %}{{ (w.position_ms // 60000) }}m {{ ((w.position_ms // 1000) % 60) }}s{% else %}start{% endif %}</td>
+          <td class="muted"><code>{{ w.channel_id }}</code></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% endif %}
 </section>
 {% endblock %}
