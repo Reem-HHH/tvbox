@@ -216,10 +216,17 @@ class CatalogRepository {
   CatalogSettings? _cached;
   Future<void>? _updateChain;
 
-  /// Stable for the process lifetime (mirrors Kotlin home shuffle seeds).
-  final int channelShuffleSeed = DateTime.now().microsecondsSinceEpoch;
-  final int videoShuffleSeed =
+  /// Stable until [reshuffleHome] (mirrors Kotlin home shuffle seeds).
+  int channelShuffleSeed = DateTime.now().microsecondsSinceEpoch;
+  int videoShuffleSeed =
       DateTime.now().microsecondsSinceEpoch ^ 0x5f3759df;
+
+  /// New home order for Shows / Mix (e.g. after pull-to-refresh).
+  void reshuffleHome() {
+    channelShuffleSeed = DateTime.now().microsecondsSinceEpoch;
+    videoShuffleSeed =
+        DateTime.now().microsecondsSinceEpoch ^ 0x5f3759df;
+  }
 
   static const _modeKey = 'home_library_mode';
   static const _seedKey = 'seed_version';

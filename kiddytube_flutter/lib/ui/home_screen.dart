@@ -158,6 +158,25 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
+  /// Phone/tablet pull-down: force cloud + playlist sync, then reshuffle home.
+  Future<void> _onPullToRefresh() async {
+    _dailySyncTimer?.cancel();
+    try {
+      await widget.repository.ensureCloudEnrolled();
+    } catch (_) {}
+    try {
+      await widget.repository.pullCloudCatalog(force: true);
+    } catch (_) {}
+    try {
+      await widget.repository.refreshAllPlaylists(force: true);
+    } catch (_) {}
+    try {
+      await widget.repository.syncWatchWithCloud();
+    } catch (_) {}
+    widget.repository.reshuffleHome();
+    await _reloadAfterSync();
+  }
+
   Future<void> _setHomeMode(HomeLibraryMode mode) async {
     final current = _settings;
     if (current == null || current.homeLibraryMode == mode) return;
@@ -258,6 +277,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final scheme = Theme.of(context).colorScheme;
     final layout = LayoutMetrics.of(context);
+    // Touch devices only — not Android TV / leanback-style layouts.
+    // Tablets (incl. iPad landscape) stay eligible even when also "tv-like" wide.
+    final allowPullRefresh = layout.isTablet || !layout.isTvLike;
     final isMix = settings.homeLibraryMode == HomeLibraryMode.mixVideos;
     _refreshShuffled(settings);
     final channels = _shuffledChannels;
@@ -265,16 +287,13 @@ class _HomeScreenState extends State<HomeScreen> {
     final crossAxisCount = layout.gridColumns(isMix: isMix);
     final tileCacheWidth = _tileMemCacheWidth(context, crossAxisCount);
 
-    return Scaffold(
-      backgroundColor: scheme.surface,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-            child: CustomScrollView(
-              primary: true,
-              scrollCacheExtent: const ScrollCacheExtent.pixels(500),
-              slivers: [
+    final homeScroll = CustomScrollView(
+      primary: true,
+      physics: allowPullRefresh
+          ? const AlwaysScrollableScrollPhysics()
+          : null,
+      scrollCacheExtent: const ScrollCacheExtent.pixels(500),
+      slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: EdgeInsets.fromLTRB(
@@ -457,7 +476,21 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
-            ),
+            );
+
+    return Scaffold(
+      backgroundColor: scheme.surface,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
+            child: allowPullRefresh
+                ? RefreshIndicator(
+                    color: _ytRed,
+                    onRefresh: _onPullToRefresh,
+                    child: homeScroll,
+                  )
+                : homeScroll,
           ),
         ),
       ),
