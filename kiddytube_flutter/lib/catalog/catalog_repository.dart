@@ -234,6 +234,7 @@ class CatalogRepository {
   static const _lastCloudSyncKey = 'last_cloud_sync_ms';
   static const _lastCloudRevisionKey = 'last_cloud_revision';
   static const _cloudAutoEnrollOptOutKey = 'cloud_auto_enroll_opt_out';
+  static const _shortsPurgedKey = 'catalog_shorts_purged_v1';
   static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
@@ -273,6 +274,12 @@ class CatalogRepository {
       channels = DefaultChannels.mergeSeedUpdates(channels);
       await _persistChannels(channels);
       await _prefs!.setInt(_seedKey, DefaultChannels.seedVersion);
+    }
+
+    final cleaned = CatalogSanitize.channels(channels);
+    if (!_sameChannelVideoIds(channels, cleaned)) {
+      channels = cleaned;
+      await _persistChannels(channels);
     }
 
     final sanitized = ReleasePinPolicy.sanitizePinFlags(
@@ -318,6 +325,21 @@ class CatalogRepository {
     } catch (_) {
       return null;
     }
+  }
+
+  static bool _sameChannelVideoIds(
+    List<ContentChannel> a,
+    List<ContentChannel> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+      if (a[i].videos.length != b[i].videos.length) return false;
+      for (var j = 0; j < a[i].videos.length; j++) {
+        if (a[i].videos[j].id != b[i].videos[j].id) return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _persistChannels(List<ContentChannel> channels) async {
@@ -790,6 +812,7 @@ class CatalogRepository {
       ),
     );
     await _ensurePrefs();
+    await _prefs!.remove(_shortsPurgedKey);
     await _prefs!.setInt(
       _lastCloudSyncKey,
       DateTime.now().millisecondsSinceEpoch,
@@ -1017,6 +1040,10 @@ class CatalogRepository {
             : s.lastSyncMs,
       ),
     );
+    if (updated > 0) {
+      await _prefs!.remove(_shortsPurgedKey);
+      await maybePurgeShortVideos(force: true);
+    }
     if (errors.isNotEmpty) {
       return 'Updated $updated playlists; ${errors.length} failed.\n'
           '${errors.take(3).join('\n')}';
@@ -1029,10 +1056,73 @@ class CatalogRepository {
     final settings = await load();
     final apiKey = settings.youtubeApiKey?.trim();
     if (apiKey == null || apiKey.isEmpty) return false;
+    final purged = await maybePurgeShortVideos();
     final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - settings.lastSyncMs < syncTtlMs) return false;
+    if (now - settings.lastSyncMs < syncTtlMs) return purged;
     final summary = await refreshAllPlaylists(force: true);
-    return !summary.startsWith('Already synced') &&
+    final synced = !summary.startsWith('Already synced') &&
         !summary.startsWith('Add a YouTube');
+    return purged || synced;
+  }
+
+  /// One-shot: drop leftover synced Shorts / live / sub-minute clips via API.
+  /// Keeps parent-manual rows and curated seed video ids (even if short).
+  Future<bool> maybePurgeShortVideos({bool force = false}) async {
+    await _ensurePrefs();
+    if (!force && (_prefs!.getBool(_shortsPurgedKey) ?? false)) {
+      return false;
+    }
+    final settings = await load();
+    final apiKey = settings.youtubeApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return false;
+
+    final seedIdsByChannel = {
+      for (final ch in DefaultChannels.seed())
+        ch.id: {for (final v in ch.videos) v.id},
+    };
+
+    final candidates = <VideoItem>[];
+    final seen = <String>{};
+    for (final ch in settings.channels) {
+      final seedIds = seedIdsByChannel[ch.id] ?? const <String>{};
+      for (final v in ch.videos) {
+        if (v.manual) continue;
+        if (seedIds.contains(v.id)) continue;
+        final yt = v.youtubeVideoId?.trim();
+        if (yt == null || yt.isEmpty || !MediaIds.isValidVideoId(yt)) continue;
+        if (seen.add(yt)) candidates.add(v);
+      }
+    }
+    if (candidates.isEmpty) {
+      await _prefs!.setBool(_shortsPurgedKey, true);
+      return false;
+    }
+
+    final kept = await _youtube.keepFullOnDemandVideos(
+      apiKey: apiKey,
+      candidates: candidates,
+    );
+    final keepIds = kept.map((v) => v.id).toSet();
+    final dropIds = {
+      for (final v in candidates)
+        if (!keepIds.contains(v.id)) v.id,
+    };
+    if (dropIds.isEmpty) {
+      await _prefs!.setBool(_shortsPurgedKey, true);
+      return false;
+    }
+
+    final next = [
+      for (final ch in settings.channels)
+        ch.copyWith(
+          videos: [
+            for (final v in ch.videos)
+              if (v.manual || !dropIds.contains(v.id)) v,
+          ],
+        ),
+    ];
+    await update((s) => s.copyWith(channels: next));
+    await _prefs!.setBool(_shortsPurgedKey, true);
+    return true;
   }
 }

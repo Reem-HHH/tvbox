@@ -104,7 +104,7 @@ class YoutubeCatalogSource {
       throw Exception('No playlist response');
     }
 
-    final filtered = await _keepFullOnDemandVideos(
+    final filtered = await keepFullOnDemandVideos(
       apiKey: apiKey,
       candidates: items,
     );
@@ -112,7 +112,10 @@ class YoutubeCatalogSource {
   }
 
   /// Batch-check duration + liveBroadcastContent; drop Shorts and live/upcoming.
-  Future<List<VideoItem>> _keepFullOnDemandVideos({
+  ///
+  /// Used by playlist sync and by one-shot local catalog purge for leftover
+  /// Shorts that arrived before duration filtering existed.
+  Future<List<VideoItem>> keepFullOnDemandVideos({
     required String apiKey,
     required List<VideoItem> candidates,
   }) async {

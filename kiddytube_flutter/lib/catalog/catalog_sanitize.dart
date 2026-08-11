@@ -1,6 +1,7 @@
 import 'content_title_filter.dart';
 import 'media_ids.dart';
 import 'models.dart';
+import 'youtube_sync.dart';
 
 /// Validates / sanitizes catalog rows from cloud, import, or untrusted JSON.
 class CatalogSanitize {
@@ -24,6 +25,7 @@ class CatalogSanitize {
 
   static VideoItem? video(VideoItem raw) {
     if (ContentTitleFilter.isBlocked(raw.title)) return null;
+    if (YoutubeCatalogSource.looksLikeShortOrLiveTitle(raw.title)) return null;
     final yt = MediaIds.isValidVideoId(raw.youtubeVideoId)
         ? raw.youtubeVideoId!.trim()
         : MediaIds.extractVideoId(raw.youtubeVideoId);

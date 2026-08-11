@@ -5,7 +5,11 @@ class MediaIds {
 
   static final _validVideoId = RegExp(r'^[A-Za-z0-9_-]{11}$');
   static final _videoFromUrl = RegExp(
-    r'(?:youtube\.com/watch\?.*v=|youtu\.be/|youtube\.com/embed/)([\w-]{11})',
+    r'(?:youtube\.com/watch\?.*v=|youtu\.be/|youtube\.com/embed/|youtube\.com/shorts/)([\w-]{11})',
+  );
+  static final _shortsUrl = RegExp(
+    r'youtube\.com/shorts/([\w-]{11})',
+    caseSensitive: false,
   );
   static final _playlistFromUrl = RegExp(
     r'[?&]list=([\w-]+)|youtube\.com/playlist\?list=([\w-]+)',
@@ -29,14 +33,23 @@ class MediaIds {
     return null;
   }
 
+  /// True when the input is explicitly a YouTube Shorts URL.
+  static bool isShortsUrl(String? input) {
+    if (input == null || input.trim().isEmpty) return false;
+    return _shortsUrl.hasMatch(input.trim());
+  }
+
   /// Split on commas, semicolons, newlines, or spaces and extract video ids.
+  /// Rejects explicit `/shorts/` URLs so parents cannot paste Shorts links.
   static List<String> parseVideoIdsCsv(String? csv) {
     if (csv == null || csv.trim().isEmpty) return const [];
     final parts = csv.split(RegExp(r'[,;\s]+'));
     final ids = <String>[];
     final seen = <String>{};
     for (final part in parts) {
-      final id = extractVideoId(part.trim());
+      final trimmed = part.trim();
+      if (trimmed.isEmpty || isShortsUrl(trimmed)) continue;
+      final id = extractVideoId(trimmed);
       if (id != null && seen.add(id)) ids.add(id);
     }
     return ids;

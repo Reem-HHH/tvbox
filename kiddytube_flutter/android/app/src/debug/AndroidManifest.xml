@@ -8,5 +8,6 @@
     <!-- LAN cloud (http://192.168.x.x) during development only. -->
     <application
         android:usesCleartextTraffic="true"
+        tools:replace="android:usesCleartextTraffic"
         tools:targetApi="28" />
 </manifest>
