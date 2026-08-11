@@ -1,11 +1,19 @@
 import 'models.dart';
 
-/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 25.
+/// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 25;
+  static const seedVersion = 26;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
+
+  /// Rotating YouTube live IDs that crash in the kid player when the stream ends.
+  static const retiredLiveVideoIds = {
+    'wawzF8i5yAo',
+    '3eAQvIImyTM',
+    'tuOo0oPuc2Y',
+    'Rs7St51oDDc',
+  };
 
   static const _spacetoonUploadsPlaylist = 'UUuQKih3Ac3NABADQKQdeV6A';
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
@@ -40,7 +48,7 @@ class DefaultChannels {
     'dawood_juz_26',
   };
 
-  static List<ContentChannel> seed() => _withDailyFollow([
+  static List<ContentChannel> seed() => [
         _channel(
           id: 'omar_hana',
           title: 'Omar & Hana',
@@ -80,6 +88,7 @@ class DefaultChannels {
           order: 2,
           color: 0xFF00897B,
           playlist: _dawoodHubPlaylist,
+          followUploads: true,
           videos: const [],
         ),
         _channel(
@@ -495,6 +504,7 @@ class DefaultChannels {
           order: 37,
           color: 0xFFAB47BC,
           playlist: _numberblocksSeason1Playlist,
+          followUploads: true,
           videos: [
             _yt('jVeYnCehEFE', 'One — Numberblocks S1 E1'),
             _yt('bz2oWyDjgbc', 'Another One — Numberblocks S1 E2'),
@@ -603,15 +613,11 @@ class DefaultChannels {
         ),
         _channel(
           id: 'live_makkah',
-          title: 'مكة مباشر',
+          title: 'قرآن للنوم',
           order: 43,
           color: 0xFF2E7D32,
           sourceType: SourceType.youtubeVideoList,
           videos: [
-            _yt('wawzF8i5yAo', 'بث مباشر — قناة القرآن الكريم | مكة'),
-            _yt('3eAQvIImyTM', 'بث مباشر مكة المكرمة — الحرم المكي HD'),
-            _yt('tuOo0oPuc2Y', 'مكة مباشر — الحرم المكي'),
-            _yt('Rs7St51oDDc', 'بث مباشر — قناة السنة النبوية | المدينة'),
             _yt('UMT2RvaOKrg', 'قرآن للنوم — جزء عم | شاشة سوداء'),
             _yt('vfdU0VNJvJ0', 'جزء عم — ماهر المعيقلي | شاشة سوداء'),
             _yt('WX2K1q0G9I4', 'سورة الملك للنوم — عمر هشام | شاشة سوداء'),
@@ -630,12 +636,11 @@ class DefaultChannels {
         ),
         _channel(
           id: 'live_quran',
-          title: 'القرآن مباشر',
+          title: 'رقية وقرآن',
           order: 44,
           color: 0xFF00695C,
           sourceType: SourceType.youtubeVideoList,
           videos: [
-            _yt('wawzF8i5yAo', 'بث مباشر — قناة القرآن الكريم'),
             _yt('TQ9R8-TIdV4', 'قرآن هادئ للنوم — 10 ساعات | شاشة سوداء'),
             _yt('kXZgeu27BOo', 'قرآن للنوم — 10 ساعات | شاشة سوداء'),
             _yt('HOREcsKsjcU', 'سورة الملك مكررة — شاشة سوداء'),
@@ -777,18 +782,7 @@ class DefaultChannels {
             _yt('9A-Cy0m0NHA', 'حلقة 230 — حديقة المرح'),
           ],
         ),
-      ]);
-
-  /// Playlist-backed channels follow uploads daily by default.
-  static List<ContentChannel> _withDailyFollow(List<ContentChannel> channels) {
-    return [
-      for (final ch in channels)
-        if (ch.youtubePlaylistId == null || ch.youtubePlaylistId!.isEmpty)
-          ch
-        else
-          ch.copyWith(followUploads: true),
-    ];
-  }
+      ];
 
   /// Merge newer seed defaults onto an existing catalog without wiping parent toggles.
   static List<ContentChannel> mergeSeedUpdates(List<ContentChannel> existing) {
@@ -820,30 +814,37 @@ class DefaultChannels {
           seedCh.youtubePlaylistId != null &&
           seedCh.youtubePlaylistId!.isNotEmpty &&
           current.youtubePlaylistId != seedCh.youtubePlaylistId;
-      final enableFollowFromSeed = seedCh.followUploads &&
-          !current.followUploads &&
-          !current.playlistManagedByParent;
+      final followChanged = !current.playlistManagedByParent &&
+          current.followUploads != seedCh.followUploads;
 
       final dropWrongKidsMusic = seedCh.id == 'kids_music' &&
           current.videos.any((v) => v.id == _retiredKidsMusicVideoId);
-      final baseVideos = dropWrongKidsMusic
-          ? current.videos
-              .where((v) => v.id != _retiredKidsMusicVideoId)
-              .toList()
-          : current.videos;
+      final dropRetiredLive = (seedCh.id == 'live_makkah' ||
+              seedCh.id == 'live_quran') &&
+          current.videos.any((v) => retiredLiveVideoIds.contains(v.id));
+      final baseVideos = [
+        for (final v in current.videos)
+          if ((!dropWrongKidsMusic || v.id != _retiredKidsMusicVideoId) &&
+              (!dropRetiredLive || !retiredLiveVideoIds.contains(v.id)))
+            v,
+      ];
       final existingIds = baseVideos.map((v) => v.id).toSet();
       final missingVideos =
           seedCh.videos.where((v) => !existingIds.contains(v.id)).toList();
       final titleStale = current.title != seedCh.title &&
-          (seedCh.id == 'spacetoon' || clearSpacetoonUploads);
+          (seedCh.id == 'spacetoon' ||
+              clearSpacetoonUploads ||
+              seedCh.id == 'live_makkah' ||
+              seedCh.id == 'live_quran');
       final disableFromSeed = !seedCh.enabled && current.enabled;
 
       if (clearSpacetoonUploads ||
           needsPlaylist ||
           replaceNumberblocksPlaylist ||
-          enableFollowFromSeed ||
+          followChanged ||
           missingVideos.isNotEmpty ||
           dropWrongKidsMusic ||
+          dropRetiredLive ||
           titleStale ||
           disableFromSeed) {
         final List<VideoItem> videos;
@@ -851,14 +852,16 @@ class DefaultChannels {
           videos = seedCh.videos;
         } else if (current.videos.isEmpty && seedCh.videos.isNotEmpty) {
           videos = seedCh.videos;
-        } else if (missingVideos.isNotEmpty || dropWrongKidsMusic) {
+        } else if (missingVideos.isNotEmpty ||
+            dropWrongKidsMusic ||
+            dropRetiredLive) {
           videos = [...baseVideos, ...missingVideos];
         } else {
           videos = current.videos;
         }
 
         byId[seedCh.id] = current.copyWith(
-          title: (titleStale || clearSpacetoonUploads)
+          title: titleStale || clearSpacetoonUploads
               ? seedCh.title
               : current.title,
           youtubePlaylistId: clearSpacetoonUploads
@@ -876,9 +879,9 @@ class DefaultChannels {
           sortOrder: seedCh.sortOrder,
           color: seedCh.color,
           enabled: !seedCh.enabled ? false : current.enabled,
-          followUploads: !current.playlistManagedByParent && seedCh.followUploads
-              ? true
-              : current.followUploads,
+          followUploads: current.playlistManagedByParent
+              ? current.followUploads
+              : seedCh.followUploads,
         );
       } else if (current.sortOrder != seedCh.sortOrder ||
           current.color != seedCh.color) {
@@ -903,6 +906,7 @@ class DefaultChannels {
     SourceType? sourceType,
     List<VideoItem> videos = const [],
     bool enabled = true,
+    bool followUploads = false,
   }) {
     return ContentChannel(
       id: id,
@@ -916,7 +920,7 @@ class DefaultChannels {
       videos: videos,
       sortOrder: order,
       color: color,
-      followUploads: playlist != null && playlist.isNotEmpty,
+      followUploads: followUploads,
     );
   }
 

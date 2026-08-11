@@ -46,6 +46,7 @@ class _PlayerScreenState extends State<PlayerScreen>
   bool _loading = true;
   Timer? _progressTimer;
   String? _seekHint;
+  int _consecutiveErrors = 0;
 
   bool _scrubbing = false;
   bool _scrubReady = false;
@@ -210,13 +211,10 @@ class _PlayerScreenState extends State<PlayerScreen>
         onMessageReceived: (message) {
           final data = message.message;
           if (data == 'ended') {
+            _consecutiveErrors = 0;
             _onEnded();
           } else if (data.startsWith('error')) {
-            if (!mounted) return;
-            setState(() {
-              _error = 'Playback error';
-              _loading = false;
-            });
+            unawaited(_onPlaybackError());
           }
         },
       )
@@ -232,7 +230,10 @@ class _PlayerScreenState extends State<PlayerScreen>
             return NavigationDecision.prevent;
           },
           onPageFinished: (_) {
-            if (mounted) setState(() => _loading = false);
+            if (mounted) {
+              _consecutiveErrors = 0;
+              setState(() => _loading = false);
+            }
           },
         ),
       );
@@ -275,15 +276,13 @@ class _PlayerScreenState extends State<PlayerScreen>
       setState(() {
         _videoController = controller;
         _loading = false;
+        _consecutiveErrors = 0;
       });
       _startProgressTimer();
     } catch (e) {
       await controller.dispose();
       if (!mounted) return;
-      setState(() {
-        _error = 'Could not play media';
-        _loading = false;
-      });
+      await _onPlaybackError(fallbackMessage: 'Could not play media');
     }
   }
 
@@ -294,6 +293,7 @@ class _PlayerScreenState extends State<PlayerScreen>
         c.value.position >= c.value.duration &&
         c.value.duration > Duration.zero) {
       c.removeListener(_onVideoTick);
+      _consecutiveErrors = 0;
       _onEnded();
     }
   }
@@ -307,6 +307,26 @@ class _PlayerScreenState extends State<PlayerScreen>
     } else {
       Navigator.of(context).maybePop();
     }
+  }
+
+  /// Skip broken live / unavailable items; stop if the whole queue fails.
+  Future<void> _onPlaybackError({String fallbackMessage = 'Playback error'}) async {
+    if (!mounted) return;
+    _consecutiveErrors++;
+    if (_index + 1 < widget.queue.length &&
+        _consecutiveErrors < widget.queue.length) {
+      setState(() {
+        _index += 1;
+        _error = null;
+        _loading = true;
+      });
+      await _loadCurrent();
+      return;
+    }
+    setState(() {
+      _error = fallbackMessage;
+      _loading = false;
+    });
   }
 
   Future<void> _scrubBy(int deltaMs, {bool commitNow = false}) async {

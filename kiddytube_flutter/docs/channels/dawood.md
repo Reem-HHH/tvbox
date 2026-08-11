@@ -2,7 +2,7 @@
 
 - **Channel id:** `dawood`
 - **Source:** Single home hub → Juz Amma playlist `PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR`
-- **Follow uploads:** off
+- **Follow uploads:** on (curated Juz Amma hub playlist — not a raw uploads feed)
 
 ## Why one tile
 

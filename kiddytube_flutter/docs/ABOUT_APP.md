@@ -34,13 +34,13 @@ Day-to-day use is this Flutter app. The older Kotlin Android TV app was moved ou
 - **Continue watching** — resumes near where they left off.
 - Logo + lock open parent settings.
 
-### Channels kids get by default (seed v25 highlights)
+### Channels kids get by default (seed v26 highlights)
 
 Islamic / Arabic-first shows, preschool series, plus recent adds:
 
 | Tile | Notes |
 | --- | --- |
-| مكة مباشر / القرآن مباشر | Live + sleep Quran (black screen), ruqyah for home; live IDs can change |
+| قرآن للنوم / رقية وقرآن | Sleep Quran + ruqyah VODs only (no live streams) |
 | ماشا والدب | Arabic Masha |
 | بليبي بالعربي | Arabic Blippi |
 | ماروكو الصغيرة | Arabic Maruko |
@@ -55,7 +55,8 @@ Full dossiers: [`channels/`](channels/).
 ### Family content rules
 
 On playlist sync, titles matching **Halloween, Thanksgiving, Pride/LGBTQ** (and common Arabic spellings) are **skipped**.  
-This is title-based only — not a visual filter. New Disney / Blippi-style channels use **curated lists** (no Follow uploads) so holiday/Pride promos are less likely to appear.
+Sync also drops **YouTube Shorts** (under ~60s / `#shorts`) and **live / upcoming** broadcasts.  
+This is API/title-based only — not a visual filter. Uploads-heavy channels keep **Follow off** by default; only curated playlists (داوود hub, Numberblocks S1) Follow daily.
 
 ---
 
@@ -91,13 +92,9 @@ Never commit `local_defines.json` (gitignored).
 
 See [`../cloud/README.md`](../cloud/README.md) and [`RUN_TV_AND_IPAD.md`](RUN_TV_AND_IPAD.md).
 
-### Live Makkah / Quran
+### Quran sleep / ruqyah channels
 
-Live YouTube IDs **rotate**. If مكة/قرآن مباشر stop working:
-
-1. Open https://www.youtube.com/@SaudiQuranTv/live  
-2. Copy the current video ID  
-3. Parent → Channels → update that channel’s video  
+Seed **v26** removed rotating live stream IDs from `live_makkah` / `live_quran`. Those tiles are on-demand sleep Quran and ruqyah only. Broken live items are dropped on upgrade; the player also auto-skips unplayable videos in a queue.
 
 ### Adding / editing shows
 
