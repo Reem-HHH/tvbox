@@ -121,6 +121,7 @@ Seed **v26** removed rotating live stream IDs from `live_makkah` / `live_quran`.
 | Doc | Purpose |
 | --- | --- |
 | [README.md](../README.md) | Flutter project overview + setup |
+| [SHIP_CHECKLIST.md](SHIP_CHECKLIST.md) | Exact next steps after hardening (TV, PR, signing, cloud, PIN) |
 | [RUN_TV_AND_IPAD.md](RUN_TV_AND_IPAD.md) | Install / pair checklist |
 | [../cloud/README.md](../cloud/README.md) | Cloud admin API |
 | [channels/README.md](channels/README.md) | Per-show notes |

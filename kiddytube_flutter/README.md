@@ -28,6 +28,8 @@ Cross-platform kids browser for:
 | Doc | Who it’s for |
 | --- | --- |
 | **[About the app](docs/ABOUT_APP.md)** | You (admin) + household: PIN, home modes, channels, cloud, live Makkah, limits |
+| **[Ship checklist](docs/SHIP_CHECKLIST.md)** | Exact next steps: TV check, PR, signing, cloud pair, change PIN |
+| **[Run TV and iPad](docs/RUN_TV_AND_IPAD.md)** | Install / pair checklist |
 | **[Install & pair on TV / iPad](docs/RUN_TV_AND_IPAD.md)** | Step-by-step install, ADB, pairing |
 | **[Cloud README](../cloud/README.md)** | Admin API + device tokens |
 | **[Channel dossiers](docs/channels/README.md)** | Per-show notes / clean-fit |
