@@ -55,7 +55,7 @@ Full dossiers: [`channels/`](channels/).
 ### Family content rules
 
 On playlist sync, titles matching **Halloween, Thanksgiving, Pride/LGBTQ** (and common Arabic spellings) are **skipped**.  
-Sync also drops **YouTube Shorts** (under ~60s / `#shorts`) and **live / upcoming** broadcasts.  
+Sync also drops **YouTube Shorts** (up to ~3 minutes / `#shorts`) and **live / upcoming** broadcasts.  
 This is API/title-based only — not a visual filter. Uploads-heavy channels keep **Follow off** by default; only curated playlists (داوود hub, Numberblocks S1) Follow daily.
 
 ---

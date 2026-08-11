@@ -44,7 +44,7 @@ void main() {
       );
     });
 
-    test('isFullOnDemandVideo drops live, upcoming, and sub-minute clips', () {
+    test('isFullOnDemandVideo drops live, upcoming, and Shorts-length clips', () {
       expect(
         YoutubeCatalogSource.isFullOnDemandVideo(
           title: 'Episode 1',
@@ -79,11 +79,31 @@ void main() {
       );
       expect(
         YoutubeCatalogSource.isFullOnDemandVideo(
-          title: 'Funny #Shorts',
+          title: 'Two minute clip',
           liveBroadcastContent: 'none',
           duration: const Duration(minutes: 2),
         ),
         isFalse,
+      );
+      expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'Just over three minutes',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 3, seconds: 1),
+        ),
+        isTrue,
+      );
+      expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'Funny #Shorts',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 5),
+        ),
+        isFalse,
+      );
+      expect(
+        YoutubeCatalogSource.minFullVideoDuration,
+        const Duration(seconds: 180),
       );
     });
   });

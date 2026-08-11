@@ -234,7 +234,7 @@ class CatalogRepository {
   static const _lastCloudSyncKey = 'last_cloud_sync_ms';
   static const _lastCloudRevisionKey = 'last_cloud_revision';
   static const _cloudAutoEnrollOptOutKey = 'cloud_auto_enroll_opt_out';
-  static const _shortsPurgedKey = 'catalog_shorts_purged_v1';
+  static const _shortsPurgedKey = 'catalog_shorts_purged_v2';
   static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {

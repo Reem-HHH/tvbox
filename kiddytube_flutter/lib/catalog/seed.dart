@@ -3,7 +3,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 26;
+  static const seedVersion = 27;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -827,10 +827,18 @@ class DefaultChannels {
       final dropRetiredLive = (seedCh.id == 'live_makkah' ||
               seedCh.id == 'live_quran') &&
           current.videos.any((v) => retiredLiveVideoIds.contains(v.id));
+      // Follow-off channels: drop leftover playlist-sync Shorts/promos that are
+      // neither curated seed nor parent-manual.
+      final seedVideoIds = {for (final v in seedCh.videos) v.id};
+      final pruneStaleSync = !current.playlistManagedByParent &&
+          !current.followUploads &&
+          !seedCh.followUploads &&
+          seedCh.videos.isNotEmpty;
       final baseVideos = [
         for (final v in current.videos)
           if ((!dropWrongKidsMusic || v.id != _retiredKidsMusicVideoId) &&
-              (!dropRetiredLive || !retiredLiveVideoIds.contains(v.id)))
+              (!dropRetiredLive || !retiredLiveVideoIds.contains(v.id)) &&
+              (!pruneStaleSync || v.manual || seedVideoIds.contains(v.id)))
             v,
       ];
       final existingIds = baseVideos.map((v) => v.id).toSet();
@@ -842,6 +850,8 @@ class DefaultChannels {
               seedCh.id == 'live_makkah' ||
               seedCh.id == 'live_quran');
       final disableFromSeed = !seedCh.enabled && current.enabled;
+      final prunedStale =
+          pruneStaleSync && baseVideos.length != current.videos.length;
 
       if (clearSpacetoonUploads ||
           needsPlaylist ||
@@ -850,6 +860,7 @@ class DefaultChannels {
           missingVideos.isNotEmpty ||
           dropWrongKidsMusic ||
           dropRetiredLive ||
+          prunedStale ||
           titleStale ||
           disableFromSeed) {
         final List<VideoItem> videos;
@@ -859,7 +870,8 @@ class DefaultChannels {
           videos = seedCh.videos;
         } else if (missingVideos.isNotEmpty ||
             dropWrongKidsMusic ||
-            dropRetiredLive) {
+            dropRetiredLive ||
+            prunedStale) {
           videos = [...baseVideos, ...missingVideos];
         } else {
           videos = current.videos;

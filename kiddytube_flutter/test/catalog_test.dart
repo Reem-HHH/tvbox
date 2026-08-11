@@ -49,7 +49,7 @@ void main() {
 
 
   test('seed keeps Twirlywoos expanded starters', () {
-    expect(DefaultChannels.seedVersion, 26);
+    expect(DefaultChannels.seedVersion, 27);
     final twirly = DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
     expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
     expect(twirly.videos.any((v) => v.id == 'Wg0JkKmQY6A'), isTrue);
@@ -58,7 +58,7 @@ void main() {
   });
 
   test('seed v19 adds Maruko Chan Arabic starters', () {
-    expect(DefaultChannels.seedVersion, 26);
+    expect(DefaultChannels.seedVersion, 27);
     final maruko = DefaultChannels.seed().firstWhere((c) => c.id == 'maruko');
     expect(maruko.title, 'ماروكو الصغيرة');
     expect(maruko.followUploads, isFalse);
@@ -70,7 +70,7 @@ void main() {
   });
 
   test('seed includes Makkah Quran Masha Blippi Disney channels without live', () {
-    expect(DefaultChannels.seedVersion, 26);
+    expect(DefaultChannels.seedVersion, 27);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
     expect(ids.containsAll([
@@ -104,7 +104,7 @@ void main() {
   });
 
   test('seed v26 follow only curated playlists; Numberblocks Season 1', () {
-    expect(DefaultChannels.seedVersion, 26);
+    expect(DefaultChannels.seedVersion, 27);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -144,7 +144,7 @@ void main() {
   });
 
   test('seed v22 adds Babar and Hadikat al-Marah channels', () {
-    expect(DefaultChannels.seedVersion, 26);
+    expect(DefaultChannels.seedVersion, 27);
     final seed = DefaultChannels.seed();
     final babar = seed.firstWhere((c) => c.id == 'babar');
     expect(babar.title, 'بابار');
@@ -294,6 +294,34 @@ void main() {
     expect(numberblocks.videos.any((v) => v.id == 'Ap5kgJ-bpEQ'), isTrue);
   });
 
+  test('mergeSeedUpdates prunes stale sync Shorts when Follow is off', () {
+    final seedSara = DefaultChannels.seed().firstWhere((c) => c.id == 'sara_duck');
+    final existing = [
+      seedSara.copyWith(
+        followUploads: false,
+        videos: [
+          ...seedSara.videos,
+          const VideoItem(
+            id: 'ShortExtra1',
+            title: 'Promo Short',
+            youtubeVideoId: 'ShortExtra1',
+          ),
+          const VideoItem(
+            id: 'ManualKeep1',
+            title: 'Parent pick',
+            youtubeVideoId: 'ManualKeep1',
+            manual: true,
+          ),
+        ],
+      ),
+    ];
+    final merged = DefaultChannels.mergeSeedUpdates(existing);
+    final sara = merged.firstWhere((c) => c.id == 'sara_duck');
+    expect(sara.videos.any((v) => v.id == 'ShortExtra1'), isFalse);
+    expect(sara.videos.any((v) => v.id == 'ManualKeep1'), isTrue);
+    expect(sara.videos.any((v) => v.id == 'EOj_7ZYmCOI'), isTrue);
+  });
+
   test('mergeSeedUpdates drops retired live IDs and disables UU follow', () {
     final existing = [
       ContentChannel(
@@ -341,7 +369,7 @@ void main() {
 
 
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 26);
+    expect(DefaultChannels.seedVersion, 27);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();

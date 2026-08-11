@@ -14,8 +14,8 @@ class YoutubeCatalogSource {
 
   final http.Client _client;
 
-  /// Shorts are typically under a minute; allow a small buffer.
-  static const minFullVideoDuration = Duration(seconds: 60);
+  /// YouTube Shorts can be up to 3 minutes; treat shorter clips as Shorts.
+  static const minFullVideoDuration = Duration(seconds: 180);
 
   Future<List<VideoItem>> fetchPlaylistVideos({
     required String apiKey,
