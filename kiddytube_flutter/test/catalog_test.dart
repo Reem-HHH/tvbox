@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kiddytube/catalog/content_title_filter.dart';
 import 'package:kiddytube/catalog/home_library.dart';
 import 'package:kiddytube/catalog/models.dart';
 import 'package:kiddytube/catalog/recent_watch.dart';
@@ -49,7 +50,7 @@ void main() {
 
 
   test('seed keeps Twirlywoos expanded starters', () {
-    expect(DefaultChannels.seedVersion, 27);
+    expect(DefaultChannels.seedVersion, 29);
     final twirly = DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
     expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
     expect(twirly.videos.any((v) => v.id == 'Wg0JkKmQY6A'), isTrue);
@@ -58,7 +59,7 @@ void main() {
   });
 
   test('seed v19 adds Maruko Chan Arabic starters', () {
-    expect(DefaultChannels.seedVersion, 27);
+    expect(DefaultChannels.seedVersion, 29);
     final maruko = DefaultChannels.seed().firstWhere((c) => c.id == 'maruko');
     expect(maruko.title, 'ماروكو الصغيرة');
     expect(maruko.followUploads, isFalse);
@@ -70,7 +71,7 @@ void main() {
   });
 
   test('seed includes Makkah Quran Masha Blippi Disney channels without live', () {
-    expect(DefaultChannels.seedVersion, 27);
+    expect(DefaultChannels.seedVersion, 29);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
     expect(ids.containsAll([
@@ -104,7 +105,7 @@ void main() {
   });
 
   test('seed v26 follow only curated playlists; Numberblocks Season 1', () {
-    expect(DefaultChannels.seedVersion, 27);
+    expect(DefaultChannels.seedVersion, 29);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -144,7 +145,7 @@ void main() {
   });
 
   test('seed v22 adds Babar and Hadikat al-Marah channels', () {
-    expect(DefaultChannels.seedVersion, 27);
+    expect(DefaultChannels.seedVersion, 29);
     final seed = DefaultChannels.seed();
     final babar = seed.firstWhere((c) => c.id == 'babar');
     expect(babar.title, 'بابار');
@@ -369,7 +370,7 @@ void main() {
 
 
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 27);
+    expect(DefaultChannels.seedVersion, 29);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -404,7 +405,50 @@ void main() {
     ];
     final merged = DefaultChannels.mergeSeedUpdates(existing);
     expect(merged.any((c) => c.id == 'peppa'), isTrue);
+    expect(merged.any((c) => c.id == 'ben_and_holly'), isTrue);
+    expect(merged.any((c) => c.id == 'minecraft'), isTrue);
     expect(merged.any((c) => c.id == 'omar_hana'), isTrue);
+  });
+
+  test('seed v28 adds Ben and Holly curated starters without Christmas', () {
+    expect(DefaultChannels.seedVersion, 29);
+    final ben = DefaultChannels.seed().firstWhere((c) => c.id == 'ben_and_holly');
+    expect(ben.title, 'Ben & Holly');
+    expect(ben.followUploads, isFalse);
+    expect(ben.youtubePlaylistId, 'UU2UhuvjTIrR0Ck2KrkvRcuA');
+    expect(ben.videos.length, greaterThanOrEqualTo(15));
+    expect(ben.videos.any((v) => v.id == 'edAhVTPprT0'), isTrue);
+    expect(ben.videos.any((v) => v.id == 'mLHPMMKTNRI'), isTrue);
+    expect(
+      ben.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
+    expect(
+      ben.videos.every(
+        (v) =>
+            !v.title.toLowerCase().contains('christmas') &&
+            !v.title.toLowerCase().contains('xmas') &&
+            !v.title.toLowerCase().contains('north pole'),
+      ),
+      isTrue,
+    );
+  });
+
+  test('seed v29 adds Minecraft Dad & Olivia calm builds', () {
+    expect(DefaultChannels.seedVersion, 29);
+    final mc = DefaultChannels.seed().firstWhere((c) => c.id == 'minecraft');
+    expect(mc.title, 'Minecraft');
+    expect(mc.followUploads, isFalse);
+    expect(mc.youtubePlaylistId, 'PLCGF5P4ZzZ6d2S5-RVKKkFp-wLZk-uKP9');
+    expect(mc.videos.length, greaterThanOrEqualTo(12));
+    expect(mc.videos.any((v) => v.id == '3prPLWKeDiw'), isTrue);
+    expect(mc.videos.any((v) => v.id == 'FjTATyVGl-o'), isTrue);
+    expect(mc.videos.any((v) => v.id == 'y1pigDzOku0'), isTrue);
+    expect(mc.videos.any((v) => v.id == 'jeust7nhHdo'), isTrue);
+    expect(
+      mc.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
   });
 
   test('ParentPinManager hashes and verifies default PIN', () {

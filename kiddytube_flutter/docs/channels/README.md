@@ -14,6 +14,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [kids_music](kids_music.md) | Kids Music | High | High–Medium | Toyor / Hala / Osratouna curated songs |
 | [babar](babar.md) | بابار | High | Medium–High | Treehouse Babar & Badou allowlist |
 | [hadikat_almarah](hadikat_almarah.md) | حديقة المرح | High | High | WildBrain Arabic Night Garden |
+| [minecraft](minecraft.md) | Minecraft | High | High | Dad & Olivia calm builds (GFKH; no scary Follow) |
 | [spacetoon](spacetoon.md) | Spacetoon أناشيد | High | High | Expanded curated songs |
 | [moda_modi](moda_modi.md) | مودا مودي | High | High | Ramadan / Eid songs |
 | [smarta](smarta.md) | سمارتا وحقيبتها العجيبة | High | High | Spacetoon Arabic curated |
@@ -29,6 +30,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [barney](barney.md) | Barney & Friends | High | Medium–High | Curated Scholastic starters |
 | [dora](dora.md) | Dora the Explorer | High | Medium–High | Official Dora & Friends starters |
 | [peppa](peppa.md) | Peppa Pig | High | Medium–High | Curated official starters (no odd Tales) |
+| [ben_and_holly](ben_and_holly.md) | Ben & Holly | High | High | Curated official starters (no Christmas) |
 | [lego_duplo](lego_duplo.md) | LEGO DUPLO | High | Medium–High | Toy play / unboxings |
 | [play_doh](play_doh.md) | Play-Doh | High | Medium–High | Sensory craft play |
 | [toy_kitchen](toy_kitchen.md) | Toy Kitchen | High | Medium–High | Playset unboxings |

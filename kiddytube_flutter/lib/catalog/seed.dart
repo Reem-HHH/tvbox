@@ -3,7 +3,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 27;
+  static const seedVersion = 29;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -20,6 +20,9 @@ class DefaultChannels {
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
   static const _numberblocksSeason1Playlist =
       'PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm';
+  /// Games For Kids Hub — Dad & Olivia Play (calm Minecraft builds only).
+  static const _dadOliviaMinecraftPlaylist =
+      'PLCGF5P4ZzZ6d2S5-RVKKkFp-wLZk-uKP9';
 
   static const retiredChannelIds = {
     'arabic_cartoons',
@@ -374,9 +377,38 @@ class DefaultChannels {
           ],
         ),
         _channel(
+          id: 'ben_and_holly',
+          title: "Ben & Holly",
+          order: 29,
+          color: 0xFF66BB6A,
+          playlist: _uploadsOf('UC2UhuvjTIrR0Ck2KrkvRcuA'),
+          videos: [
+            _yt('mLHPMMKTNRI', 'The Royal Fairy Picnic — Ben & Holly'),
+            _yt('edAhVTPprT0', 'The Toy Robot — Ben & Holly'),
+            _yt('37Cz9nqz5fg', "King Thistle's Busiest Day — Ben & Holly"),
+            _yt('gHga2hc_NsE', 'The Elf Farm — Ben & Holly'),
+            _yt('dR0UCe5DXjk', 'Gaston Moves Into the Castle — Ben & Holly'),
+            _yt('3w1Z_YhB008', 'Holly Goes to Elf School — Ben & Holly'),
+            _yt('3QCsaMMt3I4', 'Gaston Goes To School — Ben & Holly'),
+            _yt('it_Z9yZ77fM', 'Ben Turned Into a Frog — Ben & Holly'),
+            _yt('AWD6XYd8iOA', "Holly Forgets Ben's Birthday — Ben & Holly"),
+            _yt('AWWywfv69ww', 'The Elf Band Saves the Day — Ben & Holly'),
+            _yt('rZ5kKVQkqM4', 'Ben Learns to Tell Time — Ben & Holly'),
+            _yt('WOddu_AdGPU', 'What are Ben and Holly Cooking? — Ben & Holly'),
+            _yt('hCblA3qIFGs', 'Learn to Share — Ben & Holly'),
+            _yt('t5x7QurObts', 'Holly Needs Help — Ben & Holly'),
+            _yt('GvGFWEJq2oE', 'King Thistle Has a Cold — Ben & Holly'),
+            _yt('g-bNPrZWmXg', "King Thistle's Clothes Shrink — Ben & Holly"),
+            _yt('iMDZv-7pRrM', 'The Mystery of the Lost Egg — Ben & Holly'),
+            _yt('4Jr6Nfngto0', "Nanny Plum's Windmill — Ben & Holly"),
+            _yt('GzxW_whnX3I', "Betty's Butterfly Surprise — Ben & Holly"),
+            _yt('ghv0qtbeyeY', "Holly's Sandcastle Surprise — Ben & Holly"),
+          ],
+        ),
+        _channel(
           id: 'lego_duplo',
           title: 'LEGO DUPLO',
-          order: 29,
+          order: 30,
           color: 0xFFFDD835,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -391,7 +423,7 @@ class DefaultChannels {
         _channel(
           id: 'play_doh',
           title: 'Play-Doh',
-          order: 30,
+          order: 31,
           color: 0xFFFF8A65,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -404,7 +436,7 @@ class DefaultChannels {
         _channel(
           id: 'toy_kitchen',
           title: 'Toy Kitchen',
-          order: 31,
+          order: 32,
           color: 0xFF90A4AE,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -415,7 +447,7 @@ class DefaultChannels {
         _channel(
           id: 'dancing_fruit',
           title: 'Dancing Fruit',
-          order: 32,
+          order: 33,
           color: 0xFFEC407A,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -430,7 +462,7 @@ class DefaultChannels {
         _channel(
           id: 'toyor_baby',
           title: 'طيور بيبي',
-          order: 33,
+          order: 34,
           color: 0xFF81C784,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -451,7 +483,7 @@ class DefaultChannels {
         _channel(
           id: 'pingu',
           title: 'Pingu',
-          order: 34,
+          order: 35,
           color: 0xFF42A5F5,
           playlist: _uploadsOf('UCM88mtSE0zRTn5ae4EbYcuw'),
           videos: [
@@ -466,7 +498,7 @@ class DefaultChannels {
         _channel(
           id: 'daniel_tiger',
           title: 'Daniel Tiger',
-          order: 35,
+          order: 36,
           color: 0xFFFFA726,
           playlist: _uploadsOf('UCDqgSnRMGVx3dP4sn3ATZMA'),
           videos: [
@@ -485,7 +517,7 @@ class DefaultChannels {
         _channel(
           id: 'hey_duggee',
           title: 'Hey Duggee',
-          order: 36,
+          order: 37,
           color: 0xFFFFCA28,
           playlist: _uploadsOf('UCj_mFUb-47d9QNiJ5556LjQ'),
           videos: [
@@ -503,7 +535,7 @@ class DefaultChannels {
         _channel(
           id: 'numberblocks',
           title: 'Numberblocks',
-          order: 37,
+          order: 38,
           color: 0xFFAB47BC,
           playlist: _numberblocksSeason1Playlist,
           followUploads: true,
@@ -520,7 +552,7 @@ class DefaultChannels {
         _channel(
           id: 'pocoyo',
           title: 'Pocoyo',
-          order: 38,
+          order: 39,
           color: 0xFF29B6F6,
           playlist: _uploadsOf('UChT6ex4rsEDXjJKW7wJAb8w'),
           videos: [
@@ -539,7 +571,7 @@ class DefaultChannels {
         _channel(
           id: 'cocomelon',
           title: 'CoComelon',
-          order: 39,
+          order: 40,
           color: 0xFFFFEE58,
           playlist: _uploadsOf('UCbCmjCuTUZos6Inko4u57UQ'),
           videos: [
@@ -556,7 +588,7 @@ class DefaultChannels {
         _channel(
           id: 'masha',
           title: 'Masha and the Bear',
-          order: 40,
+          order: 41,
           color: 0xFFEF5350,
           playlist: _uploadsOf('UCu59yAFE8fM0sVNTipR4edw'),
           videos: [
@@ -573,7 +605,7 @@ class DefaultChannels {
         _channel(
           id: 'mansour',
           title: 'منصور',
-          order: 41,
+          order: 42,
           color: 0xFF5C6BC0,
           playlist: _uploadsOf('UCqiIbqnJB0AVTg6Z6QnZNdw'),
           videos: [
@@ -591,7 +623,7 @@ class DefaultChannels {
         _channel(
           id: 'maruko',
           title: 'ماروكو الصغيرة',
-          order: 42,
+          order: 43,
           color: 0xFFEC407A,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -616,7 +648,7 @@ class DefaultChannels {
         _channel(
           id: 'live_makkah',
           title: 'قرآن للنوم',
-          order: 43,
+          order: 44,
           color: 0xFF2E7D32,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -639,7 +671,7 @@ class DefaultChannels {
         _channel(
           id: 'live_quran',
           title: 'رقية وقرآن',
-          order: 44,
+          order: 45,
           color: 0xFF00695C,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -653,7 +685,7 @@ class DefaultChannels {
         _channel(
           id: 'masha_ar',
           title: 'ماشا والدب',
-          order: 45,
+          order: 46,
           color: 0xFFE53935,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -673,7 +705,7 @@ class DefaultChannels {
         _channel(
           id: 'blippi_ar',
           title: 'بليبي بالعربي',
-          order: 46,
+          order: 47,
           color: 0xFF039BE5,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -692,7 +724,7 @@ class DefaultChannels {
         _channel(
           id: 'disney_songs',
           title: 'Disney Songs',
-          order: 47,
+          order: 48,
           color: 0xFF5C6BC0,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -719,7 +751,7 @@ class DefaultChannels {
         _channel(
           id: 'babar',
           title: 'بابار',
-          order: 49,
+          order: 50,
           color: 0xFF78909C,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -767,7 +799,7 @@ class DefaultChannels {
         _channel(
           id: 'hadikat_almarah',
           title: 'حديقة المرح',
-          order: 50,
+          order: 51,
           color: 0xFFAB47BC,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -782,6 +814,33 @@ class DefaultChannels {
             _yt('oRmgEaQAyQc', 'بطانية — حديقة المرح'),
             _yt('OA7fVAxkuxw', 'إخفاء — حديقة المرح'),
             _yt('9A-Cy0m0NHA', 'حلقة 230 — حديقة المرح'),
+          ],
+        ),
+        _channel(
+          id: 'minecraft',
+          title: 'Minecraft',
+          order: 52,
+          color: 0xFF7CB342,
+          playlist: _dadOliviaMinecraftPlaylist,
+          videos: [
+            _yt('3prPLWKeDiw', 'Dad And Olivia Play: Minecraft'),
+            _yt('FjTATyVGl-o', 'Building our treehouse — Dad & Olivia'),
+            _yt('y1pigDzOku0', "What's A Fish House? — Dad & Olivia"),
+            _yt('rpZwIU0oZbg', 'Fish Problems — Dad & Olivia'),
+            _yt('jeust7nhHdo', 'More Zoo Animals — Dad & Olivia'),
+            _yt('O74nJOq3vjw', "We're Back! — Dad & Olivia Minecraft"),
+            _yt('vBhSLvba0U8', 'Village Adventure — Dad & Olivia'),
+            _yt('aayOk2wVf6w', 'NEW BABIES — Dad & Olivia'),
+            _yt('dptgi5L8N7Y', 'Dad & Olivia Plus A Special Guest'),
+            _yt('VO0Hf2q2FDY', 'We built our first cabin!'),
+            _yt('pyLrc-CIm48', 'Our First Chicken Coop!'),
+            _yt('sRPD8kEslRQ', 'Minecraft Makeover: Family Edition'),
+            _yt('UVRFH_QIfFA', 'Pool & Barn — Let\'s Play Minecraft'),
+            _yt('hp73MXqh0wE', 'Finding Puppies and Building Houses'),
+            _yt('RfhUhx1MgS0', 'Building Amazing Villager Shops'),
+            _yt('Fo21W_4F5KQ', 'Time To Build New Bases'),
+            _yt('K6U_08kLB-E', 'Our New Sheep Farm'),
+            _yt('gE8JZLs5xg8', 'How To Find All New Dogs!'),
           ],
         ),
     ];

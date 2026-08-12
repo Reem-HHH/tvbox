@@ -1,7 +1,7 @@
 /// Family-safe title gate for Muslim households.
 ///
 /// Drops playlist/sync items whose titles mention Halloween, Thanksgiving,
-/// Pride/LGBTQ themes, etc. Does not inspect video visuals.
+/// Christmas, Pride/LGBTQ themes, etc. Does not inspect video visuals.
 class ContentTitleFilter {
   ContentTitleFilter._();
 
@@ -9,6 +9,11 @@ class ContentTitleFilter {
     'halloween',
     'hallowe\'en',
     'thanksgiving',
+    'christmas',
+    'xmas',
+    'father christmas',
+    'santa claus',
+    'north pole',
     'lgbt',
     'lgbtq',
     'lgbtq+',
@@ -25,6 +30,8 @@ class ContentTitleFilter {
     'هالوين',
     'الهالوين',
     'عيد الشكر',
+    'عيد الميلاد',
+    'كريسماس',
     'فخر المثلي',
     'مثليون',
     'مثلية',
