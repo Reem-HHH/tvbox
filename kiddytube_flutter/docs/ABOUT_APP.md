@@ -42,7 +42,7 @@ Islamic / Arabic-first shows, preschool series, plus recent adds:
 | --- | --- |
 | قرآن للنوم ورقية | Sleep Quran + ruqyah VODs only (no live streams) |
 | ماشا والدب | Arabic Masha |
-| بليبي بالعربي | Arabic Blippi |
+| بليبي وميكا | Arabic Blippi + Meeka |
 | ماروكو الصغيرة | Arabic Maruko |
 | Disney Songs | EN sing-alongs + Mickey/Pooh (no auto Follow) |
 | Kids Music | Toyor / Hala / Osratouna songs + البندورة الحمراء |
@@ -54,7 +54,7 @@ Full dossiers: [`channels/`](channels/).
 
 ### Family content rules
 
-On playlist sync, titles matching **Halloween, Thanksgiving, Christmas, Pride/LGBTQ** (and common Arabic spellings) are **skipped**.  
+On playlist sync, titles matching **Halloween, Thanksgiving, Christmas, Christian/other religious propaganda, Pride/LGBTQ** (and common Arabic spellings) are **skipped**.  
 Sync also skips **YouTube Shorts** (up to ~3 minutes / `#shorts`) and **live / upcoming** broadcasts when **adding** new items.  
 Refresh is **append-only**: existing channel videos are never removed by sync (parents can still delete manually).  
 This is API/title-based only — not a visual filter. Uploads-heavy channels keep **Follow off** by default; only curated playlists (داوود hub, Numberblocks S1) Follow daily.

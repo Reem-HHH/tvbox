@@ -3,7 +3,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 31;
+  static const seedVersion = 32;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -1069,7 +1069,7 @@ class DefaultChannels {
         ),
         _channel(
           id: 'blippi_ar',
-          title: 'بليبي بالعربي',
+          title: 'بليبي وميكا',
           order: 47,
           color: 0xFF039BE5,
           sourceType: SourceType.youtubeVideoList,
@@ -1094,6 +1094,36 @@ class DefaultChannels {
             _yt('es4Q6dKBqCw', 'مرح بلايبي مع الآيس كريم | برنامج بليبي التعليمي | Blippi\'s Ice Cream Store | Blippi -…'),
             _yt('gciHeFxXPts', 'حلقة المحقق بليبي ++ | بلبي بالعربي | كرتون اطفال و أغاني بليبي للصغار | Blippi Arabic'),
             _yt('5sfTgOpNofM', 'Blippi بالعربي  بلبي يستكشف الحواس الخمسة | افلام كرتون بلبي | العاب اطفال بلي بي | مسلسل'),
+            _yt('6U0EqW5kppI', 'يوم الألعاب مع (ميكا) في (بيلي بيز)'),
+            _yt('4sywaSBhWPA', 'تتعلم (ميكا) لغة الإشارة الأمريكية في (بلاي لاب)'),
+            _yt('bcuTfPeiICQ', 'مغامرة الجنيات مع (ميكا)'),
+            _yt('-WRimVBKQos', 'تستمتع (ميكا) بالموضة في (بلاي داي)'),
+            _yt('_9Ozcw_TQCU', 'لعبة مطابقة (ميكا) في (مانشكن)'),
+            _yt('Y7OXVLg0qFc', 'اصنعها بنفسك — ميكا'),
+            _yt('g9gqOdGKhs4', 'اللعب الإبداعي مع (ميكا) في (بيلي بيز)'),
+            _yt('plMGo-85JUA', '(او تو بي كيدز)،  الرقص — ميكا'),
+            _yt('Wn_4aI9qI8Q', 'تصنع (ميكا) تحفة فنية في مركز الرسم'),
+            _yt('8nG3naJhTeQ', '(بابل بوب) — ميكا'),
+            _yt('nhaaCL2diBU', '(ميكا) في (ديغ ات)'),
+            _yt('O0Q5_he9kOU', 'مغامرة (ميكا) الجوية والبحرية'),
+            _yt('tWWz_FebiRc', 'أغنية القطار البخاري — بليبي'),
+            _yt('VmW0xskEOHE', 'أغنية بلِبّي عن الجرافة — بليبي'),
+            _yt('3GwX5JO85WY', 'أغنية ساحة اللعب — بليبي'),
+            _yt('dKCi3XN4vFk', 'أغنية عربة الإطفاء — بليبي'),
+            _yt('Awa80gx3aK4', 'اللعب في الثلج مع بليبي'),
+            _yt('bMBlgrQHVC8', 'بليبي ولوح التزلج'),
+            _yt('f1VwheJRX_k', 'بليبي يتعلم عن الجرافات والحفارات!'),
+            _yt('kx8ZZr8EJPM', 'بليبي يتعلم كيفية التزلج على الثلج'),
+            _yt('4dFs8Wfuu3Y', 'بليبي يجد الديناصورات في حوض الكرات!'),
+            _yt('R1ughplVzd4', 'بليبي يحب الشوكولا'),
+            _yt('bMJo6seSjLs', 'بليبي يريد أن يكون رجل إطفاء'),
+            _yt('BWOyOKf3f3Q', 'بليبي يزور منتجع تزلج | دروس تعليم التزلج'),
+            _yt('y8NONGTOpnI', 'بليبي يستكشف قطار بخاري | قطارات للأطفال'),
+            _yt('iNPnH3tiLeo', 'بليبي يقوم بالقفز الحر الداخلي مع الألعاب'),
+            _yt('xoItOBMR2aA', 'بليبي يلعب بعربة الثلج'),
+            _yt('yRA452u2SDQ', 'بليبي يلعب مع الحيوانات في حديقة الحيوانات'),
+            _yt('gwgxudRQANk', 'بلّيبي لا يستطيع التوقف عن الرقص — بليبي'),
+            _yt('7Y4M-iZ9Zmg', 'تعلم كيف تغسل شاحنات اللعب | شاحنات ألعاب للأطفال — بليبي'),
           ],
         ),
         _channel(
@@ -1330,7 +1360,8 @@ class DefaultChannels {
       final titleStale = current.title != seedCh.title &&
           (seedCh.id == 'spacetoon' ||
               clearSpacetoonUploads ||
-              seedCh.id == 'live_makkah');
+              seedCh.id == 'live_makkah' ||
+              seedCh.id == 'blippi_ar');
       final disableFromSeed = !seedCh.enabled && current.enabled;
 
       if (clearSpacetoonUploads ||

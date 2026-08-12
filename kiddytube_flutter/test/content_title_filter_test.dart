@@ -15,10 +15,13 @@ void main() {
     expect(ContentTitleFilter.isBlocked('Merry Xmas Nursery Rhymes'), isTrue);
     expect(ContentTitleFilter.isBlocked('Santa Claus Songs for Kids'), isTrue);
     expect(ContentTitleFilter.isBlocked('The North Pole! — Full Episode'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Easter Bunny Songs'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Jesus Loves Me for Kids'), isTrue);
     expect(ContentTitleFilter.isBlocked('Pride Month Parade for Kids'), isTrue);
     expect(ContentTitleFilter.isBlocked('LGBTQ Story Time'), isTrue);
     expect(ContentTitleFilter.isBlocked('أغاني هالوين للأطفال'), isTrue);
     expect(ContentTitleFilter.isBlocked('عيد الشكر مع الأصدقاء'), isTrue);
     expect(ContentTitleFilter.isBlocked('أغاني عيد الميلاد'), isTrue);
+    expect(ContentTitleFilter.isBlocked('أناشيد عن يسوع للأطفال'), isTrue);
   });
 }
