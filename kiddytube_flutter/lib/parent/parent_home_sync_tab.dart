@@ -406,8 +406,8 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                           ? 'Waiting for connection'
                           : 'Connect first')
                       : cloud!.lastCloudSyncMs == 0
-                          ? 'Never pulled'
-                          : 'Last pull ${_formatRelative(cloud.lastCloudSyncMs)}'
+                          ? 'Manual only — tap to download the cloud catalog'
+                          : 'Manual only · last pull ${_formatRelative(cloud.lastCloudSyncMs)}'
                               '${cloud.lastRevision == null ? '' : ' · rev ${cloud.lastRevision}'}',
                 ),
                 onTap: () {
@@ -422,7 +422,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                 subtitle: Text(
                   cloud?.paired != true
                       ? 'Connect first'
-                      : 'Upload Continue Watching to the cloud admin',
+                      : 'Manual only — upload Continue Watching to the cloud',
                 ),
                 onTap: () {
                   if (_busy || cloud?.paired != true) return;

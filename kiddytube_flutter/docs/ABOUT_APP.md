@@ -88,8 +88,9 @@ Never commit `local_defines.json` (gitignored).
 - Production: **Render + Neon** — see [`../../cloud/DEPLOY_RENDER_NEON.md`](../../cloud/DEPLOY_RENDER_NEON.md)  
 - Admin UI: `http://127.0.0.1:8787/admin` (local) or `https://….onrender.com/admin`  
 - Installs: prefer pairing codes from the cloud admin. Optional auto-enroll needs `CLOUD_AUTO_ENROLL=true` plus URL/secret in `local_defines.json`.  
-- Watch history: Continue Watching syncs to Neon when connected (Admin → Devices)  
-- Devices **pull** from admin; edits on a device stay local unless you re-import via admin  
+- Watch history: Continue Watching can be synced manually (Parent → Sync watch history); Admin → Devices shows paired installs
+- Devices only pull the cloud catalog when a parent taps **Pull catalog from cloud** (no auto daily pull)
+- Edits on a device stay local unless you export and import via admin, then pull on other devices
 
 See [`../cloud/README.md`](../cloud/README.md) and [`RUN_TV_AND_IPAD.md`](RUN_TV_AND_IPAD.md).
 

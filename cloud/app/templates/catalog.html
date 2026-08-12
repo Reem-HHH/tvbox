@@ -4,7 +4,7 @@
 <header class="page-head">
   <div>
     <h1>Catalog</h1>
-    <p class="lede">Channels and videos push to every paired device on the next sync. Add a YouTube id or paste a full URL.</p>
+    <p class="lede">Channels and videos stay on the cloud until a parent taps <strong>Pull catalog from cloud</strong> on each device. Add a YouTube id or paste a full URL.</p>
   </div>
   <div class="btn-row">
     <a class="btn secondary" href="#add-channel">Add channel</a>
@@ -125,14 +125,18 @@
 {% endfor %}
 
 <section class="card">
-  <details class="import-panel">
+  <details class="import-panel" open>
     <summary>Import catalog JSON</summary>
     <div class="import-body">
-      <p class="muted">Paste Flutter <code>exportJson</code> output to <strong>replace</strong> the entire cloud catalog.</p>
-      <form method="post" action="/admin/catalog/import" class="stack">
+      <p class="muted">Upload the Flutter export file (recommended) or paste JSON. Import <strong>replaces</strong> the entire cloud catalog. Devices do not update until a parent pulls manually.</p>
+      <form method="post" action="/admin/catalog/import" enctype="multipart/form-data" class="stack">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
-        <label>Catalog JSON
-          <textarea name="catalog_json" rows="10" placeholder='{"seedVersion":18,"homeLibraryMode":"channels","channels":[...]}'></textarea>
+        <label>Upload .json file
+          <span class="hint">Use this for large exports — browser paste often fails</span>
+          <input type="file" name="catalog_file" accept=".json,application/json" />
+        </label>
+        <label>Or paste catalog JSON (small only)
+          <textarea name="catalog_json" rows="8" placeholder='{"seedVersion":18,"homeLibraryMode":"channels","channels":[...]}'></textarea>
         </label>
         <div class="btn-row">
           <button type="submit" class="danger" onclick="return confirm('Replace the entire cloud catalog with this JSON?');">Import &amp; replace</button>

@@ -104,37 +104,13 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _maybeDailySync() async {
+    // Cloud catalog + watch history are manual-only (Parent → Home & Sync).
     await widget.repository.ensureCloudEnrolled();
-    final cloudChanged = await widget.repository.maybePullCloudDaily();
     final youtubeChanged = await widget.repository.maybeRefreshDaily();
-    var watchChanged = false;
-    try {
-      final before = await widget.repository.recentWatch.load();
-      await widget.repository.syncWatchWithCloud();
-      final after = await widget.repository.recentWatch.load();
-      watchChanged = !_sameRecentIds(before, after);
-    } catch (_) {}
     if (!mounted) return;
-    if (cloudChanged || youtubeChanged) {
+    if (youtubeChanged) {
       await _reloadAfterSync();
-    } else if (watchChanged) {
-      await _reloadRecentOnly();
     }
-  }
-
-  static bool _sameRecentIds(
-    List<RecentWatchItem> a,
-    List<RecentWatchItem> b,
-  ) {
-    if (a.length != b.length) return false;
-    for (var i = 0; i < a.length; i++) {
-      if (a[i].videoId != b[i].videoId ||
-          a[i].positionMs != b[i].positionMs ||
-          a[i].updatedAtMs != b[i].updatedAtMs) {
-        return false;
-      }
-    }
-    return true;
   }
 
   Future<void> _reloadRecentOnly() async {
@@ -158,20 +134,11 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (_) {}
   }
 
-  /// Phone/tablet pull-down: force cloud + playlist sync, then reshuffle home.
+  /// Phone/tablet pull-down: refresh YouTube playlists only (not cloud).
   Future<void> _onPullToRefresh() async {
     _dailySyncTimer?.cancel();
     try {
-      await widget.repository.ensureCloudEnrolled();
-    } catch (_) {}
-    try {
-      await widget.repository.pullCloudCatalog(force: true);
-    } catch (_) {}
-    try {
       await widget.repository.refreshAllPlaylists(force: true);
-    } catch (_) {}
-    try {
-      await widget.repository.syncWatchWithCloud();
     } catch (_) {}
     widget.repository.reshuffleHome();
     await _reloadAfterSync();

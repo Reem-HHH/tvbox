@@ -889,19 +889,9 @@ class CatalogRepository {
     return applyCatalogPayload(payload);
   }
 
+  /// Unused: cloud catalog pull is manual-only (Parent → Pull catalog).
   Future<bool> maybePullCloudDaily() async {
-    await ensureCloudEnrolled();
-    final status = await cloudStatus();
-    if (!status.paired || status.baseUrl.isEmpty) return false;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - status.lastCloudSyncMs < syncTtlMs) return false;
-    try {
-      final summary = await pullCloudCatalog(force: true);
-      await syncWatchWithCloud();
-      return summary.startsWith('Applied');
-    } catch (_) {
-      return false;
-    }
+    return false;
   }
 
   /// Local continue-watching + optional cloud upsert (when paired).

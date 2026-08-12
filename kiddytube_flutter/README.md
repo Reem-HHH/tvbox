@@ -75,11 +75,13 @@ Default parent PIN for development: **2580**.
 
 ### Connect to the cloud catalog
 
+Cloud catalog and watch history sync are **manual only** on devices — nothing pulls automatically on launch or refresh. Use Parent → Home & Sync → **Pull catalog from cloud** / **Sync watch history**.
+
 **Preferred — pairing:** set `CLOUD_BASE_URL` (optional), open Parent → Home & Sync → Pair, enter the 6-digit admin code.
 
 **Optional — auto-enroll:** set `DEVICE_ENROLL_SECRET` on the cloud, matching `CLOUD_ENROLL_SECRET` plus `"CLOUD_AUTO_ENROLL": "true"` in `local_defines.json`, then install with `--dart-define-from-file=local_defines.json`.
 
-Playlist sync (separate from cloud) needs a YouTube Data API key (Parent settings → stored in secure storage). Synced titles that match the family blocklist are dropped automatically.
+**Import to cloud admin:** prefer **Upload .json file** on Catalog → Import (large pastes often fail in the browser).
 
 ## Layout
 

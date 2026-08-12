@@ -153,7 +153,7 @@ The app appears in the Android TV launcher (Leanback). Use the remote / D-pad to
 
 1. In `local_defines.json` set `CLOUD_BASE_URL`, `CLOUD_ENROLL_SECRET` (same as cloud `DEVICE_ENROLL_SECRET`), and `"CLOUD_AUTO_ENROLL": "true"`.
 2. Install with `--dart-define-from-file=local_defines.json`.
-3. Open the app once — it auto-registers, then pulls catalog / watch history.
+3. Open the app once — it auto-registers (pair only). Catalog and watch history sync only when a parent taps **Pull catalog** / **Sync watch history**.
 4. Parent → **Home & Sync** shows **Connected to family cloud**.
 
 Admin → **Devices** lists each install. To remove one: **Revoke** in admin (and **Disconnect** in the app if needed).
@@ -164,7 +164,7 @@ Admin → **Devices** lists each install. To remove one: **Revoke** in admin (an
 
 1. Mac → [http://127.0.0.1:8787/admin](http://127.0.0.1:8787/admin) → **Catalog**
 2. Add/remove channels and videos (or **Import** a catalog JSON export from the app)
-3. On each device: **Pull catalog from cloud** (or wait for the daily pull)
+3. On each device: Parent → **Home & Sync** → **Pull catalog from cloud** (manual only — nothing auto-pulls)
 
 ---
 

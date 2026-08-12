@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Form, Request
+from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
@@ -344,18 +344,35 @@ def delete_video(
 
 
 @router.post("/catalog/import")
-def import_json(
+async def import_json(
     request: Request,
-    catalog_json: str = Form(...),
+    catalog_json: str = Form(""),
     csrf_token: str = Form(""),
+    catalog_file: UploadFile | None = File(None),
     db: Session = Depends(get_db),
 ):
     require_csrf(request, csrf_token)
     admin = _require_admin(request, db)
     if admin is None:
         return RedirectResponse("/admin/login", status_code=303)
+
+    raw_text = (catalog_json or "").strip()
+    if catalog_file is not None and catalog_file.filename:
+        try:
+            raw_bytes = await catalog_file.read()
+            raw_text = raw_bytes.decode("utf-8").strip()
+        except Exception:
+            return RedirectResponse(
+                "/admin/catalog?error=Could+not+read+uploaded+file",
+                status_code=303,
+            )
+    if not raw_text:
+        return RedirectResponse(
+            "/admin/catalog?error=Paste+JSON+or+upload+a+.json+file",
+            status_code=303,
+        )
     try:
-        payload = json.loads(catalog_json)
+        payload = json.loads(raw_text)
     except json.JSONDecodeError:
         return RedirectResponse("/admin/catalog?error=Invalid+JSON", status_code=303)
     if not isinstance(payload, dict) or "channels" not in payload:
@@ -363,5 +380,12 @@ def import_json(
             "/admin/catalog?error=JSON+must+include+channels+array",
             status_code=303,
         )
-    import_catalog_json(db, payload)
+    try:
+        import_catalog_json(db, payload)
+    except Exception as exc:  # noqa: BLE001 — show admin a useful flash
+        msg = str(exc).replace(" ", "+")[:180]
+        return RedirectResponse(
+            f"/admin/catalog?error=Import+failed:+{msg}",
+            status_code=303,
+        )
     return RedirectResponse("/admin/catalog?flash=Catalog+imported", status_code=303)

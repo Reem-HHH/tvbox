@@ -88,27 +88,34 @@ def import_catalog_json(db: Session, payload: Dict) -> CatalogDocument:
     channels = payload.get("channels") or []
     for index, raw in enumerate(channels):
         ch = ChannelRow(
-            channel_key=str(raw.get("id") or f"channel_{index}"),
-            title=str(raw.get("title") or raw.get("id") or f"Channel {index}"),
+            channel_key=str(raw.get("id") or f"channel_{index}")[:80],
+            title=str(raw.get("title") or raw.get("id") or f"Channel {index}")[:200],
             enabled=bool(raw.get("enabled", True)),
-            youtube_playlist_id=raw.get("youtubePlaylistId"),
+            youtube_playlist_id=(
+                str(raw["youtubePlaylistId"])[:120]
+                if raw.get("youtubePlaylistId")
+                else None
+            ),
             follow_uploads=bool(raw.get("followUploads", False)),
             default_allow_seek=bool(raw.get("defaultAllowSeek", True)),
             sort_order=int(raw.get("sortOrder") or index),
-            source_type=str(raw.get("sourceType") or "youtubePlaylist"),
+            source_type=str(raw.get("sourceType") or "youtubePlaylist")[:40],
             color=int(raw.get("color") or 0xFF42A5F5),
         )
         db.add(ch)
         db.flush()
         for v_index, vraw in enumerate(raw.get("videos") or []):
+            yt = vraw.get("youtubeVideoId")
+            direct = vraw.get("directUrl")
+            thumb = vraw.get("thumbnailUrl")
             db.add(
                 VideoRow(
                     channel_id=ch.id,
-                    video_key=str(vraw.get("id") or f"video_{v_index}"),
-                    title=str(vraw.get("title") or vraw.get("id") or "Video"),
-                    youtube_video_id=vraw.get("youtubeVideoId"),
-                    direct_url=vraw.get("directUrl"),
-                    thumbnail_url=vraw.get("thumbnailUrl"),
+                    video_key=str(vraw.get("id") or f"video_{v_index}")[:120],
+                    title=str(vraw.get("title") or vraw.get("id") or "Video")[:300],
+                    youtube_video_id=(str(yt)[:20] if yt else None),
+                    direct_url=(str(direct)[:500] if direct else None),
+                    thumbnail_url=(str(thumb)[:500] if thumb else None),
                     manual=bool(vraw.get("manual", False)),
                     allow_seek=bool(vraw.get("allowSeek", True)),
                     sort_index=v_index,
