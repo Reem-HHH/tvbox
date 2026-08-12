@@ -14,6 +14,19 @@ EMPTY_CATALOG = {
     "channels": [],
 }
 
+# Flutter ARGB colors are unsigned 32-bit (e.g. 0xFF66BB6A). Postgres INTEGER is
+# signed — store as two's-complement int32 and export unsigned again for apps.
+_DEFAULT_COLOR = 0xFF42A5F5
+
+
+def _color_to_pg(value: object) -> int:
+    raw = int(value if value is not None else _DEFAULT_COLOR) & 0xFFFFFFFF
+    return raw - 0x100000000 if raw > 0x7FFFFFFF else raw
+
+
+def _color_from_pg(value: object) -> int:
+    return int(value if value is not None else _DEFAULT_COLOR) & 0xFFFFFFFF
+
 
 def catalog_from_rows(db: Session) -> Dict:
     channels = (
@@ -35,7 +48,7 @@ def catalog_from_rows(db: Session) -> Dict:
                 "followUploads": ch.follow_uploads,
                 "defaultAllowSeek": ch.default_allow_seek,
                 "sortOrder": ch.sort_order,
-                "color": ch.color,
+                "color": _color_from_pg(ch.color),
                 "playlistManagedByParent": True,
                 "videos": [
                     {
@@ -100,7 +113,7 @@ def import_catalog_json(db: Session, payload: Dict) -> CatalogDocument:
             default_allow_seek=bool(raw.get("defaultAllowSeek", True)),
             sort_order=int(raw.get("sortOrder") or index),
             source_type=str(raw.get("sourceType") or "youtubePlaylist")[:40],
-            color=int(raw.get("color") or 0xFF42A5F5),
+            color=_color_to_pg(raw.get("color")),
         )
         db.add(ch)
         db.flush()

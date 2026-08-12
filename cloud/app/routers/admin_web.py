@@ -16,7 +16,7 @@ from ..auth import (
     ensure_admin,
     verify_password,
 )
-from ..catalog_service import import_catalog_json, persist_catalog_document
+from ..catalog_service import _color_to_pg, import_catalog_json, persist_catalog_document
 from ..config import get_settings
 from ..csrf import ensure_csrf_token, require_csrf
 from ..db import get_db
@@ -238,6 +238,7 @@ def add_channel(
             youtube_playlist_id=playlist_id.strip() or None,
             follow_uploads=bool(playlist_id.strip()),
             sort_order=max_order,
+            color=_color_to_pg(0xFF42A5F5),
         )
     )
     db.commit()
