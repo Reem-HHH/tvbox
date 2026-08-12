@@ -20,5 +20,6 @@ void main() {
     final html = youtubeIframeHtml(videoId: id, startSec: 12);
     expect(html.contains("videoId:'$id'"), isTrue);
     expect(html.contains('<script>'), isTrue);
+    expect(html.contains('function loadVideoById'), isTrue);
   });
 }

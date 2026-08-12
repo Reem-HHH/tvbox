@@ -50,13 +50,18 @@ class _SecurityTab extends StatelessWidget {
         },
       ),
     );
-    if (ok != true) return;
+    if (ok != true) {
+      controller.dispose();
+      return;
+    }
     try {
       await repository.changePin(controller.text.trim());
       await onChanged();
       toast('PIN updated');
     } catch (e) {
       toast('$e');
+    } finally {
+      controller.dispose();
     }
   }
 
@@ -88,16 +93,20 @@ class _SecurityTab extends StatelessWidget {
           color: Theme.of(context).colorScheme.surface,
           child: Column(
             children: [
-              ListTile(
-                leading: const Icon(Icons.pin_outlined),
-                title: const Text('Change PIN'),
-                subtitle: Text(
-                  settings.pinChangedFromDefault
-                      ? 'Custom PIN set'
-                      : 'Default dev PIN is 2580 until changed',
+              FocusTile(
+                autofocus: true,
+                onActivated: () => _changePin(context),
+                child: ListTile(
+                  leading: const Icon(Icons.pin_outlined),
+                  title: const Text('Change PIN'),
+                  subtitle: Text(
+                    settings.pinChangedFromDefault
+                        ? 'Custom PIN set'
+                        : 'Default dev PIN is 2580 until changed',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _changePin(context),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => _changePin(context),
               ),
               const Divider(height: 1),
               SwitchListTile(

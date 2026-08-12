@@ -270,7 +270,7 @@ class CatalogRepository {
         pinHash == null ||
         pinHash.isEmpty) {
       pinSalt = ParentPinManager.newSaltHex();
-      pinHash = ParentPinManager.hashPin(
+      pinHash = await ParentPinManager.hashPinAsync(
             ParentPinManager.defaultDevPin,
             pinSalt,
           ) ??
@@ -385,14 +385,30 @@ class CatalogRepository {
         pinChangedFromDefault: sanitized.pinChangedFromDefault,
         releaseReady: sanitized.releaseReady,
       );
-      await _persistChannels(next.channels);
+      // Channel JSON is large — skip rewrite for PIN/mode/meta-only updates.
+      if (!identical(current.channels, next.channels)) {
+        await _persistChannels(next.channels);
+      }
       await _ensurePrefs();
-      await _prefs!.setString(_modeKey, next.homeLibraryMode.storageName);
-      await _prefs!.setInt(_seedKey, next.seedVersion);
-      await _persistLockout(next.failCount, next.lockedUntilMs);
-      await _prefs!.setBool(_pinChangedKey, next.pinChangedFromDefault);
-      await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
-      await _prefs!.setInt(_lastSyncKey, next.lastSyncMs);
+      if (next.homeLibraryMode != current.homeLibraryMode) {
+        await _prefs!.setString(_modeKey, next.homeLibraryMode.storageName);
+      }
+      if (next.seedVersion != current.seedVersion) {
+        await _prefs!.setInt(_seedKey, next.seedVersion);
+      }
+      if (next.failCount != current.failCount ||
+          next.lockedUntilMs != current.lockedUntilMs) {
+        await _persistLockout(next.failCount, next.lockedUntilMs);
+      }
+      if (next.pinChangedFromDefault != current.pinChangedFromDefault) {
+        await _prefs!.setBool(_pinChangedKey, next.pinChangedFromDefault);
+      }
+      if (next.releaseReady != current.releaseReady) {
+        await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
+      }
+      if (next.lastSyncMs != current.lastSyncMs) {
+        await _prefs!.setInt(_lastSyncKey, next.lastSyncMs);
+      }
       if (next.youtubeApiKey != current.youtubeApiKey) {
         await _secrets.writeApiKey(next.youtubeApiKey);
       }
@@ -646,7 +662,7 @@ class CatalogRepository {
       throw ArgumentError('Choose a non-default PIN');
     }
     final salt = ParentPinManager.newSaltHex();
-    final hash = ParentPinManager.hashPin(newPin, salt);
+    final hash = await ParentPinManager.hashPinAsync(newPin, salt);
     if (hash == null) {
       throw StateError('Failed to hash PIN');
     }
@@ -995,12 +1011,15 @@ class CatalogRepository {
   Future<void> upgradePinHashIfNeeded(String pin) async {
     final settings = _cached ?? await load();
     if (!ParentPinManager.isLegacyHash(settings.pinHash)) return;
-    if (!ParentPinManager().verifyPin(pin, settings.pinSalt, settings.pinHash)) {
-      return;
-    }
     final salt = settings.pinSalt;
     if (salt == null || salt.isEmpty) return;
-    final hash = ParentPinManager.hashPin(pin, salt);
+    final ok = await ParentPinManager().verifyPinAsync(
+      pin,
+      salt,
+      settings.pinHash,
+    );
+    if (!ok) return;
+    final hash = await ParentPinManager.hashPinAsync(pin, salt);
     if (hash == null) return;
     await update((s) => s.copyWith(pinHash: hash));
   }
@@ -1096,10 +1115,7 @@ class CatalogRepository {
     final apiKey = settings.youtubeApiKey?.trim();
     if (apiKey == null || apiKey.isEmpty) return false;
 
-    final seedIdsByChannel = {
-      for (final ch in DefaultChannels.seed())
-        ch.id: {for (final v in ch.videos) v.id},
-    };
+    final seedIdsByChannel = DefaultChannels.seedVideoIdsByChannel();
 
     final candidates = <VideoItem>[];
     final seen = <String>{};

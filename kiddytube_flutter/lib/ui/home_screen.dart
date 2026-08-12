@@ -248,7 +248,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // Tablets (incl. iPad landscape) stay eligible even when also "tv-like" wide.
     final allowPullRefresh = layout.isTablet || !layout.isTvLike;
     final isMix = settings.homeLibraryMode == HomeLibraryMode.mixVideos;
-    _refreshShuffled(settings);
     final channels = _shuffledChannels;
     final videos = _shuffledVideos;
     final crossAxisCount = layout.gridColumns(isMix: isMix);

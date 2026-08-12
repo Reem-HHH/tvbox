@@ -15,6 +15,18 @@ import '../catalog/recent_watch.dart';
 import '../ui/app_orientations.dart';
 import 'youtube_iframe.dart';
 
+class _ScrubUi {
+  const _ScrubUi({
+    required this.visible,
+    required this.posMs,
+    required this.durMs,
+  });
+
+  final bool visible;
+  final int posMs;
+  final int durMs;
+}
+
 /// Fullscreen-ish player with YouTube iframe (kid chrome) or direct HTTPS media.
 /// On end: autoplay next in the same channel queue; else pop.
 class PlayerScreen extends StatefulWidget {
@@ -40,21 +52,23 @@ class _PlayerScreenState extends State<PlayerScreen>
   late int _index;
   WebViewController? _webController;
   VideoPlayerController? _videoController;
+  String? _loadedYoutubeId;
   String? _error;
   bool _loading = true;
   Timer? _progressTimer;
-  String? _seekHint;
   int _consecutiveErrors = 0;
+  DateTime _lastVideoTickCheck = DateTime.fromMillisecondsSinceEpoch(0);
 
   bool _scrubbing = false;
   bool _scrubReady = false;
-  bool _showScrubOverlay = false;
   int _pendingPosMs = 0;
   int _scrubDurationMs = 0;
   int _queuedDeltaMs = 0;
   int _scrubStartMs = 0;
   Timer? _commitTimer;
   Timer? _hideScrubTimer;
+  final ValueNotifier<_ScrubUi?> _scrubUi = ValueNotifier<_ScrubUi?>(null);
+  final ValueNotifier<String?> _seekHint = ValueNotifier<String?>(null);
   static const _seekStepMs = 10000;
   static const _scrubFastStepMs = 30000;
   static const _scrubAccelerateAfterMs = 400;
@@ -71,7 +85,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
     SystemChrome.setPreferredOrientations(kPlayerOrientations);
     unawaited(WakelockPlus.enable());
-    _loadCurrent(startMs: widget.startPositionMs);
+    unawaited(_loadCurrent(startMs: widget.startPositionMs));
   }
 
   @override
@@ -81,7 +95,9 @@ class _PlayerScreenState extends State<PlayerScreen>
     _commitTimer?.cancel();
     _hideScrubTimer?.cancel();
     unawaited(_persistProgress());
-    _disposePlayers();
+    _disposePlayers(teardownWeb: true);
+    _scrubUi.dispose();
+    _seekHint.dispose();
     unawaited(WakelockPlus.disable());
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations(kBrowseOrientations);
@@ -102,18 +118,40 @@ class _PlayerScreenState extends State<PlayerScreen>
     }
   }
 
-  void _disposePlayers() {
+  void _publishScrubUi({required bool visible}) {
+    if (!visible) {
+      _scrubUi.value = null;
+      return;
+    }
+    _scrubUi.value = _ScrubUi(
+      visible: true,
+      posMs: _pendingPosMs,
+      durMs: _scrubDurationMs,
+    );
+  }
+
+  void _disposePlayers({required bool teardownWeb}) {
     _progressTimer?.cancel();
     _progressTimer = null;
     _commitTimer?.cancel();
     _hideScrubTimer?.cancel();
     _scrubbing = false;
     _scrubReady = false;
-    _showScrubOverlay = false;
-    _webController = null;
+    _publishScrubUi(visible: false);
+    _seekHint.value = null;
+
     _videoController?.removeListener(_onVideoTick);
     _videoController?.dispose();
     _videoController = null;
+
+    if (teardownWeb) {
+      final web = _webController;
+      _webController = null;
+      _loadedYoutubeId = null;
+      if (web != null) {
+        unawaited(web.loadRequest(Uri.parse('about:blank')));
+      }
+    }
   }
 
   void _startProgressTimer() {
@@ -163,26 +201,30 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   Future<void> _loadCurrent({int startMs = 0}) async {
-    await _persistProgress();
-    _disposePlayers();
+    final item = _current;
+    final keepWeb = item.video.isYoutube && _webController != null;
+    _disposePlayers(teardownWeb: !keepWeb);
+    if (!mounted) return;
     setState(() {
       _loading = true;
       _error = null;
-      _seekHint = null;
     });
+    _seekHint.value = null;
 
-    final item = _current;
-    await widget.repository.recordWatch(
-      channelId: item.channelId,
-      video: item.video,
-      positionMs: startMs,
+    // Local watch bookkeeping must not delay first frame / iframe load.
+    unawaited(
+      widget.repository.recordWatch(
+        channelId: item.channelId,
+        video: item.video,
+        positionMs: startMs,
+      ),
     );
 
     if (item.video.isDirect) {
       await _playDirect(item.video.directUrl!, startMs: startMs);
     } else if (item.video.isYoutube) {
       await _playYoutube(item.video.youtubeVideoId!, startMs: startMs);
-    } else {
+    } else if (mounted) {
       setState(() {
         _loading = false;
         _error = 'No playable source for ${item.video.title}';
@@ -191,6 +233,26 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   Future<void> _playYoutube(String videoId, {int startMs = 0}) async {
+    final existing = _webController;
+    if (existing != null && _loadedYoutubeId != null) {
+      final startSec = startMs / 1000.0;
+      try {
+        await existing.runJavaScript(
+          'loadVideoById(${jsonEncode(videoId)}, $startSec)',
+        );
+        _loadedYoutubeId = videoId;
+        if (!mounted) return;
+        setState(() {
+          _loading = false;
+          _consecutiveErrors = 0;
+        });
+        _startProgressTimer();
+        return;
+      } catch (_) {
+        _disposePlayers(teardownWeb: true);
+      }
+    }
+
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
@@ -210,7 +272,7 @@ class _PlayerScreenState extends State<PlayerScreen>
           final data = message.message;
           if (data == 'ended') {
             _consecutiveErrors = 0;
-            _onEnded();
+            unawaited(_onEnded());
           } else if (data.startsWith('error')) {
             unawaited(_onPlaybackError());
           }
@@ -251,6 +313,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     );
 
     if (!mounted) return;
+    _loadedYoutubeId = videoId;
     setState(() {
       _webController = controller;
       _loading = false;
@@ -285,6 +348,9 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   void _onVideoTick() {
+    final now = DateTime.now();
+    if (now.difference(_lastVideoTickCheck).inMilliseconds < 250) return;
+    _lastVideoTickCheck = now;
     final c = _videoController;
     if (c == null) return;
     if (c.value.isInitialized &&
@@ -292,7 +358,7 @@ class _PlayerScreenState extends State<PlayerScreen>
         c.value.duration > Duration.zero) {
       c.removeListener(_onVideoTick);
       _consecutiveErrors = 0;
-      _onEnded();
+      unawaited(_onEnded());
     }
   }
 
@@ -308,7 +374,9 @@ class _PlayerScreenState extends State<PlayerScreen>
   }
 
   /// Skip broken live / unavailable items; stop if the whole queue fails.
-  Future<void> _onPlaybackError({String fallbackMessage = 'Playback error'}) async {
+  Future<void> _onPlaybackError({
+    String fallbackMessage = 'Playback error',
+  }) async {
     if (!mounted) return;
     _consecutiveErrors++;
     if (_index + 1 < widget.queue.length &&
@@ -329,26 +397,28 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   Future<void> _scrubBy(int deltaMs, {bool commitNow = false}) async {
     if (!_allowSeek) {
-      setState(() => _seekHint = 'Seek disabled for this video');
+      _seekHint.value = 'Seek disabled for this video';
       Future<void>.delayed(const Duration(seconds: 2), () {
-        if (mounted) setState(() => _seekHint = null);
+        if (mounted && _seekHint.value == 'Seek disabled for this video') {
+          _seekHint.value = null;
+        }
       });
       return;
     }
-    setState(() => _seekHint = null);
+    _seekHint.value = null;
     _hideScrubTimer?.cancel();
     final step = _scrubStepFor(deltaMs);
     if (!_scrubbing) {
       _scrubbing = true;
-      _showScrubOverlay = true;
       _scrubReady = false;
       _queuedDeltaMs = step;
       _scrubStartMs = DateTime.now().millisecondsSinceEpoch;
+      _publishScrubUi(visible: true);
       await _beginScrubSession();
       if (!mounted) return;
       _scrubReady = true;
       _applyQueuedScrubDeltas();
-      setState(() {});
+      _publishScrubUi(visible: true);
       if (commitNow) {
         await _commitScrub();
       } else {
@@ -360,7 +430,7 @@ class _PlayerScreenState extends State<PlayerScreen>
       _queuedDeltaMs += step;
     } else {
       _applyScrubDelta(step);
-      setState(() {});
+      _publishScrubUi(visible: true);
     }
     if (commitNow) {
       await _commitScrub();
@@ -415,11 +485,11 @@ class _PlayerScreenState extends State<PlayerScreen>
     _queuedDeltaMs = 0;
     await _seekToAbsolute(_pendingPosMs);
     if (!mounted) return;
-    setState(() => _showScrubOverlay = true);
+    _publishScrubUi(visible: true);
     _hideScrubTimer?.cancel();
     _hideScrubTimer = Timer(const Duration(milliseconds: 1200), () {
       if (mounted && !_scrubbing) {
-        setState(() => _showScrubOverlay = false);
+        _publishScrubUi(visible: false);
       }
     });
   }
@@ -539,7 +609,9 @@ class _PlayerScreenState extends State<PlayerScreen>
               fit: StackFit.expand,
               children: [
                 if (_webController != null)
-                  WebViewWidget(controller: _webController!)
+                  RepaintBoundary(
+                    child: WebViewWidget(controller: _webController!),
+                  )
                 else if (_videoController != null &&
                     _videoController!.value.isInitialized)
                   FittedBox(
@@ -567,26 +639,43 @@ class _PlayerScreenState extends State<PlayerScreen>
                       style: const TextStyle(color: Colors.white, fontSize: 18),
                     ),
                   ),
-                if (_seekHint != null)
-                  Center(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                ValueListenableBuilder<String?>(
+                  valueListenable: _seekHint,
+                  builder: (context, hint, _) {
+                    if (hint == null) return const SizedBox.shrink();
+                    return Center(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          color: Colors.black54,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(
-                          _seekHint!,
-                          style: const TextStyle(color: Colors.white),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            hint,
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                if (_showScrubOverlay) _buildScrubOverlay(),
+                    );
+                  },
+                ),
+                ValueListenableBuilder<_ScrubUi?>(
+                  valueListenable: _scrubUi,
+                  builder: (context, scrub, _) {
+                    if (scrub == null || !scrub.visible) {
+                      return const SizedBox.shrink();
+                    }
+                    return _ScrubOverlay(
+                      posMs: scrub.posMs,
+                      durMs: scrub.durMs,
+                      formatTime: _formatPlayerTime,
+                    );
+                  },
+                ),
                 SafeArea(
                   child: Stack(
                     children: [
@@ -637,15 +726,24 @@ class _PlayerScreenState extends State<PlayerScreen>
       ),
     );
   }
+}
 
-  Widget _buildScrubOverlay() {
-    final progress = _scrubDurationMs > 0
-        ? (_pendingPosMs / _scrubDurationMs).clamp(0.0, 1.0)
-        : 0.0;
-    final posLabel = _formatPlayerTime(_pendingPosMs);
-    final durLabel = _scrubDurationMs > 0
-        ? _formatPlayerTime(_scrubDurationMs)
-        : '--:--';
+class _ScrubOverlay extends StatelessWidget {
+  const _ScrubOverlay({
+    required this.posMs,
+    required this.durMs,
+    required this.formatTime,
+  });
+
+  final int posMs;
+  final int durMs;
+  final String Function(int ms) formatTime;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = durMs > 0 ? (posMs / durMs).clamp(0.0, 1.0) : 0.0;
+    final posLabel = formatTime(posMs);
+    final durLabel = durMs > 0 ? formatTime(durMs) : '--:--';
     return Positioned(
       left: 48,
       right: 48,
@@ -663,7 +761,7 @@ class _PlayerScreenState extends State<PlayerScreen>
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
-                  value: _scrubDurationMs > 0 ? progress : null,
+                  value: durMs > 0 ? progress : null,
                   minHeight: 8,
                   backgroundColor: Colors.white24,
                   color: Colors.white,

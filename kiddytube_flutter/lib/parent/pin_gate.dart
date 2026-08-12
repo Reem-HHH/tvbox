@@ -115,7 +115,7 @@ class _PinDialogState extends State<_PinDialog> {
     }
 
     final matchesHash =
-        manager.verifyPin(pin, widget.pinSalt, widget.pinHash);
+        await manager.verifyPinAsync(pin, widget.pinSalt, widget.pinHash);
     final blockedDefault = widget.rejectDefaultDevPin &&
         pin == ParentPinManager.defaultDevPin;
     if (matchesHash && !blockedDefault) {

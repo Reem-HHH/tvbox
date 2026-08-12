@@ -48,7 +48,7 @@ class _ChannelsTabState extends State<_ChannelsTab> {
   @override
   Widget build(BuildContext context) {
     final channels = _filtered;
-    if (widget.isTablet) {
+    if (widget.useSplitPane) {
       final selected = _selected ?? (channels.isEmpty ? null : channels.first);
       if (selected != null && _selectedId != selected.id) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -112,7 +112,7 @@ class _ChannelsTabState extends State<_ChannelsTab> {
             },
             decoration: InputDecoration(
               hintText: 'Search channels',
-              helperText: 'Press Down to browse channels',
+              helperText: '↓ browse · Select to expand',
               prefixIcon: const Icon(Icons.search),
               filled: true,
               border: OutlineInputBorder(
@@ -530,44 +530,43 @@ class _ChannelDetailPane extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final body = Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (!compact) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Text(
-              channel.title,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+    final controls = <Widget>[
+      if (!compact)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+          child: Text(
+            channel.title,
+            style: Theme.of(context).textTheme.headlineSmall,
           ),
-        ],
-        SwitchListTile(
-          title: const Text('Enabled on kids home'),
-          value: channel.enabled,
-          onChanged: _toggleEnabled,
         ),
-        SwitchListTile(
-          title: const Text('Follow uploads'),
-          subtitle: Text(
-            channel.youtubePlaylistId == null ||
-                    channel.youtubePlaylistId!.isEmpty
-                ? 'No playlist linked'
-                : 'Daily sync adds new playlist items (keeps existing)',
-          ),
-          value: channel.followUploads,
-          onChanged: channel.youtubePlaylistId == null ||
+      SwitchListTile(
+        title: const Text('Enabled on kids home'),
+        value: channel.enabled,
+        onChanged: _toggleEnabled,
+      ),
+      SwitchListTile(
+        title: const Text('Follow uploads'),
+        subtitle: Text(
+          channel.youtubePlaylistId == null ||
                   channel.youtubePlaylistId!.isEmpty
-              ? null
-              : _toggleFollow,
+              ? 'No playlist linked'
+              : 'Daily sync adds new playlist items (keeps existing)',
         ),
-        SwitchListTile(
-          title: const Text('Allow seek (FF/RW)'),
-          subtitle: const Text('Default for this channel’s videos'),
-          value: channel.defaultAllowSeek,
-          onChanged: channel.enabled ? _toggleSeek : null,
-        ),
-        ListTile(
+        value: channel.followUploads,
+        onChanged: channel.youtubePlaylistId == null ||
+                channel.youtubePlaylistId!.isEmpty
+            ? null
+            : _toggleFollow,
+      ),
+      SwitchListTile(
+        title: const Text('Allow seek (FF/RW)'),
+        subtitle: const Text('Default for this channel’s videos'),
+        value: channel.defaultAllowSeek,
+        onChanged: channel.enabled ? _toggleSeek : null,
+      ),
+      FocusTile(
+        onActivated: () => _editPlaylist(context),
+        child: ListTile(
           title: const Text('Playlist'),
           subtitle: Text(
             channel.youtubePlaylistId?.isNotEmpty == true
@@ -579,80 +578,114 @@ class _ChannelDetailPane extends StatelessWidget {
           trailing: const Icon(Icons.edit_outlined),
           onTap: () => _editPlaylist(context),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
+      ),
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton.tonalIcon(
+              onPressed: () => _addYoutube(context),
+              icon: const Icon(Icons.add),
+              label: const Text('Add YouTube'),
+            ),
+            FilledButton.tonalIcon(
+              onPressed: () => _addDirect(context),
+              icon: const Icon(Icons.link),
+              label: const Text('Add URL'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () => _clearSynced(context),
+              icon: const Icon(Icons.cleaning_services_outlined),
+              label: const Text('Clear synced'),
+            ),
+          ],
+        ),
+      ),
+      const Divider(height: 1),
+    ];
+
+    Widget videoTile(VideoItem v) {
+      return FocusTile(
+        onActivated: () => _toggleVideoSeek(v, !v.allowSeek),
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          leading: _VideoThumb(video: v),
+          title: Text(
+            v.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: Text(
+            [
+              if (v.manual) 'Manual',
+              if (v.isDirect) 'Direct',
+              if (v.isYoutube && !v.manual) 'Synced',
+              v.allowSeek ? 'Seek on' : 'Seek off',
+            ].join(' · '),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              FilledButton.tonalIcon(
-                onPressed: () => _addYoutube(context),
-                icon: const Icon(Icons.add),
-                label: const Text('Add YouTube'),
+              IconButton(
+                tooltip: v.allowSeek ? 'Disable seek' : 'Enable seek',
+                icon: Icon(
+                  v.allowSeek
+                      ? Icons.fast_forward
+                      : Icons.fast_forward_outlined,
+                ),
+                onPressed: () => _toggleVideoSeek(v, !v.allowSeek),
               ),
-              FilledButton.tonalIcon(
-                onPressed: () => _addDirect(context),
-                icon: const Icon(Icons.link),
-                label: const Text('Add URL'),
-              ),
-              OutlinedButton.icon(
-                onPressed: () => _clearSynced(context),
-                icon: const Icon(Icons.cleaning_services_outlined),
-                label: const Text('Clear synced'),
+              IconButton(
+                tooltip: 'Remove',
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () => _deleteVideo(context, v),
               ),
             ],
           ),
         ),
-        const Divider(height: 1),
-        if (channel.videos.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(24),
-            child: Text('No videos in this channel yet.'),
-          )
-        else
-          ...channel.videos.map(
-            (v) => ListTile(
-              leading: _VideoThumb(video: v),
-              title: Text(
-                v.title,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              subtitle: Text(
-                [
-                  if (v.manual) 'Manual',
-                  if (v.isDirect) 'Direct',
-                  if (v.isYoutube && !v.manual) 'Synced',
-                  v.allowSeek ? 'Seek on' : 'Seek off',
-                ].join(' · '),
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    tooltip: v.allowSeek ? 'Disable seek' : 'Enable seek',
-                    icon: Icon(
-                      v.allowSeek
-                          ? Icons.fast_forward
-                          : Icons.fast_forward_outlined,
-                    ),
-                    onPressed: () => _toggleVideoSeek(v, !v.allowSeek),
-                  ),
-                  IconButton(
-                    tooltip: 'Remove',
-                    icon: const Icon(Icons.delete_outline),
-                    onPressed: () => _deleteVideo(context, v),
-                  ),
-                ],
+      );
+    }
+
+    final videos = channel.videos;
+    if (compact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ...controls,
+          if (videos.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text('No videos in this channel yet.'),
+            )
+          else
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 360),
+              child: ListView.builder(
+                itemCount: videos.length,
+                itemBuilder: (context, index) => videoTile(videos[index]),
               ),
             ),
-          ),
-        const SizedBox(height: 16),
-      ],
-    );
+        ],
+      );
+    }
 
-    if (compact) return body;
-    return ListView(children: [body]);
+    return ListView.builder(
+      padding: const EdgeInsets.only(bottom: 16),
+      itemCount: controls.length + (videos.isEmpty ? 1 : videos.length),
+      itemBuilder: (context, index) {
+        if (index < controls.length) return controls[index];
+        if (videos.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Text('No videos in this channel yet.'),
+          );
+        }
+        return videoTile(videos[index - controls.length]);
+      },
+    );
   }
 }
 
@@ -678,6 +711,7 @@ class _VideoThumb extends StatelessWidget {
             : CachedNetworkImage(
                 imageUrl: url,
                 fit: BoxFit.cover,
+                memCacheWidth: 128,
                 placeholder: (_, _) => ColoredBox(color: color),
                 errorWidget: (_, _, _) => ColoredBox(
                   color: color,

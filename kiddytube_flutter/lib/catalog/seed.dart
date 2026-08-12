@@ -53,7 +53,23 @@ class DefaultChannels {
     'dawood_juz_26',
   };
 
-  static List<ContentChannel> seed() {
+  static List<ContentChannel>? _seedCache;
+  static Map<String, Set<String>>? _seedVideoIdsByChannel;
+
+  /// Built-in catalog. Cached after first build (large object graph).
+  static List<ContentChannel> seed() => _seedCache ??= _buildSeed();
+
+  /// Video ids per channel from seed — for purge keep-lists without rebuilding.
+  static Map<String, Set<String>> seedVideoIdsByChannel() {
+    final cached = _seedVideoIdsByChannel;
+    if (cached != null) return cached;
+    final map = <String, Set<String>>{
+      for (final ch in seed()) ch.id: {for (final v in ch.videos) v.id},
+    };
+    return _seedVideoIdsByChannel = map;
+  }
+
+  static List<ContentChannel> _buildSeed() {
     final channels = [
         _channel(
           id: 'omar_hana',

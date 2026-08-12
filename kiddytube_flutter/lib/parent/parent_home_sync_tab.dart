@@ -391,43 +391,56 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                 ),
               ),
               const Divider(height: 1),
-              ListTile(
-                leading: _busy
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.cloud_download_outlined),
-                title: const Text('Pull catalog from cloud'),
-                subtitle: Text(
-                  cloud?.paired != true
-                      ? (cloud?.autoEnrollConfigured == true
-                          ? 'Waiting for connection'
-                          : 'Connect first')
-                      : cloud!.lastCloudSyncMs == 0
-                          ? 'Manual only — tap to download the cloud catalog'
-                          : 'Manual only · last pull ${_formatRelative(cloud.lastCloudSyncMs)}'
-                              '${cloud.lastRevision == null ? '' : ' · rev ${cloud.lastRevision}'}',
-                ),
-                onTap: () {
+              FocusTile(
+                autofocus: true,
+                onActivated: () {
                   if (_busy || cloud?.paired != true) return;
                   _pullCloud();
                 },
+                child: ListTile(
+                  leading: _busy
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.cloud_download_outlined),
+                  title: const Text('Pull catalog from cloud'),
+                  subtitle: Text(
+                    cloud?.paired != true
+                        ? (cloud?.autoEnrollConfigured == true
+                            ? 'Waiting for connection'
+                            : 'Connect first')
+                        : cloud!.lastCloudSyncMs == 0
+                            ? 'Manual only — tap to download the cloud catalog'
+                            : 'Manual only · last pull ${_formatRelative(cloud.lastCloudSyncMs)}'
+                                '${cloud.lastRevision == null ? '' : ' · rev ${cloud.lastRevision}'}',
+                  ),
+                  onTap: () {
+                    if (_busy || cloud?.paired != true) return;
+                    _pullCloud();
+                  },
+                ),
               ),
               const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.history),
-                title: const Text('Sync watch history'),
-                subtitle: Text(
-                  cloud?.paired != true
-                      ? 'Connect first'
-                      : 'Manual only — upload Continue Watching to the cloud',
-                ),
-                onTap: () {
+              FocusTile(
+                onActivated: () {
                   if (_busy || cloud?.paired != true) return;
                   _syncWatch();
                 },
+                child: ListTile(
+                  leading: const Icon(Icons.history),
+                  title: const Text('Sync watch history'),
+                  subtitle: Text(
+                    cloud?.paired != true
+                        ? 'Connect first'
+                        : 'Manual only — upload Continue Watching to the cloud',
+                  ),
+                  onTap: () {
+                    if (_busy || cloud?.paired != true) return;
+                    _syncWatch();
+                  },
+                ),
               ),
               if (cloud?.paired == true) ...[
                 const Divider(height: 1),
@@ -494,16 +507,19 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
           elevation: 0,
           child: Column(
             children: [
-              ListTile(
-                leading: const Icon(Icons.key_outlined),
-                title: const Text('YouTube API key'),
-                subtitle: Text(
-                  (settings.youtubeApiKey?.isNotEmpty ?? false)
-                      ? 'Saved (hidden)'
-                      : 'Not set — needed for playlist refresh',
+              FocusTile(
+                onActivated: _editApiKey,
+                child: ListTile(
+                  leading: const Icon(Icons.key_outlined),
+                  title: const Text('YouTube API key'),
+                  subtitle: Text(
+                    (settings.youtubeApiKey?.isNotEmpty ?? false)
+                        ? 'Saved (hidden)'
+                        : 'Not set — needed for playlist refresh',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _editApiKey,
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _editApiKey,
               ),
               const Divider(height: 1),
               ListTile(
@@ -563,7 +579,7 @@ class _ChannelsTab extends StatefulWidget {
   const _ChannelsTab({
     required this.settings,
     required this.repository,
-    required this.isTablet,
+    required this.useSplitPane,
     required this.sessionOk,
     required this.onChanged,
     required this.toast,
@@ -571,7 +587,7 @@ class _ChannelsTab extends StatefulWidget {
 
   final CatalogSettings settings;
   final CatalogRepository repository;
-  final bool isTablet;
+  final bool useSplitPane;
   final _SessionCheck sessionOk;
   final Future<void> Function() onChanged;
   final _Toast toast;

@@ -74,6 +74,18 @@ String youtubeIframeHtml({
       else player.playVideo();
     }catch(e){}
   }
+  function loadVideoById(id,start){
+    try{
+      if(!player||!player.loadVideoById) return false;
+      var t=Number(start)||0;
+      if(t<0) t=0;
+      player.loadVideoById({
+        videoId:String(id||''),
+        startSeconds:Math.max(0,Math.floor(t))
+      });
+      return true;
+    }catch(e){ return false; }
+  }
   function onYouTubeIframeAPIReady(){
     var sz=size();
     player=new YT.Player('p',{

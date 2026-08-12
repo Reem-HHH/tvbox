@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 
 /// Parent unlock: salted PIN verification + temporary rate limiting.
 ///
@@ -59,6 +60,37 @@ class ParentPinManager {
     final actual = hashPin(pin, saltHex);
     if (actual == null) return false;
     return _constantTimeEquals(actual, expected);
+  }
+
+  /// PBKDF2 verify off the UI isolate (Android TV SoCs hitch on 100k iters).
+  Future<bool> verifyPinAsync(
+    String pin,
+    String? saltHex,
+    String? expectedHashHex,
+  ) {
+    if (!isValidPinFormat(pin) ||
+        saltHex == null ||
+        saltHex.isEmpty ||
+        expectedHashHex == null ||
+        expectedHashHex.isEmpty) {
+      return Future<bool>.value(false);
+    }
+    return compute(
+      _verifyPinWorker,
+      <String, String>{
+        'pin': pin,
+        'salt': saltHex,
+        'hash': expectedHashHex,
+      },
+    );
+  }
+
+  /// Hash off the UI isolate for PIN change / first-run seed.
+  static Future<String?> hashPinAsync(String pin, String saltHex) {
+    return compute(
+      _hashPinWorker,
+      <String, String>{'pin': pin, 'salt': saltHex},
+    );
   }
 
   /// True when [hash] is the old single-round SHA-256 format (no KDF prefix).
@@ -188,4 +220,12 @@ class ParentPinManager {
         int.parse(value.substring(i, i + 2), radix: 16),
     ];
   }
+}
+
+bool _verifyPinWorker(Map<String, String> args) {
+  return ParentPinManager().verifyPin(args['pin'], args['salt'], args['hash']);
+}
+
+String? _hashPinWorker(Map<String, String> args) {
+  return ParentPinManager.hashPin(args['pin']!, args['salt']!);
 }
