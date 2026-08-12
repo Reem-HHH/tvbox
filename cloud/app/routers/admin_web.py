@@ -26,6 +26,18 @@ from ..rate_limit import auth_limiter
 router = APIRouter(prefix="/admin", tags=["admin-web"])
 TEMPLATES = Jinja2Templates(directory=str(Path(__file__).resolve().parents[1] / "templates"))
 
+
+def _argb_to_css(value: object) -> str:
+    """Flutter ARGB int (signed or unsigned) → #RRGGBB for admin swatches."""
+    try:
+        n = int(value) & 0xFFFFFFFF  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        n = 0xFF42A5F5
+    return f"#{(n >> 16) & 0xFF:02x}{(n >> 8) & 0xFF:02x}{n & 0xFF:02x}"
+
+
+TEMPLATES.env.filters["argb_css"] = _argb_to_css
+
 _YT_ID = re.compile(r"(?:youtube\.com/watch\?.*v=|youtu\.be/|youtube\.com/embed/)?([\w-]{11})$")
 
 
@@ -201,11 +213,13 @@ def catalog_page(request: Request, db: Session = Depends(get_db)):
         .order_by(ChannelRow.sort_order.asc(), ChannelRow.id.asc())
         .all()
     )
+    video_count = sum(len(ch.videos) for ch in channels)
     return _page(
         request,
         "catalog.html",
         admin=admin,
         channels=channels,
+        video_count=video_count,
         flash=request.query_params.get("flash"),
         error=request.query_params.get("error"),
     )
