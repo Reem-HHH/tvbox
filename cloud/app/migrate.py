@@ -25,12 +25,11 @@ def ensure_schema() -> None:
     Upgrade to head.
 
     Databases created with the old Base.metadata.create_all path (tables present,
-    no alembic_version) are stamped at head so the next deploy can migrate.
+    no alembic_version) are stamped at 0001_initial so later revisions still run.
     """
     cfg = _alembic_config()
     inspector = inspect(engine)
     tables = set(inspector.get_table_names())
     if "alembic_version" not in tables and "devices" in tables:
-        command.stamp(cfg, "head")
-        return
+        command.stamp(cfg, "0001_initial")
     command.upgrade(cfg, "head")
