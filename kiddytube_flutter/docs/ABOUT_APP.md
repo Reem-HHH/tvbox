@@ -40,7 +40,7 @@ Islamic / Arabic-first shows, preschool series, plus recent adds:
 
 | Tile | Notes |
 | --- | --- |
-| قرآن للنوم / رقية وقرآن | Sleep Quran + ruqyah VODs only (no live streams) |
+| قرآن للنوم ورقية | Sleep Quran + ruqyah VODs only (no live streams) |
 | ماشا والدب | Arabic Masha |
 | بليبي بالعربي | Arabic Blippi |
 | ماروكو الصغيرة | Arabic Maruko |
@@ -95,7 +95,7 @@ See [`../cloud/README.md`](../cloud/README.md) and [`RUN_TV_AND_IPAD.md`](RUN_TV
 
 ### Quran sleep / ruqyah channels
 
-Seed **v26** removed rotating live stream IDs from `live_makkah` / `live_quran`. Those tiles are on-demand sleep Quran and ruqyah only. Broken live items are dropped on upgrade; the player also auto-skips unplayable videos in a queue.
+Seed **v26** removed rotating live stream IDs from sleep Quran / ruqyah. Seed **v31** merges those into one home tile (`live_makkah` — قرآن للنوم ورقية); the old `live_quran` tile is retired and its videos are absorbed on upgrade. Broken live items are dropped; the player also auto-skips unplayable videos in a queue.
 
 ### Adding / editing shows
 

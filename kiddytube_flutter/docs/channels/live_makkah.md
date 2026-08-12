@@ -1,9 +1,9 @@
-# قرآن للنوم / رقية وقرآن
+# قرآن للنوم ورقية
 
-- **Channel ids:** `live_makkah`, `live_quran`
+- **Channel id:** `live_makkah`
 - **Source:** Curated long-form sleep Quran and ruqyah (on-demand only)
-- **Seed:** v26 removes rotating live stream IDs that crashed in the kid player; tiles renamed away from "مباشر"
+- **Seed:** v31 merges the former `live_quran` (رقية وقرآن) tile into this single channel
 
 ## Notes
 
-No live YouTube streams. Sleep and ruqyah entries are normal videos. Existing installs drop retired live IDs on seed upgrade.
+One home tile for sleep Quran + ruqyah. No live YouTube streams. Existing installs absorb any `live_quran` videos into this channel on upgrade, then retire the old tile.

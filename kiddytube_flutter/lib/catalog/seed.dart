@@ -3,7 +3,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 30;
+  static const seedVersion = 31;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -32,6 +32,7 @@ class DefaultChannels {
     'fulla',
     'toyor_jana',
     'disney_songs_ar',
+    'live_quran',
     'dawood_juz_amma',
     'dawood_juz_amma_plain',
     'dawood_juz_amma_repeat',
@@ -987,7 +988,7 @@ class DefaultChannels {
         ),
         _channel(
           id: 'live_makkah',
-          title: 'قرآن للنوم',
+          title: 'قرآن للنوم ورقية',
           order: 44,
           color: 0xFF2E7D32,
           sourceType: SourceType.youtubeVideoList,
@@ -1016,15 +1017,6 @@ class DefaultChannels {
             _yt('Fj0iEdnZI-g', 'قرآن كريم للمساعدة على نوم عميق وبسرعة - قران كريم بصوت جميل جدا جدا قبل النوم 😌 أحمد ا…'),
             _yt('cvScckR3tSY', 'تلاوة هادئة للقرآن لراحة القلوب ❤️ Beautiful Quran Recitation ❤️ #المصحف #اكسبلور'),
             _yt('KWhVVdd19Gw', 'الرقية الشرعية لعلاج الأرق والنوم بهدوء وراحة وسكينة 😌🎧  اجمل تلاوة قران كريم💚 أيوب مصعب'),
-          ],
-        ),
-        _channel(
-          id: 'live_quran',
-          title: 'رقية وقرآن',
-          order: 45,
-          color: 0xFF00695C,
-          sourceType: SourceType.youtubeVideoList,
-          videos: [
             _yt('TQ9R8-TIdV4', 'قرآن هادئ للنوم — 10 ساعات | شاشة سوداء'),
             _yt('kXZgeu27BOo', 'قرآن للنوم — 10 ساعات | شاشة سوداء'),
             _yt('HOREcsKsjcU', 'سورة الملك مكررة — شاشة سوداء'),
@@ -1044,6 +1036,7 @@ class DefaultChannels {
             _yt('_Jlpyzeniu0', 'رقية النوم🤲لعلاج الارق والنوم والعين والحسد والسحر بصوت يريح القلب جداجدا4'),
           ],
         ),
+
         _channel(
           id: 'masha_ar',
           title: 'ماشا والدب',
@@ -1266,10 +1259,32 @@ class DefaultChannels {
 
   /// Merge newer seed defaults onto an existing catalog without wiping parent toggles.
   static List<ContentChannel> mergeSeedUpdates(List<ContentChannel> existing) {
+    // Fold retired رقية وقرآن into قرآن للنوم ورقية before dropping the old tile.
+    final absorbedQuran = <VideoItem>[];
+    for (final ch in existing) {
+      if (ch.id == 'live_quran') {
+        absorbedQuran.addAll(ch.videos);
+      }
+    }
+
     final byId = {
       for (final ch in existing.where((c) => !retiredChannelIds.contains(c.id)))
         ch.id: ch,
     };
+
+    if (absorbedQuran.isNotEmpty) {
+      final hub = byId['live_makkah'];
+      if (hub != null) {
+        final have = hub.videos.map((v) => v.id).toSet();
+        final extra = [
+          for (final v in absorbedQuran)
+            if (!have.contains(v.id)) v,
+        ];
+        if (extra.isNotEmpty) {
+          byId['live_makkah'] = hub.copyWith(videos: [...hub.videos, ...extra]);
+        }
+      }
+    }
 
     for (final seedCh in seed()) {
       final current = byId[seedCh.id];
@@ -1299,8 +1314,7 @@ class DefaultChannels {
 
       final dropWrongKidsMusic = seedCh.id == 'kids_music' &&
           current.videos.any((v) => v.id == _retiredKidsMusicVideoId);
-      final dropRetiredLive = (seedCh.id == 'live_makkah' ||
-              seedCh.id == 'live_quran') &&
+      final dropRetiredLive = seedCh.id == 'live_makkah' &&
           current.videos.any((v) => retiredLiveVideoIds.contains(v.id));
       // Keep every existing video (including prior playlist-sync items). Seed
       // upgrades only add missing curated starters — never prune the catalog.
@@ -1316,8 +1330,7 @@ class DefaultChannels {
       final titleStale = current.title != seedCh.title &&
           (seedCh.id == 'spacetoon' ||
               clearSpacetoonUploads ||
-              seedCh.id == 'live_makkah' ||
-              seedCh.id == 'live_quran');
+              seedCh.id == 'live_makkah');
       final disableFromSeed = !seedCh.enabled && current.enabled;
 
       if (clearSpacetoonUploads ||
