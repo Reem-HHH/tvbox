@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:kiddytube/catalog/catalog_repository.dart';
 import 'package:kiddytube/catalog/content_title_filter.dart';
 import 'package:kiddytube/catalog/home_library.dart';
 import 'package:kiddytube/catalog/models.dart';
@@ -295,7 +296,64 @@ void main() {
     expect(numberblocks.videos.any((v) => v.id == 'Ap5kgJ-bpEQ'), isTrue);
   });
 
-  test('mergeSeedUpdates prunes stale sync Shorts when Follow is off', () {
+  test('mergePlaylistSync keeps old videos and adds new ones', () {
+    const existing = [
+      VideoItem(
+        id: 'oldEp',
+        title: 'Old episode',
+        youtubeVideoId: 'oldEp',
+        publishedAtMs: 1000,
+      ),
+      VideoItem(
+        id: 'manual1',
+        title: 'Parent pick',
+        youtubeVideoId: 'manual1',
+        manual: true,
+        allowSeek: false,
+        publishedAtMs: 2000,
+      ),
+      VideoItem(
+        id: 'shared',
+        title: 'Old title',
+        youtubeVideoId: 'shared',
+        allowSeek: false,
+        publishedAtMs: 1500,
+      ),
+    ];
+    const synced = [
+      VideoItem(
+        id: 'shared',
+        title: 'Fresh title',
+        youtubeVideoId: 'shared',
+        thumbnailUrl: 'https://example.com/t.jpg',
+        publishedAtMs: 3000,
+      ),
+      VideoItem(
+        id: 'newEp',
+        title: 'Brand new',
+        youtubeVideoId: 'newEp',
+        publishedAtMs: 4000,
+      ),
+    ];
+    final merged = CatalogRepository.mergePlaylistSync(
+      existing: existing,
+      synced: synced,
+      defaultAllowSeek: true,
+    );
+    final ids = merged.map((v) => v.id).toList();
+    expect(ids, containsAll(['oldEp', 'manual1', 'shared', 'newEp']));
+    expect(ids.first, 'newEp'); // newest-first
+    final shared = merged.firstWhere((v) => v.id == 'shared');
+    expect(shared.title, 'Fresh title');
+    expect(shared.allowSeek, isFalse); // preserved
+    expect(shared.thumbnailUrl, 'https://example.com/t.jpg');
+    final manual = merged.firstWhere((v) => v.id == 'manual1');
+    expect(manual.manual, isTrue);
+    final added = merged.firstWhere((v) => v.id == 'newEp');
+    expect(added.allowSeek, isTrue); // default for new
+  });
+
+  test('mergeSeedUpdates keeps prior sync videos when Follow is off', () {
     final seedSara = DefaultChannels.seed().firstWhere((c) => c.id == 'sara_duck');
     final existing = [
       seedSara.copyWith(
@@ -303,9 +361,9 @@ void main() {
         videos: [
           ...seedSara.videos,
           const VideoItem(
-            id: 'ShortExtra1',
-            title: 'Promo Short',
-            youtubeVideoId: 'ShortExtra1',
+            id: 'SyncedExtr1',
+            title: 'Earlier synced episode',
+            youtubeVideoId: 'SyncedExtr1',
           ),
           const VideoItem(
             id: 'ManualKeep1',
@@ -318,7 +376,7 @@ void main() {
     ];
     final merged = DefaultChannels.mergeSeedUpdates(existing);
     final sara = merged.firstWhere((c) => c.id == 'sara_duck');
-    expect(sara.videos.any((v) => v.id == 'ShortExtra1'), isFalse);
+    expect(sara.videos.any((v) => v.id == 'SyncedExtr1'), isTrue);
     expect(sara.videos.any((v) => v.id == 'ManualKeep1'), isTrue);
     expect(sara.videos.any((v) => v.id == 'EOj_7ZYmCOI'), isTrue);
   });

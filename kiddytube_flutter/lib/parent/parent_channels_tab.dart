@@ -553,7 +553,7 @@ class _ChannelDetailPane extends StatelessWidget {
             channel.youtubePlaylistId == null ||
                     channel.youtubePlaylistId!.isEmpty
                 ? 'No playlist linked'
-                : 'Daily sync pulls new playlist items',
+                : 'Daily sync adds new playlist items (keeps existing)',
           ),
           value: channel.followUploads,
           onChanged: channel.youtubePlaylistId == null ||

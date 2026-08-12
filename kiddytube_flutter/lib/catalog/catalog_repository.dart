@@ -597,6 +597,35 @@ class CatalogRepository {
     });
   }
 
+  /// Playlist refresh merge: never drop existing videos; only add new ids.
+  ///
+  /// Matching ids keep parent flags (`manual`, `allowSeek`) and pick up fresher
+  /// title / thumbnail / publish time from the playlist fetch when present.
+  static List<VideoItem> mergePlaylistSync({
+    required List<VideoItem> existing,
+    required List<VideoItem> synced,
+    required bool defaultAllowSeek,
+  }) {
+    final byId = <String, VideoItem>{};
+    for (final v in existing) {
+      byId[v.id] = v;
+    }
+    for (final v in synced) {
+      final prev = byId[v.id];
+      if (prev == null) {
+        byId[v.id] = v.copyWith(allowSeek: defaultAllowSeek);
+        continue;
+      }
+      byId[v.id] = prev.copyWith(
+        title: v.title.trim().isNotEmpty ? v.title : prev.title,
+        thumbnailUrl: v.thumbnailUrl ?? prev.thumbnailUrl,
+        publishedAtMs: v.publishedAtMs ?? prev.publishedAtMs,
+        youtubeVideoId: v.youtubeVideoId ?? prev.youtubeVideoId,
+      );
+    }
+    return _newestFirst(byId.values.toList());
+  }
+
   static List<VideoItem> _newestFirst(List<VideoItem> items) {
     final indexed = items.asMap().entries.toList();
     indexed.sort((a, b) {
@@ -1023,18 +1052,14 @@ class CatalogRepository {
           skipped++;
           continue;
         }
-        // Keep manual entries; preserve allowSeek for matching synced ids.
-        final seekById = {
-          for (final v in ch.videos) v.id: v.allowSeek,
-        };
-        final synced = [
-          for (final v in videos)
-            v.copyWith(
-              allowSeek: seekById[v.id] ?? ch.defaultAllowSeek,
-            ),
-        ];
-        final manuals = ch.videos.where((v) => v.manual).toList();
-        channels[i] = ch.copyWith(videos: [...synced, ...manuals]);
+        // Append-only: keep every existing video; add newly seen playlist items.
+        channels[i] = ch.copyWith(
+          videos: mergePlaylistSync(
+            existing: ch.videos,
+            synced: videos,
+            defaultAllowSeek: ch.defaultAllowSeek,
+          ),
+        );
         updated++;
       } catch (e) {
         errors.add('${ch.title}: $e');
@@ -1049,10 +1074,6 @@ class CatalogRepository {
             : s.lastSyncMs,
       ),
     );
-    if (updated > 0) {
-      await _prefs!.remove(_shortsPurgedKey);
-      await maybePurgeShortVideos(force: true);
-    }
     if (errors.isNotEmpty) {
       return 'Updated $updated playlists; ${errors.length} failed.\n'
           '${errors.take(3).join('\n')}';
