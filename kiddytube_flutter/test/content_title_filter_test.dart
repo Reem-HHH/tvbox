@@ -14,14 +14,25 @@ void main() {
     expect(ContentTitleFilter.isBlocked('Ben & Holly Christmas Special'), isTrue);
     expect(ContentTitleFilter.isBlocked('Merry Xmas Nursery Rhymes'), isTrue);
     expect(ContentTitleFilter.isBlocked('Santa Claus Songs for Kids'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Let\'s Spell SANTA'), isTrue);
     expect(ContentTitleFilter.isBlocked('The North Pole! — Full Episode'), isTrue);
     expect(ContentTitleFilter.isBlocked('Easter Bunny Songs'), isTrue);
     expect(ContentTitleFilter.isBlocked('Jesus Loves Me for Kids'), isTrue);
     expect(ContentTitleFilter.isBlocked('Pride Month Parade for Kids'), isTrue);
     expect(ContentTitleFilter.isBlocked('LGBTQ Story Time'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Spooky Ghost Night for Kids'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Haunted House Song'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Scary shadows! Halloween Colour Fun'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Presents 🎁 | NEW EPISODE | Bing Full Episodes'), isTrue);
+    expect(ContentTitleFilter.isBlocked('@officialalphablocks - Boo! 👻 | New Special!'), isTrue);
     expect(ContentTitleFilter.isBlocked('أغاني هالوين للأطفال'), isTrue);
     expect(ContentTitleFilter.isBlocked('عيد الشكر مع الأصدقاء'), isTrue);
     expect(ContentTitleFilter.isBlocked('أغاني عيد الميلاد'), isTrue);
     expect(ContentTitleFilter.isBlocked('أناشيد عن يسوع للأطفال'), isTrue);
+  });
+
+  test('allows non-holiday Bing and birthday present titles', () {
+    expect(ContentTitleFilter.isAllowed('Fossil | Bing Full Episode'), isTrue);
+    expect(ContentTitleFilter.isAllowed('Peppa Pig Birthday Present'), isTrue);
   });
 }

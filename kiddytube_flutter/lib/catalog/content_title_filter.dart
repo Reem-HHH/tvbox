@@ -1,8 +1,9 @@
 /// Family-safe title gate for Muslim households.
 ///
 /// Drops playlist/sync items whose titles mention Halloween, Thanksgiving,
-/// Christmas, Christian/other religious propaganda, Pride/LGBTQ themes, etc.
-/// Does not inspect video visuals.
+/// Christmas, Christian/other religious propaganda, Pride/LGBTQ themes,
+/// or common scary/spooky Halloween wording. Does not inspect video visuals
+/// or YouTube tags.
 class ContentTitleFilter {
   ContentTitleFilter._();
 
@@ -14,6 +15,7 @@ class ContentTitleFilter {
     'xmas',
     'father christmas',
     'santa claus',
+    'santa',
     'north pole',
     'easter',
     'jesus',
@@ -34,6 +36,17 @@ class ContentTitleFilter {
     'gay pride',
     'drag queen',
     'drag story',
+    // Scary / spooky holiday wording
+    'spooky',
+    'haunted',
+    'scary',
+    'nightmare',
+    'trick-or-treat',
+    'trick or treat',
+    'jack-o-lantern',
+    'jack-a-lantern',
+    'jack o lantern',
+    'letters to santa',
     // Arabic spellings / common transliterations
     'هالوين',
     'الهالوين',
@@ -69,6 +82,18 @@ class ContentTitleFilter {
             normalized.contains('flag') ||
             normalized.contains('lgbt') ||
             normalized.contains('202'))) {
+      return false;
+    }
+    // Soft Christmas titles (e.g. Bing "Presents 🎁" without saying Christmas).
+    if (RegExp(r'(^|[^a-z])presents([^a-z]|$)').hasMatch(normalized) &&
+        normalized.contains('bing')) {
+      return false;
+    }
+    // Halloween "Boo!" specials that omit the word Halloween.
+    if (normalized.contains('boo!') &&
+        (normalized.contains('special') ||
+            title.contains('👻') ||
+            normalized.contains('halloween'))) {
       return false;
     }
     return true;

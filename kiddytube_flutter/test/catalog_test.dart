@@ -54,7 +54,7 @@ void main() {
 
 
   test('seed keeps Twirlywoos expanded starters', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final twirly = DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
     expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
     expect(twirly.videos.any((v) => v.id == 'Wg0JkKmQY6A'), isTrue);
@@ -63,7 +63,7 @@ void main() {
   });
 
   test('seed v19 adds Maruko Chan Arabic starters', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final maruko = DefaultChannels.seed().firstWhere((c) => c.id == 'maruko');
     expect(maruko.title, 'ماروكو الصغيرة');
     expect(maruko.followUploads, isFalse);
@@ -75,7 +75,7 @@ void main() {
   });
 
   test('seed includes Makkah Quran Masha Blippi Disney channels without live', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
     expect(ids.containsAll([
@@ -111,7 +111,7 @@ void main() {
   });
 
   test('seed v26 follow only curated playlists; Numberblocks Season 1', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -120,8 +120,17 @@ void main() {
     expect(ids.contains('cocomelon'), isTrue);
     expect(ids.contains('mansour'), isTrue);
     expect(ids.contains('numberblocks'), isTrue);
+    const followOn = {
+      'dawood',
+      'numberblocks',
+      'zaky',
+      'colourblocks',
+      'alphablocks',
+      'bing',
+      'bakkar',
+    };
     for (final ch in seed) {
-      if (ch.id == 'dawood' || ch.id == 'numberblocks') {
+      if (followOn.contains(ch.id)) {
         expect(ch.followUploads, isTrue, reason: ch.id);
         expect(ch.youtubePlaylistId, isNotNull);
       } else {
@@ -151,7 +160,7 @@ void main() {
   });
 
   test('seed v22 adds Babar and Hadikat al-Marah channels', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final seed = DefaultChannels.seed();
     final babar = seed.firstWhere((c) => c.id == 'babar');
     expect(babar.title, 'بابار');
@@ -167,7 +176,7 @@ void main() {
   });
 
   test('seed v35 adds Muka Muka, Milo, and Peppa Toys channels', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
     expect(ids.containsAll(['muka_muka', 'milo', 'peppa_toys']), isTrue);
@@ -294,8 +303,43 @@ void main() {
     expect(babar.videos.any((v) => v.id == 'fbRBhg1tegQ'), isTrue);
   });
 
+  test('seed v40 adds Zaky Colourblocks Alphablocks Bing Bakkar with Follow', () {
+    expect(DefaultChannels.seedVersion, 40);
+    final seed = DefaultChannels.seed();
+    final byId = {for (final c in seed) c.id: c};
+
+    final zaky = byId['zaky']!;
+    expect(zaky.title, 'Zaky');
+    expect(zaky.followUploads, isTrue);
+    expect(zaky.youtubePlaylistId, 'PLVhRNB9aLU4iijlj1hieweb16ao3P5C-o');
+    expect(zaky.videos.length, greaterThanOrEqualTo(50));
+    expect(zaky.videos.any((v) => ContentTitleFilter.isBlocked(v.title)), isFalse);
+
+    final colour = byId['colourblocks']!;
+    expect(colour.followUploads, isTrue);
+    expect(colour.youtubePlaylistId, 'PLNlJG0d7KqJvg1Lxjm33FsYBpZHRS5o2H');
+    expect(colour.videos.length, greaterThanOrEqualTo(25));
+
+    final alpha = byId['alphablocks']!;
+    expect(alpha.followUploads, isTrue);
+    expect(alpha.youtubePlaylistId, 'PLSW2D61TnopQh0UN4Xqi1wNFfF1wHliQg');
+    expect(alpha.videos.length, greaterThanOrEqualTo(50));
+
+    final bing = byId['bing']!;
+    expect(bing.followUploads, isTrue);
+    expect(bing.youtubePlaylistId, 'PLiHTGV3bXdR8yYzEepbhfb23SxoTSTtF7');
+    expect(bing.videos.any((v) => v.title.toLowerCase().contains('halloween')), isFalse);
+    expect(bing.videos.any((v) => v.id == 'eYuUe-o1T8w'), isFalse);
+
+    final bakkar = byId['bakkar']!;
+    expect(bakkar.title, 'بكار');
+    expect(bakkar.followUploads, isTrue);
+    expect(bakkar.youtubePlaylistId, 'PL678DQfcGwUyHPVWW7u4SO1jPkfuQiDdx');
+    expect(bakkar.videos.length, greaterThanOrEqualTo(20));
+  });
+
   test('seed v36 has no retired short ids and merge drops leftovers', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     expect(DefaultChannels.retiredShortVideoIds, isNotEmpty);
     for (final ch in DefaultChannels.seed()) {
       expect(
@@ -393,7 +437,7 @@ void main() {
           if (DefaultChannels.retiredShortVideoIds.contains(v.id)) v.id,
     ];
     expect(leftoverIds, isEmpty);
-    expect(settings.seedVersion, 39);
+    expect(settings.seedVersion, 40);
   });
 
   test('mergeSeedUpdates replaces wrong Kids Music sleep song', () {
@@ -624,7 +668,7 @@ void main() {
 
 
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -665,7 +709,7 @@ void main() {
   });
 
   test('seed v28 adds Ben and Holly curated starters without Christmas', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final ben = DefaultChannels.seed().firstWhere((c) => c.id == 'ben_and_holly');
     expect(ben.title, 'Ben & Holly');
     expect(ben.followUploads, isFalse);
@@ -689,7 +733,7 @@ void main() {
   });
 
   test('seed v29 adds Minecraft Dad & Olivia calm builds', () {
-    expect(DefaultChannels.seedVersion, 39);
+    expect(DefaultChannels.seedVersion, 40);
     final mc = DefaultChannels.seed().firstWhere((c) => c.id == 'minecraft');
     expect(mc.title, 'Minecraft');
     expect(mc.followUploads, isFalse);

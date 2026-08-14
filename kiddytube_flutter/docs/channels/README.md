@@ -31,6 +31,11 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [dora](dora.md) | Dora the Explorer | High | Medium–High | Official Dora & Friends starters |
 | [peppa](peppa.md) | Peppa Pig | High | Medium–High | Curated official starters (no odd Tales) |
 | [peppa_toys](peppa_toys.md) | Peppa Pig Toys | High | Medium–High | Official toy play / stop-motion for ~4yos (no Tales/holidays) |
+| [zaky](zaky.md) | Zaky | High | High | One4Kids Islamic compilations + Follow |
+| [colourblocks](colourblocks.md) | Colourblocks | High | High | Season 1 full episodes + Follow (holiday titles filtered) |
+| [alphablocks](alphablocks.md) | Alphablocks | High | High | Full episodes playlist + Follow (holiday titles filtered) |
+| [bing](bing.md) | Bing | High | High–Medium | Official full episodes + Follow (Halloween/Christmas filtered) |
+| [bakkar](bakkar.md) | بكار | High | High | Maspero أطفال الجزء الثاني + Follow |
 | [milo](milo.md) | Milo | High | High | Official preschool cat job adventures |
 | [muka_muka](muka_muka.md) | موكا موكا | High | High–Medium | Green dinosaur classic — theme pack until full eps on YT |
 | [ben_and_holly](ben_and_holly.md) | Ben & Holly | High | High | Curated official starters (no Christmas) |
