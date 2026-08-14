@@ -226,20 +226,9 @@ class DefaultChannels {
   };
 
   static List<ContentChannel>? _seedCache;
-  static Map<String, Set<String>>? _seedVideoIdsByChannel;
 
   /// Built-in catalog. Cached after first build (large object graph).
   static List<ContentChannel> seed() => _seedCache ??= _buildSeed();
-
-  /// Video ids per channel from seed — for purge keep-lists without rebuilding.
-  static Map<String, Set<String>> seedVideoIdsByChannel() {
-    final cached = _seedVideoIdsByChannel;
-    if (cached != null) return cached;
-    final map = <String, Set<String>>{
-      for (final ch in seed()) ch.id: {for (final v in ch.videos) v.id},
-    };
-    return _seedVideoIdsByChannel = map;
-  }
 
   /// Strip live IDs, Shorts, and non-embeddable rows from persisted catalogs.
   static List<ContentChannel> dropRetiredMedia(List<ContentChannel> input) {

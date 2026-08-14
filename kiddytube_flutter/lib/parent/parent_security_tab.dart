@@ -129,22 +129,3 @@ class _SecurityTab extends StatelessWidget {
   }
 }
 
-class _HomeSyncTab extends StatefulWidget {
-  const _HomeSyncTab({
-    required this.settings,
-    required this.repository,
-    required this.sessionOk,
-    required this.onChanged,
-    required this.toast,
-  });
-
-  final CatalogSettings settings;
-  final CatalogRepository repository;
-  final _SessionCheck sessionOk;
-  final Future<void> Function() onChanged;
-  final _Toast toast;
-
-  @override
-  State<_HomeSyncTab> createState() => _HomeSyncTabState();
-}
-

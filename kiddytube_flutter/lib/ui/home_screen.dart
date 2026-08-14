@@ -9,6 +9,7 @@ import '../catalog/catalog_repository.dart';
 import '../catalog/home_library.dart';
 import '../catalog/models.dart';
 import '../catalog/recent_watch.dart';
+import '../app_version.dart';
 import '../parent/parent_settings_screen.dart';
 import '../parent/pin_gate.dart';
 import '../parent/release_pin_policy.dart';
@@ -21,10 +22,9 @@ const _ytRed = Color(0xFFFF0000);
 /// Tiny header stamp so you can tell debug vs release on the TV.
 /// `flutter run` → D·… ; `flutter run --release` / release APK → R·…
 String get kiddyTubeBuildStamp {
-  const ver = '0.1.0';
-  if (kReleaseMode) return 'R·$ver';
-  if (kProfileMode) return 'P·$ver';
-  return 'D·$ver';
+  if (kReleaseMode) return 'R·$kiddyTubeVersion';
+  if (kProfileMode) return 'P·$kiddyTubeVersion';
+  return 'D·$kiddyTubeVersion';
 }
 
 class HomeScreen extends StatefulWidget {

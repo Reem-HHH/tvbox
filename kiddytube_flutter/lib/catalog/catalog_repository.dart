@@ -559,7 +559,7 @@ class CatalogRepository {
     ];
 
     await _updateChannel(channelId, (ch) {
-      final merged = _newestFirst([...tagged, ...ch.videos]);
+      final merged = newestVideosFirst([...tagged, ...ch.videos]);
       final byId = <String, VideoItem>{};
       for (final v in merged) {
         byId.putIfAbsent(v.id, () => v);
@@ -592,7 +592,7 @@ class CatalogRepository {
       );
       final hasYoutube = ch.videos.any((v) => v.isYoutube);
       return ch.copyWith(
-        videos: _newestFirst([item, ...ch.videos]),
+        videos: newestVideosFirst([item, ...ch.videos]),
         sourceType: hasYoutube ? ch.sourceType : SourceType.directUrl,
       );
     });
@@ -641,19 +641,7 @@ class CatalogRepository {
         youtubeVideoId: v.youtubeVideoId ?? prev.youtubeVideoId,
       );
     }
-    return _newestFirst(byId.values.toList());
-  }
-
-  static List<VideoItem> _newestFirst(List<VideoItem> items) {
-    final indexed = items.asMap().entries.toList();
-    indexed.sort((a, b) {
-      final aMs = a.value.publishedAtMs ?? -1;
-      final bMs = b.value.publishedAtMs ?? -1;
-      final byDate = bMs.compareTo(aMs);
-      if (byDate != 0) return byDate;
-      return a.key.compareTo(b.key);
-    });
-    return indexed.map((e) => e.value).toList();
+    return newestVideosFirst(byId.values.toList());
   }
 
   Future<void> changePin(String newPin) async {
@@ -843,7 +831,7 @@ class CatalogRepository {
     await _prefs!.setBool(_cloudAutoEnrollOptOutKey, true);
   }
 
-  /// Re-hash a verified PIN with the current KDF when the stored hash is legacy.
+  /// Replace local catalog from cloud/export JSON map.
   Future<String> applyCatalogPayload(Map<String, dynamic> payload) async {
     final rawChannels = payload['channels'];
     if (rawChannels is! List) {
@@ -907,11 +895,6 @@ class CatalogRepository {
       token: token,
     );
     return applyCatalogPayload(payload);
-  }
-
-  /// Unused: cloud catalog pull is manual-only (Parent → Pull catalog).
-  Future<bool> maybePullCloudDaily() async {
-    return false;
   }
 
   /// Local continue-watching + optional cloud upsert (when paired).
@@ -1009,9 +992,7 @@ class CatalogRepository {
         updatedAtMs: (json['updated_at_ms'] as num?)?.toInt() ?? 0,
       );
 
-  /// Refresh playlist-backed channels that have Follow uploads enabled.
-  /// Returns a human-readable summary.
-
+  /// Re-hash a verified PIN with the current KDF when the stored hash is legacy.
   Future<void> upgradePinHashIfNeeded(String pin) async {
     final settings = _cached ?? await load();
     if (!ParentPinManager.isLegacyHash(settings.pinHash)) return;
@@ -1028,7 +1009,8 @@ class CatalogRepository {
     await update((s) => s.copyWith(pinHash: hash));
   }
 
-  /// Replace local catalog from cloud/export JSON map.
+  /// Refresh playlist-backed channels that have Follow uploads enabled.
+  /// Returns a human-readable summary.
   Future<String> refreshAllPlaylists({bool force = false}) async {
     final settings = await load();
     final apiKey = settings.youtubeApiKey?.trim();

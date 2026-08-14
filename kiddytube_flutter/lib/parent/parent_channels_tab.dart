@@ -1,5 +1,26 @@
 part of 'parent_settings_screen.dart';
 
+class _ChannelsTab extends StatefulWidget {
+  const _ChannelsTab({
+    required this.settings,
+    required this.repository,
+    required this.useSplitPane,
+    required this.sessionOk,
+    required this.onChanged,
+    required this.toast,
+  });
+
+  final CatalogSettings settings;
+  final CatalogRepository repository;
+  final bool useSplitPane;
+  final _SessionCheck sessionOk;
+  final Future<void> Function() onChanged;
+  final _Toast toast;
+
+  @override
+  State<_ChannelsTab> createState() => _ChannelsTabState();
+}
+
 class _ChannelsTabState extends State<_ChannelsTab> {
   final _search = TextEditingController();
   late final FocusNode _searchFocus = FocusNode(onKeyEvent: _onSearchKey);

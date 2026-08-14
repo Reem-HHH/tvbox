@@ -1,5 +1,24 @@
 part of 'parent_settings_screen.dart';
 
+class _HomeSyncTab extends StatefulWidget {
+  const _HomeSyncTab({
+    required this.settings,
+    required this.repository,
+    required this.sessionOk,
+    required this.onChanged,
+    required this.toast,
+  });
+
+  final CatalogSettings settings;
+  final CatalogRepository repository;
+  final _SessionCheck sessionOk;
+  final Future<void> Function() onChanged;
+  final _Toast toast;
+
+  @override
+  State<_HomeSyncTab> createState() => _HomeSyncTabState();
+}
+
 class _HomeSyncTabState extends State<_HomeSyncTab> {
   bool _busy = false;
   CloudLinkStatus? _cloud;
@@ -573,26 +592,5 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
     if (diff.inDays < 1) return '${diff.inHours}h ago';
     return '${diff.inDays}d ago';
   }
-}
-
-class _ChannelsTab extends StatefulWidget {
-  const _ChannelsTab({
-    required this.settings,
-    required this.repository,
-    required this.useSplitPane,
-    required this.sessionOk,
-    required this.onChanged,
-    required this.toast,
-  });
-
-  final CatalogSettings settings;
-  final CatalogRepository repository;
-  final bool useSplitPane;
-  final _SessionCheck sessionOk;
-  final Future<void> Function() onChanged;
-  final _Toast toast;
-
-  @override
-  State<_ChannelsTab> createState() => _ChannelsTabState();
 }
 

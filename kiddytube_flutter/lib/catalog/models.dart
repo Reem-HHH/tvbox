@@ -61,9 +61,6 @@ class VideoItem {
     return thumbnailUrl;
   }
 
-  /// Same as [youtubeThumbnail] — kept for call sites; avoid heavier sddefault.
-  String? get youtubeThumbnailLarge => youtubeThumbnail;
-
   VideoItem copyWith({
     String? title,
     String? thumbnailUrl,
@@ -139,7 +136,7 @@ class ContentChannel {
   /// Preview thumb from the first YouTube video when available.
   String? get previewThumbnail {
     for (final v in videos) {
-      final t = v.youtubeThumbnailLarge ?? v.youtubeThumbnail;
+      final t = v.youtubeThumbnail;
       if (t != null && t.isNotEmpty) return t;
     }
     return null;
@@ -216,6 +213,19 @@ class ContentChannel {
             json['playlistManagedByParent'] as bool? ?? false,
         defaultAllowSeek: json['defaultAllowSeek'] as bool? ?? true,
       );
+}
+
+/// Newest [publishedAtMs] first; stable for equal/missing dates.
+List<VideoItem> newestVideosFirst(List<VideoItem> items) {
+  final indexed = items.asMap().entries.toList();
+  indexed.sort((a, b) {
+    final aMs = a.value.publishedAtMs ?? -1;
+    final bMs = b.value.publishedAtMs ?? -1;
+    final byDate = bMs.compareTo(aMs);
+    if (byDate != 0) return byDate;
+    return a.key.compareTo(b.key);
+  });
+  return indexed.map((e) => e.value).toList();
 }
 
 /// Video tile bound to its owning channel.

@@ -107,11 +107,13 @@ Matches Flutter `CatalogRepository.exportJson()`:
 
 You can paste an export from the current app into **Catalog → Import**.
 
-## Next app integration (not in this folder yet)
+## Flutter app integration
 
-- Flutter: settings screen “Pair device” (enter code) + persist token
-- On launch / parent Refresh: `GET /v1/catalog` → write into local `CatalogRepository`
-- Keep local seed as offline fallback when cloud unreachable
+The Flutter client in [`../kiddytube_flutter`](../kiddytube_flutter) already supports:
+
+- Parent → Home & Sync → **Pair device** (6-digit code) + persisted token
+- Manual **Pull catalog** / **Sync watch history** into local `CatalogRepository`
+- Local seed as offline fallback when cloud is unreachable
 
 ## Production notes
 

@@ -83,8 +83,8 @@ class ChannelRow(Base):
     default_allow_seek: Mapped[bool] = mapped_column(Boolean, default=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     source_type: Mapped[str] = mapped_column(String(40), default="youtubePlaylist")
-    # Flutter ARGB fits in BIGINT; import also clamps to signed int32 for safety.
-    color: Mapped[int] = mapped_column(BigInteger, default=-12409355)
+    # Flutter ARGB fits in BIGINT (unsigned 32-bit stored as positive int).
+    color: Mapped[int] = mapped_column(BigInteger, default=0xFF42A5F5)
     videos: Mapped[List["VideoRow"]] = relationship(
         back_populates="channel",
         cascade="all, delete-orphan",

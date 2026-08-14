@@ -108,7 +108,7 @@ class YoutubeCatalogSource {
       apiKey: apiKey,
       candidates: items,
     );
-    return _newestFirst(filtered);
+    return newestVideosFirst(filtered);
   }
 
   /// Batch-check duration + liveBroadcastContent; drop Shorts and live/upcoming.
@@ -247,17 +247,5 @@ class YoutubeCatalogSource {
   static int? _parseIso8601(String? value) {
     if (value == null || value.isEmpty) return null;
     return DateTime.tryParse(value)?.millisecondsSinceEpoch;
-  }
-
-  static List<VideoItem> _newestFirst(List<VideoItem> items) {
-    final indexed = items.asMap().entries.toList();
-    indexed.sort((a, b) {
-      final aMs = a.value.publishedAtMs ?? -1;
-      final bMs = b.value.publishedAtMs ?? -1;
-      final byDate = bMs.compareTo(aMs);
-      if (byDate != 0) return byDate;
-      return a.key.compareTo(b.key);
-    });
-    return indexed.map((e) => e.value).toList();
   }
 }

@@ -5,7 +5,7 @@ import secrets
 from datetime import timedelta
 from typing import Optional, Tuple
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -61,14 +61,6 @@ def ensure_admin(db: Session, settings: Settings) -> AdminUser:
         db.commit()
         db.refresh(user)
     return user
-
-
-def require_admin_session(request: Request) -> None:
-    if not request.session.get("admin_id"):
-        raise HTTPException(
-            status_code=status.HTTP_303_SEE_OTHER,
-            headers={"Location": "/admin/login"},
-        )
 
 
 def get_current_device(

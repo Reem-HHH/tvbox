@@ -14,14 +14,12 @@ EMPTY_CATALOG = {
     "channels": [],
 }
 
-# Flutter ARGB colors are unsigned 32-bit (e.g. 0xFF66BB6A). Postgres INTEGER is
-# signed — store as two's-complement int32 and export unsigned again for apps.
+# Flutter ARGB colors are unsigned 32-bit (e.g. 0xFF66BB6A). Stored in BIGINT.
 _DEFAULT_COLOR = 0xFF42A5F5
 
 
 def _color_to_pg(value: object) -> int:
-    raw = int(value if value is not None else _DEFAULT_COLOR) & 0xFFFFFFFF
-    return raw - 0x100000000 if raw > 0x7FFFFFFF else raw
+    return int(value if value is not None else _DEFAULT_COLOR) & 0xFFFFFFFF
 
 
 def _color_from_pg(value: object) -> int:
