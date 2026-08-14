@@ -223,7 +223,11 @@ class ParentPinManager {
 }
 
 bool _verifyPinWorker(Map<String, String> args) {
-  return ParentPinManager().verifyPin(args['pin'], args['salt'], args['hash']);
+  return ParentPinManager().verifyPin(
+    args['pin']!,
+    args['salt']!,
+    args['hash']!,
+  );
 }
 
 String? _hashPinWorker(Map<String, String> args) {

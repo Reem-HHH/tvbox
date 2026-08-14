@@ -30,6 +30,9 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [barney](barney.md) | Barney & Friends | High | Medium–High | Curated Scholastic starters |
 | [dora](dora.md) | Dora the Explorer | High | Medium–High | Official Dora & Friends starters |
 | [peppa](peppa.md) | Peppa Pig | High | Medium–High | Curated official starters (no odd Tales) |
+| [peppa_toys](peppa_toys.md) | Peppa Pig Toys | High | Medium–High | Official toy play / stop-motion for ~4yos (no Tales/holidays) |
+| [milo](milo.md) | Milo | High | High | Official preschool cat job adventures |
+| [muka_muka](muka_muka.md) | موكا موكا | High | High–Medium | Green dinosaur classic — theme pack until full eps on YT |
 | [ben_and_holly](ben_and_holly.md) | Ben & Holly | High | High | Curated official starters (no Christmas) |
 | [lego_duplo](lego_duplo.md) | LEGO DUPLO | High | Medium–High | Toy play / unboxings |
 | [play_doh](play_doh.md) | Play-Doh | High | Medium–High | Sensory craft play |

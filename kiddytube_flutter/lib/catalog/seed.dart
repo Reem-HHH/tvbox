@@ -3,7 +3,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 34;
+  static const seedVersion = 35;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -23,6 +23,8 @@ class DefaultChannels {
   /// Games For Kids Hub — Dad & Olivia Play (calm Minecraft builds only).
   static const _dadOliviaMinecraftPlaylist =
       'PLCGF5P4ZzZ6d2S5-RVKKkFp-wLZk-uKP9';
+  /// Milo (Milkshake! / PBS Kids preschool cat) — official uploads.
+  static const _miloOfficialUploads = 'UUYYRc7w6PgFgSh3dnZyZchw';
 
   static const retiredChannelIds = {
     'arabic_cartoons',
@@ -2025,6 +2027,121 @@ class DefaultChannels {
             _yt('oXRNCk6a9eE', 'Minecraft survival ep 1 | Finding a village and building a house'),
             _yt('1gTJQOChf94', 'How To Draw Pizza - Preschool'),
             _yt('4O4hHK_uRNM', 'How To Draw A Squishmallows Axolotl'),
+          ],
+        ),
+        // Classic Spacetoon anime (green dinosaur). Full Arabic episodes are
+        // not currently on YouTube as embeddable long-form videos — theme /
+        // opening pack keeps the tile ready; parents can Add YouTube IDs.
+        _channel(
+          id: 'muka_muka',
+          title: 'موكا موكا',
+          order: 53,
+          color: 0xFF43A047,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('LnPKwbetSMQ', 'سبيستون | موكا موكا | شارة العمل'),
+            _yt('wjI1Jf0W7vE', 'أغاني كرتون — أغنية موكا موكا'),
+            _yt('DOmcbxGqMds', 'أغنية كرتون موكا موكا — سبيستون'),
+            _yt('bgfCTu3UjW4', 'موسيقى موكا موكا — أغنية المقدمة مع الكلمات'),
+            _yt('WeYCqfGahd4', 'Muka Muka Paradise Arabic Opening Song — أغنية موكا موكا'),
+            _yt('t3BogEchwBk', 'موكا موكا — طارق العربي طرقان'),
+            _yt('ziJtGhjtiP4', 'موكا موكا بصوت سامي فيصل'),
+            _yt('0Pbrj3TWG4k', 'أغنية من أنمي موكا موكا'),
+            _yt('00tHaOagVdw', 'شارة موكا موكا'),
+            _yt('6mwMWNc0iuk', 'شارة موكا موكا'),
+            _yt('YMBmF7qSgaE', 'شارة البداية — موكا موكا'),
+            _yt('_qBzu7oN_MY', 'تقرير عن موكا موكا — Mukamuka Paradise + أصوات الدبلجة'),
+            _yt('9JYgC0CinUQ', 'Muka Muka Paradise OP & ED'),
+            _yt('eESQJIpFGpA', 'Itsumo Muka Muka To Issho — opening'),
+            _yt('p1MgB8hepHk', 'Muka Muka Paradise — Itsumo Muka-Muka to Issho'),
+            _yt('tbhP_V94k2Y', 'موكا موكا صديقٌ غالي — سبيستون'),
+          ],
+        ),
+        _channel(
+          id: 'milo',
+          title: 'Milo',
+          order: 54,
+          color: 0xFF5C6BC0,
+          playlist: _miloOfficialUploads,
+          videos: [
+            _yt('mNOhUdl3yfQ', 'Milo and His Friends in Nature — Milo Cartoon'),
+            _yt('4SODfWe8c20', 'MILO, MARINE BIOLOGIST — Full Episode'),
+            _yt('1AfWGqX9400', 'MILO, THE BASKETBALL PLAYER — Full Episode'),
+            _yt('_11kQDM4ees', 'MILO, ROYAL GUARD — Full Episode'),
+            _yt('hDQO6W5FW24', 'MILO, THE CRUISE SHIP CAPTAIN — Full Episode'),
+            _yt('9gWoKhP7Rwo', 'MILO, COWBOY — Full Episode'),
+            _yt('A-fxPLinzR8', 'MILO THE CRUISE SHIP CAPTAIN — Compilation'),
+            _yt('8kKAonHUHu4', 'Milo The Museum Curator — Compilation'),
+            _yt('DTE41sJQeww', 'MILO THE VET — Full Episodes Compilation'),
+            _yt('qR0qsWKoSB8', 'MILO THE PHOTOGRAPHER — Full Episodes Compilation'),
+            _yt('9y0wTaAxjgg', 'Milo The Astronomer — Compilation'),
+            _yt('qcm55uRhf8M', 'MILO THE CLEANER — Full Episodes Compilation'),
+            _yt('7wVsb9gd81k', 'Milo The Ice Cream Seller — Compilation'),
+            _yt('GQ_fzXdtSt4', 'MILO THE MOVIE DIRECTOR — Full Episodes Compilation'),
+            _yt('KBmf_A38XNY', 'MILO THE BUILDER — Full Episodes Compilation'),
+            _yt('JGBFmS0iVhw', 'Milo The Private Detective — Full Episodes Compilation'),
+            _yt('6R3bEfnQaII', 'MILO THE BOTANIST — Full Episodes Compilation'),
+            _yt('Cum19-4cM_8', 'Milo The Dairy Farmer — Compilation'),
+            _yt('6jmUWzvLzn4', 'MILO THE DOCTOR — Compilation'),
+            _yt('mcDRULSpHCU', 'Milo The Ambulance Driver — Compilation'),
+            _yt('96KORWCBSlo', 'MILO THE TEACHER — Full Episodes Compilation'),
+            _yt('VBUUMnmLKBE', 'MILO THE GARDENER — Full Episodes Compilation'),
+            _yt('e7s7Eazb1EY', 'MILO THE TAXI DRIVER — Full Episodes Compilation'),
+            _yt('wjg_WoM8fbE', 'Milo The Plumber — Full Episodes Compilation'),
+            _yt('vevgnqFaenA', 'Milo The Treasure Hunter — Full Episodes Compilation'),
+            _yt('JAVOUrwwt0g', 'Milo The Road Rescuer — Full Episodes Compilation'),
+            _yt('HSH0ZtbTm_s', 'Milo The TV Presenter — Full Episodes Compilation'),
+            _yt('b1yU0E2KzhY', 'Milo The Biographer — Full Episodes Compilation'),
+            _yt('lKr44HLNBEE', 'Milo The Marine Biologist — Full Episodes Compilation'),
+            _yt('jRIatS1Fcxg', 'MILO THE ROBOTICS ENGINEER — Compilation'),
+            _yt('syFXNRMuQdg', 'The Adventures of Milo, Lofty and Lark — Super Fun Uniforms'),
+            _yt('JZOhFsg5uG4', 'From the Supermarket to the Plate — Milo Cartoon'),
+            _yt('s4F5CiYwr9M', 'The Adventures of Milo with Hat, Cap, and Helmet'),
+            _yt('BwCYz6_uvEc', 'I present to you… Skipper Stone! — Milo Cartoon'),
+            _yt('hNgHnvYmTys', 'How fast does Charlie run? — Milo Cartoon'),
+            _yt('vZ9LSXSgbjE', 'Celebrate FAMILY DAY with Milo — Milo Cartoon'),
+            _yt('bNQFvfOPaQg', 'Milo is also BACK TO SCHOOL! — Best episodes'),
+            _yt('GlzwgdoN4ZE', 'Explore the World with Milo — Tourism Day'),
+            _yt('zfSmKJ2dwS8', 'Have a super fun afternoon with Milo and his friends'),
+            _yt('rkGYUPhxtes', 'Milo The Basketball Player — Full Episodes Compilation'),
+          ],
+        ),
+        // Official Peppa toy play / stop-motion / calm LEGO DUPLO pretend —
+        // not cartoon Tales; no Christmas/Halloween/scary packs.
+        _channel(
+          id: 'peppa_toys',
+          title: 'Peppa Pig Toys',
+          order: 55,
+          color: 0xFFEC407A,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('IV8Iu-hoI-I', 'Come Play with Peppa — Making a Chocolate Birthday Cake'),
+            _yt('SKMd_QtMJKM', 'Come Play with Peppa — Shopping at the Vegetable Market'),
+            _yt('WTw90otQB40', 'Come Play with Peppa — Muddy Puddle Bucket Challenge'),
+            _yt('8JO_naA7pwc', 'Come Play with Peppa — The Hot Balloon Ride Adventure'),
+            _yt('iJmGYabu5kc', 'Peppa Pig Stop Motion — Bathtime in Her Wooden House'),
+            _yt('8oS3hPkTxw8', 'Peppa Pig Stop Motion — Peppa Goes to Theatre'),
+            _yt('NDOd7pX2BUc', 'The TWENTY Scoop Ice Cream — Peppa Pig Toy Videos'),
+            _yt('qh-kujqxaYU', 'Muddy Puddle Jump with Peppa — Play-Doh Show Stop Motion'),
+            _yt('DGxlVLT8jXk', 'Peppa Pig Stop Motion — Shopping for George\'s Birthday Present'),
+            _yt('_gDNIfjhpuI', 'Peppa Pig Stop Motion — Detective Peppa Pig'),
+            _yt('qtAnY_PolIk', 'Peppa Pig Stop Motion — Dress-up for Group Call'),
+            _yt('cerxQqFDePs', 'Peppa Pig Stop Motion — Campervan Holiday Fun Time'),
+            _yt('HQOEGuAQ7gY', 'Peppa Pig Stop Motion — Garden Games'),
+            _yt('OAky1Y5LcUc', 'Peppa Pig Stop Motion — Peppa Pig at the Beach'),
+            _yt('8_6CpuqsSn0', 'Peppa Pig Stop Motion — Clean Up with Peppa Pig'),
+            _yt('Fw-PO1S2OIk', 'Peppa Pig Stop Motion — The Mystery of Missing Teddy'),
+            _yt('7Z0xThd_SRE', 'Peppa Pig Stop Motion — Games at Peppa Pig\'s Playgroup'),
+            _yt('Mwx-4PLdrlc', 'Peppa Pig Stop Motion — Peppa at the Aquarium'),
+            _yt('g-3zwxDBN5I', 'Peppa Pig\'s Day Out — Peppa Pig Stop Motion'),
+            _yt('ykFiv37vw0w', 'Peppa Pig Stop Motion — Peppa Pig Looks at Shooting Stars'),
+            _yt('TGKphkDSlTQ', 'Peppa Pig Stop Motion — The Camping Holiday'),
+            _yt('B9cVczyoJMY', 'Peppa Pig Stop Motion — Campervan Holiday Fun Time'),
+            _yt('5FFI-K8mVEI', 'Ready, Steady, Bake with Peppa Pig — LEGO Little Ones'),
+            _yt('F3-bchgh1tM', 'Fun Grocery Shopping with Mummy and Peppa Pig — LEGO Little Ones'),
+            _yt('GCdNA7rL5u4', 'Peppa Pig\'s Island Campout — LEGO Little Ones'),
+            _yt('5nhq0Aybp6Q', 'Fun at the Beach with Peppa Pig and George — LEGO Little Ones'),
+            _yt('jbdck_y74ls', 'Peppa Pig Rides the TRAIN! — LEGO DUPLO'),
           ],
         ),
     ];
