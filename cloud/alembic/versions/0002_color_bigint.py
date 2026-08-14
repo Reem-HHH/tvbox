@@ -20,6 +20,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # SQLite INTEGER is already 64-bit; Postgres ALTER COLUMN is invalid there.
+    if op.get_bind().dialect.name == "sqlite":
+        return
     op.alter_column(
         "channels",
         "color",
@@ -30,6 +33,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    if op.get_bind().dialect.name == "sqlite":
+        return
     op.alter_column(
         "channels",
         "color",

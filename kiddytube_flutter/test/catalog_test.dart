@@ -68,7 +68,7 @@ void main() {
     expect(maruko.videos.any((v) => v.id == 'OMbPlfL2VMY'), isTrue);
     expect(maruko.videos.any((v) => v.id == '7Xf9nKYyAM4'), isTrue);
     expect(maruko.videos.length, greaterThanOrEqualTo(16));
-    expect(maruko.videos.any((v) => v.id == 'efoYDgyUdbU'), isTrue);
+    expect(maruko.videos.any((v) => v.id == '0gAG-rxdX2I'), isTrue);
   });
 
   test('seed includes Makkah Quran Masha Blippi Disney channels without live', () {
@@ -142,7 +142,7 @@ void main() {
     expect(kidsMusic.videos.any((v) => v.id == 'qn3ITODjLiw'), isTrue);
     expect(kidsMusic.videos.any((v) => v.id == 'ISSlEZyIRFw'), isFalse);
     expect(kidsMusic.videos.any((v) => v.id == '03X3iys-Rcs'), isTrue);
-    expect(kidsMusic.videos.any((v) => v.id == 'XE4qklLOokQ'), isTrue);
+    expect(kidsMusic.videos.any((v) => v.id == 'Gmhk7mWG050'), isTrue);
     expect(ids.contains('toyor_jana'), isFalse);
     expect(DefaultChannels.retiredChannelIds.contains('toyor_jana'), isTrue);
   });
@@ -279,7 +279,7 @@ void main() {
     final merged = DefaultChannels.mergeSeedUpdates(existing);
     expect(merged.any((c) => c.id == 'toyor_jana'), isFalse);
     final maruko = merged.firstWhere((c) => c.id == 'maruko');
-    expect(maruko.videos.any((v) => v.id == 'efoYDgyUdbU'), isTrue);
+    expect(maruko.videos.any((v) => v.id == '0gAG-rxdX2I'), isTrue);
     final babar = merged.firstWhere((c) => c.id == 'babar');
     expect(babar.videos.any((v) => v.id == 'fbRBhg1tegQ'), isTrue);
   });
