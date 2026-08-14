@@ -17,6 +17,9 @@ class YoutubeCatalogSource {
   /// YouTube Shorts can be up to 3 minutes; drop those and anything shorter.
   static const minFullVideoDuration = Duration(seconds: 180);
 
+  /// Match [CloudClient] so hung networks cannot leave parent sync busy forever.
+  static const _requestTimeout = Duration(seconds: 20);
+
   Future<List<VideoItem>> fetchPlaylistVideos({
     required String apiKey,
     required String playlistId,
@@ -40,7 +43,7 @@ class YoutubeCatalogSource {
         '/youtube/v3/playlistItems',
         params,
       );
-      final response = await _client.get(uri);
+      final response = await _client.get(uri).timeout(_requestTimeout);
       if (response.statusCode != 200) {
         throw Exception(
           'YouTube API ${response.statusCode}: ${response.body}',
@@ -134,7 +137,7 @@ class YoutubeCatalogSource {
           'key': apiKey,
         },
       );
-      final response = await _client.get(uri);
+      final response = await _client.get(uri).timeout(_requestTimeout);
       if (response.statusCode != 200) {
         throw Exception(
           'YouTube videos API ${response.statusCode}: ${response.body}',

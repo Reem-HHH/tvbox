@@ -49,6 +49,7 @@ class CatalogSettings {
     this.pinHash,
     this.pinChangedFromDefault = false,
     this.releaseReady = false,
+    this.biometricUnlock = false,
     this.failCount = 0,
     this.lockedUntilMs = 0,
     this.lastSyncMs = 0,
@@ -62,6 +63,8 @@ class CatalogSettings {
   final String? pinHash;
   final bool pinChangedFromDefault;
   final bool releaseReady;
+  /// Opt-in Face ID / fingerprint unlock (off by default — shared devices).
+  final bool biometricUnlock;
   final int failCount;
   final int lockedUntilMs;
   final int lastSyncMs;
@@ -76,6 +79,7 @@ class CatalogSettings {
     String? pinHash,
     bool? pinChangedFromDefault,
     bool? releaseReady,
+    bool? biometricUnlock,
     int? failCount,
     int? lockedUntilMs,
     int? lastSyncMs,
@@ -90,6 +94,7 @@ class CatalogSettings {
       pinChangedFromDefault:
           pinChangedFromDefault ?? this.pinChangedFromDefault,
       releaseReady: releaseReady ?? this.releaseReady,
+      biometricUnlock: biometricUnlock ?? this.biometricUnlock,
       failCount: failCount ?? this.failCount,
       lockedUntilMs: lockedUntilMs ?? this.lockedUntilMs,
       lastSyncMs: lastSyncMs ?? this.lastSyncMs,
@@ -235,6 +240,7 @@ class CatalogRepository {
   static const _lockedUntilKey = 'pin_locked_until_ms';
   static const _pinChangedKey = 'pin_changed_from_default';
   static const _releaseReadyKey = 'release_ready';
+  static const _biometricUnlockKey = 'parent_biometric_unlock';
   static const _lastSyncKey = 'last_sync_ms';
   static const _cloudBaseUrlKey = 'cloud_base_url';
   static const _cloudDeviceNameKey = 'cloud_device_name';
@@ -293,17 +299,23 @@ class CatalogRepository {
       await _persistChannels(channels);
     }
 
-    final sanitized = ReleasePinPolicy.sanitizePinFlags(
+    final sanitized = await ReleasePinPolicy.sanitizePinFlagsAsync(
       pinSalt: pinSalt,
       pinHash: pinHash,
       pinChangedFromDefault: _prefs!.getBool(_pinChangedKey) ?? false,
       releaseReady: _prefs!.getBool(_releaseReadyKey) ?? false,
     );
+    var biometricUnlock = _prefs!.getBool(_biometricUnlockKey) ?? false;
+    if (!sanitized.pinChangedFromDefault) {
+      biometricUnlock = false;
+    }
     if (sanitized.pinChangedFromDefault !=
             (_prefs!.getBool(_pinChangedKey) ?? false) ||
-        sanitized.releaseReady != (_prefs!.getBool(_releaseReadyKey) ?? false)) {
+        sanitized.releaseReady != (_prefs!.getBool(_releaseReadyKey) ?? false) ||
+        biometricUnlock != (_prefs!.getBool(_biometricUnlockKey) ?? false)) {
       await _prefs!.setBool(_pinChangedKey, sanitized.pinChangedFromDefault);
       await _prefs!.setBool(_releaseReadyKey, sanitized.releaseReady);
+      await _prefs!.setBool(_biometricUnlockKey, biometricUnlock);
     }
 
     final settings = CatalogSettings(
@@ -315,6 +327,7 @@ class CatalogRepository {
       pinHash: pinHash,
       pinChangedFromDefault: sanitized.pinChangedFromDefault,
       releaseReady: sanitized.releaseReady,
+      biometricUnlock: biometricUnlock,
       failCount: _prefs!.getInt(_failCountKey) ?? 0,
       lockedUntilMs: _prefs!.getInt(_lockedUntilKey) ?? 0,
       lastSyncMs: _prefs!.getInt(_lastSyncKey) ?? 0,
@@ -377,7 +390,7 @@ class CatalogRepository {
       if (previous != null) await previous;
       final current = _cached ?? await load();
       var next = transform(current);
-      final sanitized = ReleasePinPolicy.sanitizePinFlags(
+      final sanitized = await ReleasePinPolicy.sanitizePinFlagsAsync(
         pinSalt: next.pinSalt,
         pinHash: next.pinHash,
         pinChangedFromDefault: next.pinChangedFromDefault,
@@ -386,6 +399,8 @@ class CatalogRepository {
       next = next.copyWith(
         pinChangedFromDefault: sanitized.pinChangedFromDefault,
         releaseReady: sanitized.releaseReady,
+        biometricUnlock:
+            sanitized.pinChangedFromDefault ? next.biometricUnlock : false,
       );
       // Channel JSON is large — skip rewrite for PIN/mode/meta-only updates.
       if (!identical(current.channels, next.channels)) {
@@ -407,6 +422,9 @@ class CatalogRepository {
       }
       if (next.releaseReady != current.releaseReady) {
         await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
+      }
+      if (next.biometricUnlock != current.biometricUnlock) {
+        await _prefs!.setBool(_biometricUnlockKey, next.biometricUnlock);
       }
       if (next.lastSyncMs != current.lastSyncMs) {
         await _prefs!.setInt(_lastSyncKey, next.lastSyncMs);
@@ -661,6 +679,8 @@ class CatalogRepository {
         pinSalt: salt,
         pinHash: hash,
         pinChangedFromDefault: true,
+        // Require re-opt-in after PIN change (shared-device safety).
+        biometricUnlock: false,
       ),
     );
   }
@@ -671,6 +691,16 @@ class CatalogRepository {
         throw StateError('Change the default PIN first');
       }
       return s.copyWith(releaseReady: ready);
+    });
+  }
+
+  /// Opt-in Face ID / fingerprint unlock. Off by default on shared devices.
+  Future<void> setBiometricUnlock(bool enabled) async {
+    await update((s) {
+      if (enabled && !s.pinChangedFromDefault) {
+        throw StateError('Change the default PIN first');
+      }
+      return s.copyWith(biometricUnlock: enabled);
     });
   }
 

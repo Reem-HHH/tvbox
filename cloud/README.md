@@ -121,7 +121,7 @@ The Flutter client in [`../kiddytube_flutter`](../kiddytube_flutter) already sup
 - Put TLS in front if you self-host; set `PUBLIC_BASE_URL` to your https URL
 - `DATABASE_URL` accepts Neon `postgresql://…?sslmode=require` (auto-rewritten for psycopg3)
 - Change `ADMIN_PASSWORD` and `SECRET_KEY` before exposing the server
-- Production (`https://` `PUBLIC_BASE_URL`) refuses default admin password / secret key
-- Pair / enroll / login are rate-limited; admin session cookies are `Secure` on HTTPS
+- Production (`https://` `PUBLIC_BASE_URL`, `PRODUCTION=true`, or Render’s `RENDER` env) refuses default admin password / secret key and refuses SQLite
+- Pair / enroll / login are rate-limited by the proxy-appended client IP (rightmost `X-Forwarded-For` hop)
 - Run API tests: `pip install -r requirements.txt && pytest` from `cloud/`
 - Free Render sleeps when idle — first wake can be slow; optional uptime ping on `/health`

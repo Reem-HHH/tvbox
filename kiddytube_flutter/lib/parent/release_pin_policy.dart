@@ -24,6 +24,18 @@ class ReleasePinPolicy {
   }) =>
       !isDebugBuild && !pinChangedFromDefault;
 
+  static Future<bool> matchesDefaultDevPinAsync(String? salt, String? hash) async {
+    if (salt == null || salt.isEmpty || hash == null || hash.isEmpty) {
+      return false;
+    }
+    return ParentPinManager().verifyPinAsync(
+      ParentPinManager.defaultDevPin,
+      salt,
+      hash,
+    );
+  }
+
+  /// Sync helper for unit tests; prefer [sanitizePinFlagsAsync] on the UI path.
   static bool matchesDefaultDevPin(String? salt, String? hash) {
     if (salt == null || salt.isEmpty || hash == null || hash.isEmpty) {
       return false;
@@ -35,14 +47,34 @@ class ReleasePinPolicy {
     );
   }
 
+  static Future<({bool pinChangedFromDefault, bool releaseReady})>
+      sanitizePinFlagsAsync({
+    required String? pinSalt,
+    required String? pinHash,
+    required bool pinChangedFromDefault,
+    required bool releaseReady,
+  }) async {
+    // Flags already say "still default" — skip PBKDF2 (cold-start / tests).
+    if (!pinChangedFromDefault) {
+      return (pinChangedFromDefault: false, releaseReady: false);
+    }
+    final stillDefault = await matchesDefaultDevPinAsync(pinSalt, pinHash);
+    final changed = !stillDefault;
+    final ready = releaseReady && changed;
+    return (pinChangedFromDefault: changed, releaseReady: ready);
+  }
+
   static ({bool pinChangedFromDefault, bool releaseReady}) sanitizePinFlags({
     required String? pinSalt,
     required String? pinHash,
     required bool pinChangedFromDefault,
     required bool releaseReady,
   }) {
+    if (!pinChangedFromDefault) {
+      return (pinChangedFromDefault: false, releaseReady: false);
+    }
     final stillDefault = matchesDefaultDevPin(pinSalt, pinHash);
-    final changed = pinChangedFromDefault && !stillDefault;
+    final changed = !stillDefault;
     final ready = releaseReady && changed;
     return (pinChangedFromDefault: changed, releaseReady: ready);
   }

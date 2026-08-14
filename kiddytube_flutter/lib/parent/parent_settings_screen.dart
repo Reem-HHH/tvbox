@@ -11,6 +11,7 @@ import '../catalog/models.dart';
 import '../ui/focus_tile.dart';
 import '../ui/layout_metrics.dart';
 import '../ui/tv_text_dialog.dart';
+import 'parent_biometrics.dart';
 import 'parent_pin.dart';
 import 'parent_session.dart';
 

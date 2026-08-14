@@ -33,10 +33,12 @@ Future<bool> ensureParentUnlocked(
     return false;
   }
 
-  // Prefer Face ID / fingerprint only after the factory PIN has been changed.
+  // Biometrics only when the parent explicitly opted in (never auto after PIN change).
   // Device unlock PIN must never open parent settings.
   final biometrics = ParentBiometrics();
-  if (settings.pinChangedFromDefault && await biometrics.canAuthenticate()) {
+  if (settings.pinChangedFromDefault &&
+      settings.biometricUnlock &&
+      await biometrics.canAuthenticate()) {
     final bioOk = await biometrics.authenticate();
     if (bioOk) {
       pinManager.registerSuccess();

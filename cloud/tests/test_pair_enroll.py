@@ -35,8 +35,9 @@ def test_enroll_rejects_bad_secret(client):
 
 
 def test_enroll_rate_limit(client):
-    # Exhaust IP window (limit 10 / 60s) on a dedicated forwarded IP.
-    headers = {"X-Forwarded-For": "203.0.113.50"}
+    # Exhaust IP window (limit 10 / 60s). Spoofed leftmost XFF must not bypass
+    # the rightmost (proxy-appended) hop used for rate limiting.
+    headers = {"X-Forwarded-For": "198.51.100.1, 203.0.113.50"}
     last = None
     for i in range(12):
         last = client.post(
@@ -50,3 +51,11 @@ def test_enroll_rate_limit(client):
         )
     assert last is not None
     assert last.status_code == 429
+
+    # A different leftmost spoof with the same rightmost hop stays limited.
+    other = client.post(
+        "/v1/devices/enroll",
+        headers={"X-Forwarded-For": "198.51.100.99, 203.0.113.50"},
+        json={"secret": "wrong-secret-xxxxxxxx", "name": "Y", "platform": "ios"},
+    )
+    assert other.status_code == 429

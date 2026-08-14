@@ -17,6 +17,7 @@ from ..auth import (
     verify_password,
 )
 from ..catalog_service import _color_to_pg, import_catalog_json, persist_catalog_document
+from ..client_ip import client_ip
 from ..config import get_settings
 from ..csrf import ensure_csrf_token, require_csrf
 from ..db import get_db
@@ -80,10 +81,7 @@ def login_submit(
 ):
     require_csrf(request, csrf_token)
     settings = get_settings()
-    ip = (request.client.host if request.client else None) or "unknown"
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        ip = forwarded.split(",")[0].strip() or ip
+    ip = client_ip(request)
     if not auth_limiter.allow(f"login:ip:{ip}", limit=12, window_seconds=60):
         return _page(
             request,
@@ -363,7 +361,7 @@ async def import_json(
     request: Request,
     catalog_json: str = Form(""),
     csrf_token: str = Form(""),
-    catalog_file: UploadFile | None = File(None),
+    catalog_file: Optional[UploadFile] = File(None),
     db: Session = Depends(get_db),
 ):
     require_csrf(request, csrf_token)

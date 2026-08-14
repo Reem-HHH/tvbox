@@ -11,21 +11,13 @@ from sqlalchemy.orm import Session
 
 from ..auth import enroll_device, get_current_device, pair_device
 from ..catalog_service import get_catalog_document
+from ..client_ip import client_ip
 from ..config import get_settings
 from ..db import get_db
 from ..models import Device, WatchHistoryRow, as_utc, utcnow
 from ..rate_limit import auth_limiter
 
 router = APIRouter(prefix="/v1", tags=["device-api"])
-
-
-def _client_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip() or "unknown"
-    if request.client and request.client.host:
-        return request.client.host
-    return "unknown"
 
 
 def _rate_limit_or_429(key: str, *, limit: int, window_seconds: float) -> None:
@@ -62,7 +54,7 @@ class DeviceInfo(BaseModel):
 
 @router.post("/devices/pair", response_model=PairResponse)
 def pair(body: PairRequest, request: Request, db: Session = Depends(get_db)):
-    ip = _client_ip(request)
+    ip = client_ip(request)
     _rate_limit_or_429(f"pair:ip:{ip}", limit=20, window_seconds=60)
     _rate_limit_or_429(f"pair:code:{body.code.strip()}", limit=8, window_seconds=600)
     settings = get_settings()
@@ -79,7 +71,7 @@ def pair(body: PairRequest, request: Request, db: Session = Depends(get_db)):
 @router.post("/devices/enroll", response_model=PairResponse)
 def enroll(body: EnrollRequest, request: Request, db: Session = Depends(get_db)):
     """Auto-register builds that embed CLOUD_ENROLL_SECRET (no pairing code)."""
-    ip = _client_ip(request)
+    ip = client_ip(request)
     _rate_limit_or_429(f"enroll:ip:{ip}", limit=10, window_seconds=60)
     settings = get_settings()
     device, token = enroll_device(

@@ -175,7 +175,7 @@ Admin → **Devices** lists each install. To remove one: **Revoke** in admin (an
 | `flutter devices` empty | Wake/unlock device; reconnect USB; for TV run `adb devices`; for iPad trust the Mac |
 | Enroll / pull fails | Same Wi‑Fi for LAN; cloud `--host 0.0.0.0`; physical devices need LAN IP not `127.0.0.1`; Render free tier may sleep (~30–60s first hit); secrets must match |
 | iPad blocks HTTP | App allows local networking (`NSAllowsLocalNetworking`); still use `http://` LAN IP |
-| Android cleartext | App allows cleartext for LAN testing (`usesCleartextTraffic`) |
+| Android cleartext | Release allows LAN HTTP via `network_security_config`; Dart still rejects public `http://` cloud URLs |
 | Wrong catalog | Confirm this device is connected and pulled after editing the admin catalog |
 | Parent lock | Dev PIN is **2580** until you change it under **Security** |
 
