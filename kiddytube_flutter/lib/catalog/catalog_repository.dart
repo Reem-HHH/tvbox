@@ -241,7 +241,7 @@ class CatalogRepository {
   static const _lastCloudSyncKey = 'last_cloud_sync_ms';
   static const _lastCloudRevisionKey = 'last_cloud_revision';
   static const _cloudAutoEnrollOptOutKey = 'cloud_auto_enroll_opt_out';
-  static const _shortsPurgedKey = 'catalog_shorts_purged_v2';
+  static const _shortsPurgedKey = 'catalog_shorts_purged_v3';
   static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
@@ -285,7 +285,9 @@ class CatalogRepository {
       await _prefs!.setInt(_seedKey, DefaultChannels.seedVersion);
     }
 
-    final cleaned = CatalogSanitize.channels(channels);
+    final cleaned = DefaultChannels.dropRetiredMedia(
+      CatalogSanitize.channels(channels),
+    );
     if (!_sameChannelVideoIds(channels, cleaned)) {
       channels = cleaned;
       await _persistChannels(channels);
@@ -852,7 +854,9 @@ class CatalogRepository {
           (e) => ContentChannel.fromJson(Map<String, dynamic>.from(e as Map)),
         )
         .toList();
-    final channels = CatalogSanitize.channels(parsed);
+    final channels = DefaultChannels.dropRetiredMedia(
+      CatalogSanitize.channels(parsed),
+    );
     final mode = HomeLibraryMode.fromStored(
       payload['homeLibraryMode'] as String?,
     );
@@ -1104,8 +1108,8 @@ class CatalogRepository {
     return purged || synced;
   }
 
-  /// One-shot: drop leftover synced Shorts / live / sub-minute clips via API.
-  /// Keeps parent-manual rows and curated seed video ids (even if short).
+  /// One-shot: drop leftover Shorts / live / sub-3-minute clips via API.
+  /// Keeps parent-manual rows only — curated seed shorts are not exempt.
   Future<bool> maybePurgeShortVideos({bool force = false}) async {
     await _ensurePrefs();
     if (!force && (_prefs!.getBool(_shortsPurgedKey) ?? false)) {
@@ -1115,15 +1119,11 @@ class CatalogRepository {
     final apiKey = settings.youtubeApiKey?.trim();
     if (apiKey == null || apiKey.isEmpty) return false;
 
-    final seedIdsByChannel = DefaultChannels.seedVideoIdsByChannel();
-
     final candidates = <VideoItem>[];
     final seen = <String>{};
     for (final ch in settings.channels) {
-      final seedIds = seedIdsByChannel[ch.id] ?? const <String>{};
       for (final v in ch.videos) {
         if (v.manual) continue;
-        if (seedIds.contains(v.id)) continue;
         final yt = v.youtubeVideoId?.trim();
         if (yt == null || yt.isEmpty || !MediaIds.isValidVideoId(yt)) continue;
         if (seen.add(yt)) candidates.add(v);

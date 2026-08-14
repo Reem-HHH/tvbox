@@ -87,6 +87,14 @@ void main() {
       );
       expect(
         YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'Exactly three minutes',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 3),
+        ),
+        isFalse,
+      );
+      expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
           title: 'Just over three minutes',
           liveBroadcastContent: 'none',
           duration: const Duration(minutes: 3, seconds: 1),

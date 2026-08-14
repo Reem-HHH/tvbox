@@ -14,7 +14,7 @@ class YoutubeCatalogSource {
 
   final http.Client _client;
 
-  /// YouTube Shorts can be up to 3 minutes; treat shorter clips as Shorts.
+  /// YouTube Shorts can be up to 3 minutes; drop those and anything shorter.
   static const minFullVideoDuration = Duration(seconds: 180);
 
   Future<List<VideoItem>> fetchPlaylistVideos({
@@ -200,7 +200,7 @@ class YoutubeCatalogSource {
     final live = liveBroadcastContent.trim().toLowerCase();
     if (live == 'live' || live == 'upcoming') return false;
     if (looksLikeShortOrLiveTitle(title)) return false;
-    if (duration != null && duration < minFullVideoDuration) return false;
+    if (duration != null && duration <= minFullVideoDuration) return false;
     return true;
   }
 

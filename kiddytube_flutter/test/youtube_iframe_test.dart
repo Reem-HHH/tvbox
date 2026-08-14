@@ -21,5 +21,7 @@ void main() {
     expect(html.contains("videoId:'$id'"), isTrue);
     expect(html.contains('<script>'), isTrue);
     expect(html.contains('function loadVideoById'), isTrue);
+    expect(html.contains('id="cover"'), isTrue);
+    expect(html.contains('sendEnded'), isTrue);
   });
 }

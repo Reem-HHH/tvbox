@@ -21,16 +21,29 @@ String youtubeIframeHtml({
     display:flex;align-items:center;justify-content:center}
   #stage{position:relative;background:#000;overflow:hidden;width:100%;height:100%}
   #stage iframe{pointer-events:none;border:0;display:block;width:100%;height:100%}
+  #cover{position:absolute;inset:0;background:#000;display:none;z-index:5}
 </style></head><body>
-<div id="stage"><div id="p"></div></div>
+<div id="stage"><div id="p"></div><div id="cover"></div></div>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script>
   var player;
   var startSec=$start;
+  var endedSent=false;
   function size(){
     var w=window.innerWidth||document.documentElement.clientWidth||320;
     var h=window.innerHeight||document.documentElement.clientHeight||180;
     return {w:w,h:h};
+  }
+  function hideRelated(){
+    var c=document.getElementById('cover');
+    if(c) c.style.display='block';
+  }
+  function sendEnded(){
+    if(endedSent) return;
+    endedSent=true;
+    hideRelated();
+    try{ if(player&&player.pauseVideo) player.pauseVideo(); }catch(e){}
+    if(window.KiddyNative) KiddyNative.postMessage('ended');
   }
   function progressSnapshot(){
     try{
@@ -83,6 +96,9 @@ String youtubeIframeHtml({
         videoId:String(id||''),
         startSeconds:Math.max(0,Math.floor(t))
       });
+      endedSent=false;
+      var c=document.getElementById('cover');
+      if(c) c.style.display='none';
       return true;
     }catch(e){ return false; }
   }
@@ -101,13 +117,21 @@ String youtubeIframeHtml({
       events:{
         onReady:function(e){ try{e.target.playVideo();}catch(err){} },
         onStateChange:function(e){
-          if(e.data===0 && window.KiddyNative) KiddyNative.postMessage('ended');
+          if(e.data===0) sendEnded();
         },
         onError:function(e){
           if(window.KiddyNative) KiddyNative.postMessage('error:'+e.data);
         }
       }
     });
+    setInterval(function(){
+      try{
+        if(endedSent||!player||!player.getCurrentTime||!player.getDuration) return;
+        var d=player.getDuration()||0;
+        var t=player.getCurrentTime()||0;
+        if(d>3 && t>=d-1.2) sendEnded();
+      }catch(e){}
+    },250);
   }
   window.addEventListener('resize',function(){
     if(!player||!player.setSize) return;
