@@ -110,6 +110,24 @@ void main() {
         isFalse,
       );
       expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'MILO THE VET Compilation',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 35),
+          embeddable: false,
+        ),
+        isFalse,
+      );
+      expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'MILO, THE CHEF — Full Episode',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 11),
+          embeddable: true,
+        ),
+        isTrue,
+      );
+      expect(
         YoutubeCatalogSource.minFullVideoDuration,
         const Duration(seconds: 180),
       );

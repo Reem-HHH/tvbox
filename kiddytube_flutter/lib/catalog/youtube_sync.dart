@@ -7,8 +7,10 @@ import 'models.dart';
 
 /// YouTube Data API playlist sync (requires a parent-stored API key).
 ///
-/// Keeps full on-demand videos only: drops Shorts (by duration / title) and
-/// live / upcoming broadcasts that often break in the kid player.
+/// Keeps full on-demand videos only: drops Shorts (by duration / title),
+/// live / upcoming broadcasts, and videos YouTube marks non-embeddable
+/// (common for some Milo compilations — they play on youtube.com but not
+/// in the kid iframe player).
 class YoutubeCatalogSource {
   YoutubeCatalogSource({http.Client? client}) : _client = client ?? http.Client();
 
@@ -114,7 +116,8 @@ class YoutubeCatalogSource {
     return newestVideosFirst(filtered);
   }
 
-  /// Batch-check duration + liveBroadcastContent; drop Shorts and live/upcoming.
+  /// Batch-check duration, live status, and embeddable; drop Shorts / live /
+  /// non-embeddable rows that break the kid iframe player.
   ///
   /// Used by playlist sync and by one-shot local catalog purge for leftover
   /// Shorts that arrived before duration filtering existed.
@@ -132,7 +135,7 @@ class YoutubeCatalogSource {
         'www.googleapis.com',
         '/youtube/v3/videos',
         {
-          'part': 'contentDetails,snippet',
+          'part': 'contentDetails,snippet,status',
           'id': chunk.join(','),
           'key': apiKey,
         },
@@ -161,16 +164,20 @@ class YoutubeCatalogSource {
         final content = Map<String, dynamic>.from(
           item['contentDetails'] as Map? ?? const {},
         );
+        final status =
+            Map<String, dynamic>.from(item['status'] as Map? ?? const {});
         final title = snippet['title'] as String? ?? byId[id]?.title ?? '';
         final live = (snippet['liveBroadcastContent'] as String?)?.trim() ??
             'none';
         final duration = parseIso8601Duration(
           content['duration'] as String?,
         );
+        final embeddable = status['embeddable'] as bool?;
         if (!isFullOnDemandVideo(
           title: title,
           liveBroadcastContent: live,
           duration: duration,
+          embeddable: embeddable,
         )) {
           continue;
         }
@@ -194,12 +201,15 @@ class YoutubeCatalogSource {
     ];
   }
 
-  /// True when the item is a normal VOD suitable for kids (not Short / live).
+  /// True when the item is a normal VOD suitable for kids (not Short / live /
+  /// embed-blocked).
   static bool isFullOnDemandVideo({
     required String title,
     required String liveBroadcastContent,
     Duration? duration,
+    bool? embeddable,
   }) {
+    if (embeddable == false) return false;
     final live = liveBroadcastContent.trim().toLowerCase();
     if (live == 'live' || live == 'upcoming') return false;
     if (looksLikeShortOrLiveTitle(title)) return false;

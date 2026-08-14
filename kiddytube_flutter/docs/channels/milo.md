@@ -9,8 +9,9 @@ British preschool series about Milo, a curious 5-year-old cat, with friends Loft
 
 ## What’s in the app
 
-- Curated full episodes and job-theme compilations from the official channel
-- Official uploads playlist linked with Follow uploads **off** by default
+- Curated full episodes and theme packs from the official channel that YouTube allows in embeds
+- Official uploads playlist linked with **Follow uploads off** (many Milo compilations are non-embeddable and break the kid player)
+- Non-embeddable IDs are purged on upgrade / playlist sync
 
 ## Audience
 
