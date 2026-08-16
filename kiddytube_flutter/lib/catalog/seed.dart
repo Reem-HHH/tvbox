@@ -3,7 +3,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 41;
+  static const seedVersion = 42;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -2682,8 +2682,8 @@ class DefaultChannels {
             _yt('jbdck_y74ls', 'Peppa Pig Rides the TRAIN! — LEGO DUPLO'),
           ],
         ),
-        // Official LEGO cooking / baking / grocery — DUPLO Little Ones +
-        // classic Friends food episodes. Follow off (no cooking-only playlist).
+        // @legocooking stop-motion kitchen (embeddable long videos only).
+        // Follow off: many uploads are non-embeddable or hunt/scary titles.
         _channel(
           id: 'lego_cooking',
           title: 'LEGO Cooking',
@@ -2691,14 +2691,27 @@ class DefaultChannels {
           color: 0xFFFFB74D,
           sourceType: SourceType.youtubeVideoList,
           videos: [
-            _yt('5FFI-K8mVEI', 'Ready, Steady, Bake with Peppa Pig and Family — LEGO Little Ones'),
-            _yt('F3-bchgh1tM', 'Fun Grocery Shopping with Mummy and Peppa Pig — LEGO Little Ones'),
-            _yt('ANJilSbKmng', 'Not Just Baking — LEGO Friends Season 2 Episode 30'),
-            _yt('b-6M09jSfEM', 'Perfectly Planned Pizza — LEGO Friends Season 2 Episode 45'),
-            _yt('ohvLx7YM844', 'Invasion of the Cupcake Snatchers — LEGO Friends Season 3 Episode 30'),
-            _yt('VVKUg0aSv9Q', 'Breakfast at Stephanie\'s — LEGO Friends Season 4 Episode 5'),
-            _yt('kVo_4iomNrs', 'All We Need is Juice — LEGO Friends Webisode 6'),
-            _yt('5v_RRNyZUgM', 'What an Interesting Ice Cream — LEGO Friends Season 2 Episode 4'),
+            _yt('yqx7nYQZ91I', 'Domino\'s Pizza Was Too Spicy — So I Made 3 LEGO Pizzas Instead'),
+            _yt('MO89_KK7m2E', 'LEGO BURGER BIG BOX: Yummy LEGO Cooking in Real Life!'),
+            _yt('8Hnn1f3jZpI', 'Ultimate LEGO Ramen Cooking Challenge! Stop Motion Cooking ASMR'),
+            _yt('JirthL4Ngqc', 'Cooking the Perfect LEGO Cheeseburger on HOT Stone!'),
+            _yt('cuItcPDS1j8', 'Too REAL to be LEGO: Super Cheesy Thin & Crust Pizza Recipe!'),
+            _yt('rDphBSlWAcM', 'CRISPY & SPICY Dave\'s Hot Fried Chicken Tender Recipe at LEGO Kitchen'),
+            _yt('i91cilGCGNQ', 'TOP 15 MOST VIRAL LEGO Cooking Videos EVER'),
+            _yt('H94PapYI4DA', 'KFC MEGA FAST FOOD BOX Challenge: Yummy Lunch Box in LEGO!'),
+            _yt('ygAZJEcc7wc', 'I made the WORLD\'s GIANT Pizza Slice in LEGO!'),
+            _yt('ZsnvVKwpz4E', 'LEGO Food Challenge: The 67 Number Shaped Chicken NUGGETS Recipe!'),
+            _yt('pahjZmQZTKY', 'The BEST Super Crispy Fried Chicken McNuggets Challenge'),
+            _yt('3xd09svKY5A', 'Super Crispy: World\'s Best FREE KFC Fried Chicken at Home'),
+            _yt('IGf15g7Ilfs', 'How Millions Of BURGER are Made In A LEGO Factory'),
+            _yt('wRLoIeDGJIw', 'The World\'s Best SUSHI Omakase — LEGO Stop Motion Cooking'),
+            _yt('snMXj1h3rFk', 'The WORLD\'S LARGEST LEGO Cheesy Giant Pizza Fail Recipe'),
+            _yt('BCgXBhM9oUU', 'Cooking GIANT Food Challenge — Best of LEGO COOKING Compilation 2024'),
+            _yt('KXITEQpr-rk', 'McDonald\'s Cooking Custom LEGO Vending Machine!'),
+            _yt('3Xgz8ll_oM4', 'Extra CRISPY LEGO Fried Chicken Recipe KFC Krispy Days'),
+            _yt('kfb7AvskXLA', 'Takis And Cheetos Challenge — Which LEGO Fried Chicken Flavor is Better?'),
+            _yt('0iANyLSxvyM', 'NEXT LEVEL COCA-COLA & PEPSI Pizza LEGO Food Challenge'),
+            _yt('kTQ4vmhFfCc', 'LEGO Breakfast: The Ultimate Grilled Cheesy Sandwich'),
           ],
         ),
     ];
@@ -2760,6 +2773,9 @@ class DefaultChannels {
           current.youtubePlaylistId != seedCh.youtubePlaylistId;
       final followChanged = !current.playlistManagedByParent &&
           current.followUploads != seedCh.followUploads;
+      final replaceLegoCooking = seedCh.id == 'lego_cooking' &&
+          !current.playlistManagedByParent &&
+          !current.videos.any((v) => v.id == 'yqx7nYQZ91I');
 
       final dropWrongKidsMusic = seedCh.id == 'kids_music' &&
           current.videos.any((v) => v.id == _retiredKidsMusicVideoId);
@@ -2792,6 +2808,7 @@ class DefaultChannels {
       if (clearSpacetoonUploads ||
           needsPlaylist ||
           replaceNumberblocksPlaylist ||
+          replaceLegoCooking ||
           followChanged ||
           missingVideos.isNotEmpty ||
           dropWrongKidsMusic ||
@@ -2801,7 +2818,7 @@ class DefaultChannels {
           titleStale ||
           disableFromSeed) {
         final List<VideoItem> videos;
-        if (clearSpacetoonUploads) {
+        if (clearSpacetoonUploads || replaceLegoCooking) {
           videos = seedCh.videos;
         } else if (current.videos.isEmpty && seedCh.videos.isNotEmpty) {
           videos = seedCh.videos;

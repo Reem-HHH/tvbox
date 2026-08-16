@@ -1,28 +1,29 @@
 # LEGO Cooking
 
 - **Channel id:** `lego_cooking`
-- **Source:** Curated official LEGO Little Ones + classic LEGO Friends food episodes (allowlist only)
+- **Source:** YouTube `@legocooking` (`UCwIejFZVc_QPBMMOIm5ObaQ`) — curated allowlist
 
 ## What it is
 
-A cooking-only LEGO tile: DUPLO bake/grocery pretend with Peppa, plus classic Friends kitchen stories (baking, pizza, breakfast, juice, ice cream). Separate from general **LEGO DUPLO** builds and from **Toy Kitchen** unboxings.
+The **Lego Cooking** stop-motion channel: LEGO bricks cooked as pizza, burgers, ramen, fried chicken, sushi, and breakfast. Separate from **LEGO DUPLO** nursery builds.
 
 ## What’s in the app
 
-- Ready, Steady, Bake and grocery shopping (LEGO Little Ones)
-- Friends episodes: Not Just Baking, Perfectly Planned Pizza, Cupcake Snatchers, Breakfast at Stephanie’s, juice bar, ice cream
-- **Follow uploads off** — there is no official cooking-only playlist; random LEGO uploads include Halloween/Christmas and non-food videos
+- Embeddable long videos only (many official uploads are marked non-embeddable and cannot play in the kid player)
+- Pizza, burger, ramen, nuggets, KFC/McDonald’s-style kitchens, sushi, grilled cheese
+- **Skipped:** hunt/catch-and-cook (shark, snake, boar), demon-hunter titles, prison challenges, Shorts
+- **Follow uploads off** — the uploads feed mixes non-embeddable clips and titles we do not want
 
 ## Audience
 
-Ages ~3–7. Little Ones clips are preschool; Friends food episodes run a bit older.
+Ages ~4–8. Fast-food / ASMR energy; louder than DUPLO preschool songs.
 
 ## Rating / clean / conservative
 
 | Dimension | Assessment |
 |---|---|
-| Suggested rating | Preschool / kids |
+| Suggested rating | Kids / toy play |
 | Clean language | High |
-| Violence / scary | None–Low (mild kitchen mishaps) |
+| Violence / scary | Low on the allowlist (kitchen only) |
 | Conservative / family fit | Medium–High |
-| Parent caveats | Skip LEGO Friends: The Next Chapter (high school). Keep Follow off. |
+| Parent caveats | Keep Follow off. Title filter cannot see the video itself. |
