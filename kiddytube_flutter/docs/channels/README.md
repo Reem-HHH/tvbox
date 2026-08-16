@@ -40,6 +40,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [muka_muka](muka_muka.md) | موكا موكا | High | High–Medium | Green dinosaur classic — theme pack until full eps on YT |
 | [ben_and_holly](ben_and_holly.md) | Ben & Holly | High | High | Curated official starters (no Christmas) |
 | [lego_duplo](lego_duplo.md) | LEGO DUPLO | High | Medium–High | Toy play / unboxings |
+| [lego_cooking](lego_cooking.md) | LEGO Cooking | High | Medium–High | Official bake / grocery / pizza (no Follow) |
 | [play_doh](play_doh.md) | Play-Doh | High | Medium–High | Sensory craft play |
 | [toy_kitchen](toy_kitchen.md) | Toy Kitchen | High | Medium–High | Playset unboxings |
 | [dancing_fruit](dancing_fruit.md) | Dancing Fruit | High | Medium–High | Black-screen sensory fruit dance |

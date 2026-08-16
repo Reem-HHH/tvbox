@@ -3,7 +3,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 40;
+  static const seedVersion = 41;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -2680,6 +2680,25 @@ class DefaultChannels {
             _yt('GCdNA7rL5u4', 'Peppa Pig\'s Island Campout — LEGO Little Ones'),
             _yt('5nhq0Aybp6Q', 'Fun at the Beach with Peppa Pig and George — LEGO Little Ones'),
             _yt('jbdck_y74ls', 'Peppa Pig Rides the TRAIN! — LEGO DUPLO'),
+          ],
+        ),
+        // Official LEGO cooking / baking / grocery — DUPLO Little Ones +
+        // classic Friends food episodes. Follow off (no cooking-only playlist).
+        _channel(
+          id: 'lego_cooking',
+          title: 'LEGO Cooking',
+          order: 61,
+          color: 0xFFFFB74D,
+          sourceType: SourceType.youtubeVideoList,
+          videos: [
+            _yt('5FFI-K8mVEI', 'Ready, Steady, Bake with Peppa Pig and Family — LEGO Little Ones'),
+            _yt('F3-bchgh1tM', 'Fun Grocery Shopping with Mummy and Peppa Pig — LEGO Little Ones'),
+            _yt('ANJilSbKmng', 'Not Just Baking — LEGO Friends Season 2 Episode 30'),
+            _yt('b-6M09jSfEM', 'Perfectly Planned Pizza — LEGO Friends Season 2 Episode 45'),
+            _yt('ohvLx7YM844', 'Invasion of the Cupcake Snatchers — LEGO Friends Season 3 Episode 30'),
+            _yt('VVKUg0aSv9Q', 'Breakfast at Stephanie\'s — LEGO Friends Season 4 Episode 5'),
+            _yt('kVo_4iomNrs', 'All We Need is Juice — LEGO Friends Webisode 6'),
+            _yt('5v_RRNyZUgM', 'What an Interesting Ice Cream — LEGO Friends Season 2 Episode 4'),
           ],
         ),
     ];
