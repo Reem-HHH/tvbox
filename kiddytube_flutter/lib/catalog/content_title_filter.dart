@@ -1,9 +1,9 @@
-/// Family-safe title gate for Muslim households.
+/// Family-safe gate for Muslim households.
 ///
-/// Drops playlist/sync items whose titles mention Halloween, Thanksgiving,
-/// Christmas, Christian/other religious propaganda, Pride/LGBTQ themes,
-/// or common scary/spooky Halloween wording. Does not inspect video visuals
-/// or YouTube tags.
+/// Drops playlist/sync items whose titles or YouTube tags mention Halloween,
+/// Thanksgiving, Christmas, Christian/other religious propaganda, Pride/LGBTQ
+/// themes, or common scary/spooky Halloween wording. Does not inspect video
+/// visuals. Tags are only available on the videos.list sync pass.
 class ContentTitleFilter {
   ContentTitleFilter._();
 
@@ -64,15 +64,23 @@ class ContentTitleFilter {
     'مثلية',
   ];
 
-  /// Returns true when [title] should be kept for kids playback.
-  static bool isAllowed(String? title) {
+  /// Returns true when [title] (and optional YouTube [tags]) should be kept.
+  static bool isAllowed(String? title, {Iterable<String>? tags}) {
+    if (!_titleAllowed(title)) return false;
+    if (tags == null) return true;
+    for (final tag in tags) {
+      if (!_tagAllowed(tag)) return false;
+    }
+    return true;
+  }
+
+  static bool isBlocked(String? title, {Iterable<String>? tags}) =>
+      !isAllowed(title, tags: tags);
+
+  static bool _titleAllowed(String? title) {
     if (title == null || title.trim().isEmpty) return true;
     final normalized = title.toLowerCase();
-    for (final keyword in blockedKeywords) {
-      if (normalized.contains(keyword.toLowerCase())) {
-        return false;
-      }
-    }
+    if (_keywordsBlocked(normalized)) return false;
     // Whole-word-ish "pride" to avoid blocking "pride and joy" less often —
     // still block common Pride festival phrasing via keywords above; also
     // catch " pride " / "#pride".
@@ -99,5 +107,21 @@ class ContentTitleFilter {
     return true;
   }
 
-  static bool isBlocked(String? title) => !isAllowed(title);
+  static bool _tagAllowed(String tag) {
+    final normalized = tag.trim().toLowerCase();
+    if (normalized.isEmpty) return true;
+    if (_keywordsBlocked(normalized)) return false;
+    // A lone YouTube tag "pride" is enough; titles still need extra context.
+    if (normalized == 'pride') return false;
+    return true;
+  }
+
+  static bool _keywordsBlocked(String normalized) {
+    for (final keyword in blockedKeywords) {
+      if (normalized.contains(keyword.toLowerCase())) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

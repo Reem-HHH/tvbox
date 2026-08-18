@@ -54,10 +54,10 @@ Full dossiers: [`channels/`](channels/).
 
 ### Family content rules
 
-On playlist sync, titles matching **Halloween, Thanksgiving, Christmas, Santa, Easter, Christian/other religious propaganda, Pride/LGBTQ, or common scary/spooky wording** (and common Arabic spellings) are **skipped**.  
-Sync also skips **YouTube Shorts** (up to ~3 minutes / `#shorts`) and **live / upcoming** broadcasts when **adding** new items.  
+On playlist sync, titles **or YouTube tags** matching **Halloween, Thanksgiving, Christmas, Santa, Easter, Christian/other religious propaganda, Pride/LGBTQ, or common scary/spooky wording** (and common Arabic spellings) are **skipped**.  
+Sync also skips **YouTube Shorts** (clips under 60 seconds, `#shorts` in the title or tags, or vertical 1–3 minute clips) and **live / upcoming** broadcasts when **adding** new items. Landscape songs in the 1–3 minute range are kept.  
 Refresh is **append-only**: existing channel videos are never removed by sync (parents can still delete manually).  
-This is API/**title**-based only — not YouTube tags or a visual filter. Uploads-heavy channels keep **Follow off** by default; curated full-episode playlists (داوود hub, Numberblocks S1, Zaky, Colourblocks, Alphablocks, Bing, بكار) Follow daily.
+This is API **title + tag** based — not a visual filter. Uploads-heavy channels keep **Follow off** by default; curated full-episode playlists (داوود hub, Numberblocks S1, Zaky, Colourblocks, Alphablocks, Bing, بكار) Follow daily.
 
 ---
 

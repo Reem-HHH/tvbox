@@ -19,7 +19,7 @@ Cross-platform kids browser for:
   - YouTube API key, refresh playlists, clear continue watching, export catalog
 - **Cloud family catalog**: pair each device with a 6-digit code, pull shared channels from [`../cloud`](../cloud)
 - Release builds block kid playback until the factory PIN is changed
-- **Family title filter** on playlist sync (skips Halloween / Thanksgiving / LGBTQ-related titles)
+- **Family title + tag filter** on playlist sync (skips Halloween / Thanksgiving / LGBTQ-related titles and YouTube tags)
 - Recent seed highlights: مكة مباشر، القرآن مباشر، ماشا والدب، بليبي بالعربي، Disney Songs، ماروكو الصغيرة، بابار، حديقة المرح
 - Channel tiles use YouTube preview thumbs; TV-friendly grids and lighter scroll decoding
 
@@ -87,7 +87,7 @@ Cloud catalog and watch history sync are **manual only** on devices — nothing 
 
 ```
 lib/
-  catalog/   models, seed v25, repository, sync + title filter, continue watching
+  catalog/   models, seed, repository, sync + title/tag filter, continue watching
   cloud/     enroll + pair + pull client for ../cloud API
   parent/    PIN, session, settings screen
   player/    YouTube iframe + video_player

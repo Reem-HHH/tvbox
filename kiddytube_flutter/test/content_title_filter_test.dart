@@ -35,4 +35,61 @@ void main() {
     expect(ContentTitleFilter.isAllowed('Fossil | Bing Full Episode'), isTrue);
     expect(ContentTitleFilter.isAllowed('Peppa Pig Birthday Present'), isTrue);
   });
+
+  test('blocks clean titles when YouTube tags are off-brief', () {
+    expect(
+      ContentTitleFilter.isBlocked(
+        'Peppa Pig Muddy Puddles',
+        tags: ['kids', 'halloween'],
+      ),
+      isTrue,
+    );
+    expect(
+      ContentTitleFilter.isBlocked(
+        'Colour Fun',
+        tags: ['christmas'],
+      ),
+      isTrue,
+    );
+    expect(
+      ContentTitleFilter.isBlocked(
+        'Story Time',
+        tags: ['lgbt'],
+      ),
+      isTrue,
+    );
+    expect(
+      ContentTitleFilter.isBlocked(
+        'أغنية جديدة',
+        tags: ['عيد الميلاد'],
+      ),
+      isTrue,
+    );
+    expect(
+      ContentTitleFilter.isBlocked(
+        'Fossil | Bing Full Episode',
+        tags: ['pride'],
+      ),
+      isTrue,
+    );
+  });
+
+  test('allows clean titles with empty or benign tags', () {
+    expect(
+      ContentTitleFilter.isAllowed(
+        'Peppa Pig Muddy Puddles',
+        tags: ['kids', 'peppa'],
+      ),
+      isTrue,
+    );
+    expect(
+      ContentTitleFilter.isAllowed('Peppa Pig Birthday Present', tags: const []),
+      isTrue,
+    );
+    expect(ContentTitleFilter.isAllowed('Peppa Pig Birthday Present'), isTrue);
+    expect(
+      ContentTitleFilter.isAllowed('Fossil | Bing Full Episode', tags: ['bing']),
+      isTrue,
+    );
+  });
 }

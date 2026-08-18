@@ -7,17 +7,24 @@ import 'models.dart';
 
 /// YouTube Data API playlist sync (requires a parent-stored API key).
 ///
-/// Keeps full on-demand videos only: drops Shorts (by duration / title),
-/// live / upcoming broadcasts, and videos YouTube marks non-embeddable
-/// (common for some Milo compilations — they play on youtube.com but not
-/// in the kid iframe player).
+/// Keeps on-demand videos: drops YouTube Shorts (classic length, #shorts
+/// labels/tags, or vertical 60–180s clips), live / upcoming broadcasts, and
+/// videos YouTube marks non-embeddable (common for some Milo compilations —
+/// they play on youtube.com but not in the kid iframe player).
 class YoutubeCatalogSource {
   YoutubeCatalogSource({http.Client? client}) : _client = client ?? http.Client();
 
   final http.Client _client;
 
-  /// YouTube Shorts can be up to 3 minutes; drop those and anything shorter.
-  static const minFullVideoDuration = Duration(seconds: 180);
+  /// Sub-minute clips are treated as Shorts even without a #shorts label.
+  static const classicShortMax = Duration(seconds: 60);
+
+  /// YouTube allows Shorts up to 3 minutes. In this band, drop only if the
+  /// clip is labeled a Short or has a vertical Shorts thumbnail.
+  static const maxShortDuration = Duration(seconds: 180);
+
+  /// Upper bound of the "maybe a Short" band (same as [maxShortDuration]).
+  static const minFullVideoDuration = maxShortDuration;
 
   /// Match [CloudClient] so hung networks cannot leave parent sync busy forever.
   static const _requestTimeout = Duration(seconds: 20);
@@ -116,8 +123,9 @@ class YoutubeCatalogSource {
     return newestVideosFirst(filtered);
   }
 
-  /// Batch-check duration, live status, and embeddable; drop Shorts / live /
-  /// non-embeddable rows that break the kid iframe player.
+  /// Batch-check duration, live status, embeddable, and family title/tags;
+  /// drop Shorts / live / non-embeddable / off-brief rows that break the
+  /// kid iframe player or fail the content gate.
   ///
   /// Used by playlist sync and by one-shot local catalog purge for leftover
   /// Shorts that arrived before duration filtering existed.
@@ -167,18 +175,34 @@ class YoutubeCatalogSource {
         final status =
             Map<String, dynamic>.from(item['status'] as Map? ?? const {});
         final title = snippet['title'] as String? ?? byId[id]?.title ?? '';
+        final tags = _stringList(snippet['tags']);
         final live = (snippet['liveBroadcastContent'] as String?)?.trim() ??
             'none';
         final duration = parseIso8601Duration(
           content['duration'] as String?,
         );
         final embeddable = status['embeddable'] as bool?;
+        final labeledShort =
+            looksLikeShortOrLiveTitle(title) || looksLikeShortsTags(tags);
+        var isVerticalShort = false;
+        if (!labeledShort &&
+            id.isNotEmpty &&
+            duration != null &&
+            duration >= classicShortMax &&
+            duration <= maxShortDuration) {
+          isVerticalShort = await looksLikeVerticalShort(id);
+        }
         if (!isFullOnDemandVideo(
           title: title,
           liveBroadcastContent: live,
           duration: duration,
           embeddable: embeddable,
+          tags: tags,
+          isVerticalShort: isVerticalShort,
         )) {
+          continue;
+        }
+        if (ContentTitleFilter.isBlocked(title, tags: tags)) {
           continue;
         }
         final base = byId[id];
@@ -203,18 +227,49 @@ class YoutubeCatalogSource {
 
   /// True when the item is a normal VOD suitable for kids (not Short / live /
   /// embed-blocked).
+  ///
+  /// Duration bands: under 60s is always a Short; 60–180s is a Short only when
+  /// labeled (`#shorts` / Shorts tags) or [isVerticalShort]; over 180s is kept.
   static bool isFullOnDemandVideo({
     required String title,
     required String liveBroadcastContent,
     Duration? duration,
     bool? embeddable,
+    Iterable<String>? tags,
+    bool isVerticalShort = false,
   }) {
     if (embeddable == false) return false;
     final live = liveBroadcastContent.trim().toLowerCase();
     if (live == 'live' || live == 'upcoming') return false;
-    if (looksLikeShortOrLiveTitle(title)) return false;
-    if (duration != null && duration <= minFullVideoDuration) return false;
+    if (looksLikeShortOrLiveTitle(title) || looksLikeShortsTags(tags)) {
+      return false;
+    }
+    if (duration != null) {
+      if (duration < classicShortMax) return false;
+      if (duration <= maxShortDuration && isVerticalShort) return false;
+    }
     return true;
+  }
+
+  /// True when YouTube tags mark the upload as a Short (not the word "short").
+  static bool looksLikeShortsTags(Iterable<String>? tags) {
+    if (tags == null) return false;
+    for (final raw in tags) {
+      final t = raw.trim().toLowerCase();
+      if (t.isEmpty) continue;
+      if (t == 'shorts' ||
+          t == '#shorts' ||
+          t == '#short' ||
+          t == 'youtubeshorts' ||
+          t == 'youtube shorts' ||
+          t == 'ytshorts') {
+        return true;
+      }
+      if (t.contains('#shorts') || t.contains('youtubeshorts')) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /// Title heuristics for Shorts and live streams (Arabic + English).
@@ -240,6 +295,20 @@ class YoutubeCatalogSource {
     return false;
   }
 
+  /// YouTube serves `oardefault.jpg` for vertical Shorts. Landscape VODs 404.
+  /// Fail open (treat as not a Short) on network errors.
+  Future<bool> looksLikeVerticalShort(String videoId) async {
+    final id = videoId.trim();
+    if (id.isEmpty) return false;
+    final uri = Uri.https('i.ytimg.com', '/vi/$id/oardefault.jpg');
+    try {
+      final response = await _client.head(uri).timeout(_requestTimeout);
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// Parses YouTube `contentDetails.duration` (ISO-8601), e.g. `PT1M30S`.
   static Duration? parseIso8601Duration(String? raw) {
     if (raw == null || raw.isEmpty) return null;
@@ -262,5 +331,13 @@ class YoutubeCatalogSource {
   static int? _parseIso8601(String? value) {
     if (value == null || value.isEmpty) return null;
     return DateTime.tryParse(value)?.millisecondsSinceEpoch;
+  }
+
+  static List<String> _stringList(Object? raw) {
+    if (raw is! List) return const [];
+    return [
+      for (final item in raw)
+        if (item is String && item.trim().isNotEmpty) item.trim(),
+    ];
   }
 }

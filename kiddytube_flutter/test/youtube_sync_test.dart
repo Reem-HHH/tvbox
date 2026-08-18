@@ -50,7 +50,26 @@ void main() {
       );
     });
 
-    test('isFullOnDemandVideo drops live, upcoming, and Shorts-length clips', () {
+    test('looksLikeShortsTags matches Shorts labels not the word short', () {
+      expect(YoutubeCatalogSource.looksLikeShortsTags(null), isFalse);
+      expect(YoutubeCatalogSource.looksLikeShortsTags(const []), isFalse);
+      expect(
+        YoutubeCatalogSource.looksLikeShortsTags(const ['kids', 'peppa']),
+        isFalse,
+      );
+      expect(
+        YoutubeCatalogSource.looksLikeShortsTags(const ['short film']),
+        isFalse,
+      );
+      expect(YoutubeCatalogSource.looksLikeShortsTags(const ['shorts']), isTrue);
+      expect(YoutubeCatalogSource.looksLikeShortsTags(const ['#Shorts']), isTrue);
+      expect(
+        YoutubeCatalogSource.looksLikeShortsTags(const ['YouTubeShorts']),
+        isTrue,
+      );
+    });
+
+    test('isFullOnDemandVideo drops live, classic Shorts, and labeled Shorts', () {
       expect(
         YoutubeCatalogSource.isFullOnDemandVideo(
           title: 'Episode 1',
@@ -85,9 +104,35 @@ void main() {
       );
       expect(
         YoutubeCatalogSource.isFullOnDemandVideo(
-          title: 'Two minute clip',
+          title: 'Nursery song',
           liveBroadcastContent: 'none',
           duration: const Duration(minutes: 2),
+        ),
+        isTrue,
+      );
+      expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'Nursery song #Shorts',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 2),
+        ),
+        isFalse,
+      );
+      expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'Nursery song',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 2),
+          tags: const ['shorts'],
+        ),
+        isFalse,
+      );
+      expect(
+        YoutubeCatalogSource.isFullOnDemandVideo(
+          title: 'Nursery song',
+          liveBroadcastContent: 'none',
+          duration: const Duration(minutes: 2),
+          isVerticalShort: true,
         ),
         isFalse,
       );
@@ -97,7 +142,7 @@ void main() {
           liveBroadcastContent: 'none',
           duration: const Duration(minutes: 3),
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         YoutubeCatalogSource.isFullOnDemandVideo(
@@ -132,6 +177,10 @@ void main() {
           embeddable: true,
         ),
         isTrue,
+      );
+      expect(
+        YoutubeCatalogSource.classicShortMax,
+        const Duration(seconds: 60),
       );
       expect(
         YoutubeCatalogSource.minFullVideoDuration,
