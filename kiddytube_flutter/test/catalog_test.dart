@@ -149,7 +149,7 @@ void main() {
 
 
   test('seed keeps Twirlywoos expanded starters', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final twirly = DefaultChannels.seed().firstWhere((c) => c.id == 'twirlywoos');
     expect(twirly.videos.any((v) => v.id == 'wAFiVXz1NNw'), isTrue);
     expect(twirly.videos.any((v) => v.id == 'Wg0JkKmQY6A'), isTrue);
@@ -158,7 +158,7 @@ void main() {
   });
 
   test('seed v19 adds Maruko Chan Arabic starters', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final maruko = DefaultChannels.seed().firstWhere((c) => c.id == 'maruko');
     expect(maruko.title, 'ماروكو الصغيرة');
     expect(maruko.followUploads, isFalse);
@@ -170,7 +170,7 @@ void main() {
   });
 
   test('seed includes Makkah Quran Masha Blippi Disney channels without live', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
     expect(ids.containsAll([
@@ -206,7 +206,7 @@ void main() {
   });
 
   test('seed v26 follow only curated playlists; Numberblocks Season 1', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -255,7 +255,7 @@ void main() {
   });
 
   test('seed v22 adds Babar and Hadikat al-Marah channels', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final seed = DefaultChannels.seed();
     final babar = seed.firstWhere((c) => c.id == 'babar');
     expect(babar.title, 'بابار');
@@ -271,10 +271,10 @@ void main() {
   });
 
   test('seed v35 adds Muka Muka, Milo, and Peppa Toys channels', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final seed = DefaultChannels.seed();
     final ids = seed.map((c) => c.id).toSet();
-    expect(ids.containsAll(['muka_muka', 'milo', 'peppa_toys']), isTrue);
+    expect(ids.containsAll(['ana_wa_akhi', 'muka_muka', 'milo', 'peppa_toys']), isTrue);
 
     final muka = seed.firstWhere((c) => c.id == 'muka_muka');
     expect(muka.title, 'موكا موكا');
@@ -399,7 +399,7 @@ void main() {
   });
 
   test('seed v40 adds Zaky Colourblocks Alphablocks Bing Bakkar with Follow', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final seed = DefaultChannels.seed();
     final byId = {for (final c in seed) c.id: c};
 
@@ -433,8 +433,145 @@ void main() {
     expect(bakkar.videos.length, greaterThanOrEqualTo(20));
   });
 
+  test('seed v44 adds Ana wa Akhi curated Arabic episodes', () {
+    expect(DefaultChannels.seedVersion, 48);
+    final ana = DefaultChannels.seed().firstWhere((c) => c.id == 'ana_wa_akhi');
+    expect(ana.title, 'أنا وأخي');
+    expect(ana.followUploads, isFalse);
+    expect(ana.youtubePlaylistId, isNull);
+    expect(ana.videos.length, greaterThanOrEqualTo(30));
+    expect(ana.videos.any((v) => v.id == '_M-sZNslWM8'), isTrue);
+    expect(ana.videos.any((v) => v.id == '1yxODADlgXA'), isTrue);
+    expect(ana.videos.any((v) => v.id == 'BdWkREGkK38'), isTrue);
+    expect(
+      ana.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
+  });
+
+  test('seed v45 adds True\'s Magical Adventure official episodes', () {
+    expect(DefaultChannels.seedVersion, 48);
+    final trueShow =
+        DefaultChannels.seed().firstWhere((c) => c.id == 'true_magical');
+    expect(trueShow.title, 'True\'s Magical Adventure');
+    expect(trueShow.followUploads, isFalse);
+    expect(trueShow.youtubePlaylistId, 'PL3cjmspE05RhaybbOA6cIJGbc9QlwYOAP');
+    expect(trueShow.videos.length, greaterThanOrEqualTo(25));
+    expect(trueShow.videos.any((v) => v.id == 'pnM1TEWRPm0'), isTrue);
+    expect(trueShow.videos.any((v) => v.id == 'ZtRMyNLqJHc'), isTrue);
+    expect(trueShow.videos.any((v) => v.id == '6otsqlZQUNU'), isTrue);
+    expect(
+      trueShow.videos.any(
+        (v) =>
+            v.title.toLowerCase().contains('halloween') ||
+            v.title.toLowerCase().contains('easter') ||
+            v.title.toLowerCase().contains('valentine') ||
+            v.title.toLowerCase().contains('spooky'),
+      ),
+      isFalse,
+    );
+    expect(
+      trueShow.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
+  });
+
+  test('seed v46 adds Sesame Street English and Iftah Ya Simsim', () {
+    expect(DefaultChannels.seedVersion, 48);
+    final en =
+        DefaultChannels.seed().firstWhere((c) => c.id == 'sesame');
+    expect(en.title, 'Sesame Street');
+    expect(en.followUploads, isFalse);
+    expect(en.youtubePlaylistId, 'PL8TioFHubWFsnPhBmrDQ8dtoXxghDMKxr');
+    expect(en.videos.length, greaterThanOrEqualTo(25));
+    expect(en.videos.any((v) => v.id == 'cO1x0WYdGjI'), isTrue);
+    expect(en.videos.any((v) => v.id == '1Wqv-kUX8ao'), isTrue);
+    expect(
+      en.videos.any(
+        (v) =>
+            v.title.toLowerCase().contains('halloween') ||
+            v.title.toLowerCase().contains('christmas') ||
+            v.title.toLowerCase().contains('easter') ||
+            v.title.toLowerCase().contains('valentine') ||
+            v.title.toLowerCase().contains('pride'),
+      ),
+      isFalse,
+    );
+    expect(
+      en.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
+
+    final ar =
+        DefaultChannels.seed().firstWhere((c) => c.id == 'sesame_ar');
+    expect(ar.title, 'افتح يا سمسم');
+    expect(ar.followUploads, isFalse);
+    expect(ar.youtubePlaylistId, 'PLc4t1-K0nthvSUhYtc43BiG-Z9LK2mw5D');
+    expect(ar.videos.length, greaterThanOrEqualTo(25));
+    expect(ar.videos.any((v) => v.id == '8EdkVl27Ix0'), isTrue);
+    expect(ar.videos.any((v) => v.id == 'tvsL5xABpW4'), isTrue);
+    expect(
+      ar.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
+  });
+
+  test('seed v47 adds Rob the Robot official singles', () {
+    expect(DefaultChannels.seedVersion, 48);
+    final rob =
+        DefaultChannels.seed().firstWhere((c) => c.id == 'rob_the_robot');
+    expect(rob.title, 'Rob the Robot');
+    expect(rob.followUploads, isFalse);
+    expect(rob.youtubePlaylistId, 'PLCgmiKORinbJSqB2B_KK5kHx1bmeK6TmX');
+    expect(rob.videos.length, greaterThanOrEqualTo(30));
+    expect(rob.videos.any((v) => v.id == 'P7PQof3mLlI'), isTrue);
+    expect(rob.videos.any((v) => v.id == 'l9WpweX0eto'), isTrue);
+    expect(
+      rob.videos.any(
+        (v) =>
+            v.title.toLowerCase().contains('halloween') ||
+            v.title.toLowerCase().contains('christmas') ||
+            v.title.toLowerCase().contains('spooky') ||
+            v.title.toLowerCase().contains('holiday'),
+      ),
+      isFalse,
+    );
+    expect(
+      rob.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
+  });
+
+  test('seed v48 adds Sofia the First official episodes', () {
+    expect(DefaultChannels.seedVersion, 48);
+    final sofia =
+        DefaultChannels.seed().firstWhere((c) => c.id == 'sofia');
+    expect(sofia.title, 'Sofia the First');
+    expect(sofia.followUploads, isFalse);
+    expect(sofia.youtubePlaylistId, 'PL2m1vjiMH_hMCxxjKvsORK-mybMW4OB33');
+    expect(sofia.videos.length, greaterThanOrEqualTo(20));
+    expect(sofia.videos.any((v) => v.id == 'WEurGXf0grY'), isTrue);
+    expect(sofia.videos.any((v) => v.id == 'Xze_F5Fbyog'), isTrue);
+    expect(sofia.videos.any((v) => v.id == 'Cfe15ehP4g4'), isTrue);
+    expect(
+      sofia.videos.any(
+        (v) =>
+            v.title.toLowerCase().contains('halloween') ||
+            v.title.toLowerCase().contains('christmas') ||
+            v.title.toLowerCase().contains('holiday') ||
+            v.title.toLowerCase().contains('witch') ||
+            v.title.toLowerCase().contains('spooky'),
+      ),
+      isFalse,
+    );
+    expect(
+      sofia.videos.every((v) => ContentTitleFilter.isAllowed(v.title)),
+      isTrue,
+    );
+  });
+
   test('seed v43 expands full episodes and drops live title leftovers', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(45));
     var total = 0;
@@ -462,7 +599,7 @@ void main() {
   });
 
   test('seed v42 uses @legocooking stop-motion kitchen videos', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final cooking = DefaultChannels.seed().firstWhere((c) => c.id == 'lego_cooking');
     expect(cooking.title, 'LEGO Cooking');
     expect(cooking.followUploads, isFalse);
@@ -498,7 +635,7 @@ void main() {
   });
 
   test('seed v36 has no retired short ids and merge drops leftovers', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     expect(DefaultChannels.retiredShortVideoIds, isNotEmpty);
     for (final ch in DefaultChannels.seed()) {
       expect(
@@ -596,7 +733,7 @@ void main() {
           if (DefaultChannels.retiredShortVideoIds.contains(v.id)) v.id,
     ];
     expect(leftoverIds, isEmpty);
-    expect(settings.seedVersion, 43);
+    expect(settings.seedVersion, 48);
   });
 
   test('mergeSeedUpdates replaces wrong Kids Music sleep song', () {
@@ -827,7 +964,7 @@ void main() {
 
 
   test('seed v16 has expected channels and starter videos where applicable', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final seed = DefaultChannels.seed();
     expect(seed.length, greaterThanOrEqualTo(30));
     final ids = seed.map((c) => c.id).toSet();
@@ -865,11 +1002,17 @@ void main() {
     expect(merged.any((c) => c.id == 'ben_and_holly'), isTrue);
     expect(merged.any((c) => c.id == 'minecraft'), isTrue);
     expect(merged.any((c) => c.id == 'lego_cooking'), isTrue);
+    expect(merged.any((c) => c.id == 'ana_wa_akhi'), isTrue);
+    expect(merged.any((c) => c.id == 'true_magical'), isTrue);
+    expect(merged.any((c) => c.id == 'sesame'), isTrue);
+    expect(merged.any((c) => c.id == 'sesame_ar'), isTrue);
+    expect(merged.any((c) => c.id == 'rob_the_robot'), isTrue);
+    expect(merged.any((c) => c.id == 'sofia'), isTrue);
     expect(merged.any((c) => c.id == 'omar_hana'), isTrue);
   });
 
   test('seed v28 adds Ben and Holly curated starters without Christmas', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final ben = DefaultChannels.seed().firstWhere((c) => c.id == 'ben_and_holly');
     expect(ben.title, 'Ben & Holly');
     expect(ben.followUploads, isFalse);
@@ -893,7 +1036,7 @@ void main() {
   });
 
   test('seed v29 adds Minecraft Dad & Olivia calm builds', () {
-    expect(DefaultChannels.seedVersion, 43);
+    expect(DefaultChannels.seedVersion, 48);
     final mc = DefaultChannels.seed().firstWhere((c) => c.id == 'minecraft');
     expect(mc.title, 'Minecraft');
     expect(mc.followUploads, isFalse);

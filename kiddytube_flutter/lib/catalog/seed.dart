@@ -4,7 +4,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 43;
+  static const seedVersion = 48;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -303,6 +303,22 @@ class DefaultChannels {
   /// بكار — Maspero أطفال الجزء الثاني حلقات كاملة.
   static const _bakkarSeason2Playlist =
       'PL678DQfcGwUyHPVWW7u4SO1jPkfuQiDdx';
+  /// True and the Rainbow Kingdom — official full-episode series list.
+  /// Follow stays off: the playlist also has Valentine/Halloween dumps.
+  static const _trueMagicalSeriesPlaylist =
+      'PL3cjmspE05RhaybbOA6cIJGbc9QlwYOAP';
+  /// Official Sesame Street full-episode playlist (holidays mixed — Follow off).
+  static const _sesameFullEpisodesPlaylist =
+      'PL8TioFHubWFsnPhBmrDQ8dtoXxghDMKxr';
+  /// Official Ahlan Simsim channel — افتح يا سمسم season 1 full episodes.
+  static const _iftahYaSimsimSeason1Playlist =
+      'PLc4t1-K0nthvSUhYtc43BiG-Z9LK2mw5D';
+  /// Official Rob the Robot single episodes (holiday specials mixed — Follow off).
+  static const _robTheRobotSinglesPlaylist =
+      'PLCgmiKORinbJSqB2B_KK5kHx1bmeK6TmX';
+  /// Official Disney Jr Sofia the First playlist (clips + holidays — Follow off).
+  static const _sofiaTheFirstPlaylist =
+      'PL2m1vjiMH_hMCxxjKvsORK-mybMW4OB33';
 
   static const retiredChannelIds = {
     'arabic_cartoons',
@@ -2387,6 +2403,52 @@ class DefaultChannels {
             _yt('iVxE1FsbYNI', 'Who\'s the Best Fisher? Dad or Son | Our Crafty World Minecraft S5E3'),
           ],
         ),
+        // Spacetoon Arabic dub of Aka-chan to Boku (سامي ووسيم). Curated
+        // full episodes only — no Follow; YouTube rips are unofficial.
+        _channel(
+          id: 'ana_wa_akhi',
+          title: 'أنا وأخي',
+          order: 53,
+          color: 0xFF8E24AA,
+          sourceType: SourceType.youtubeVideoList,
+          followUploads: false,
+          videos: [
+            _yt('_M-sZNslWM8', 'كنوز سبيستون — أنا وأخي — الحلقة 1'),
+            _yt('1yxODADlgXA', 'كنوز سبيستون — أنا وأخي — الحلقة 2'),
+            _yt('mGPeN5aXVHk', 'أنا وأخي — الحلقة 3'),
+            _yt('v00zQF8ykPo', 'أنا وأخي — الحلقة 4'),
+            _yt('8-Unq2x5kaw', 'أنا وأخي — الحلقة 5'),
+            _yt('X0z5ZVw_4vE', 'أنا وأخي — الحلقة 6'),
+            _yt('r4N9yr_xJQQ', 'أنا وأخي — الحلقة 7'),
+            _yt('4deMEfemXQ4', 'أنا وأخي — الحلقة 8'),
+            _yt('fcXSWgkSExg', 'أنا وأخي — الحلقة 9'),
+            _yt('ok7zpZFZGG4', 'أنا وأخي — الحلقة 10'),
+            _yt('3Z0-oa8xlvU', 'أنا وأخي — الحلقة 11'),
+            _yt('DMw5YON6Hro', 'أنا وأخي — الحلقة 12'),
+            _yt('kAPzlihACZI', 'أنا وأخي — الحلقة 13'),
+            _yt('SV0sosLv_aU', 'أنا وأخي — الحلقة 14'),
+            _yt('nVfWA1KBDaI', 'أنا وأخي — الحلقة 15'),
+            _yt('5tC9vSluzUg', 'أنا وأخي — الحلقة 16'),
+            _yt('jRWRvznq_ko', 'أنا وأخي — الحلقة 17'),
+            _yt('vyufmG-E-IA', 'أنا وأخي — الحلقة 18'),
+            _yt('uBcgSX6R3bU', 'أنا وأخي — الحلقة 19'),
+            _yt('TRwJ7qyHNVI', 'أنا وأخي — الحلقة 20'),
+            _yt('Ss_-V6fqKZ4', 'أنا وأخي — الحلقة 21'),
+            _yt('8keHFt5Ulpc', 'أنا وأخي — الحلقة 22'),
+            _yt('pZsTVGPJRuo', 'أنا وأخي — الحلقة 23'),
+            _yt('5kqiFu6ta4k', 'أنا وأخي — الحلقة 24'),
+            _yt('KsmpfAgOEc8', 'أنا وأخي — الحلقة 25'),
+            _yt('Rthkgm_B7f8', 'أنا وأخي — الحلقة 26'),
+            _yt('uEV8U8sRB6c', 'أنا وأخي — الحلقة 28'),
+            _yt('dpczrl3cYCY', 'أنا وأخي — الحلقة 29'),
+            _yt('LClfSbF1zUo', 'أنا وأخي — الحلقة 30'),
+            _yt('KSYJpMQsoEc', 'أنا وأخي — الحلقة 31'),
+            _yt('sQI2lI9EeLw', 'أنا وأخي — الحلقة 32'),
+            _yt('P-irq1KXNK4', 'أنا وأخي — الحلقة 33'),
+            _yt('-rzoCo3HZok', 'أنا وأخي — الحلقة 34'),
+            _yt('BdWkREGkK38', 'أنا وأخي — الحلقة 35'),
+          ],
+        ),
         // Classic Spacetoon anime (green dinosaur). Full Arabic episodes are
         // not currently on YouTube as embeddable long-form videos — theme /
         // opening pack keeps the tile ready; parents can Add YouTube IDs.
@@ -2464,6 +2526,215 @@ class DefaultChannels {
             _yt('BdsIT0CptaQ', 'Animal Sounds Quiz for Children | Learn Colors & Sounds'),
             _yt('vROKEVCh_kc', 'Milo x Tee & Mo Summer Camp ☀️🏕️ | Compilation'),
             _yt('TuC3tiPNt74', 'ABC Animal Challenge 🐾 | Learn Animals with Milo and Friends'),
+          ],
+        ),
+        // Official True and the Rainbow Kingdom full episodes (~22 min).
+        // Curated singles only — no Follow; official playlists mix holidays.
+        _channel(
+          id: 'true_magical',
+          title: 'True\'s Magical Adventure',
+          order: 54,
+          color: 0xFFEC407A,
+          playlist: _trueMagicalSeriesPlaylist,
+          followUploads: false,
+          videos: [
+            _yt('pnM1TEWRPm0', 'Big Mossy Mess'),
+            _yt('iyA3VBjtUHw', 'Wishing Heart Hollow'),
+            _yt('wXKaCWtqwxE', 'Super Duper Dance Party'),
+            _yt('94d87yVZxxo', 'The Kittynati'),
+            _yt('k1ZN952qHoc', 'Frookie Sitting'),
+            _yt('CHVGH49W60c', 'Great Grizmos'),
+            _yt('jjAsGVxgAdM', 'Little Helpers'),
+            _yt('LHc4NF3Cp48', 'Zappy Cling'),
+            _yt('tRc29E78B3c', 'A Berry Big Mystery'),
+            _yt('2JMnveP35ow', 'Zip Zap Zoom'),
+            _yt('Bt0KdRC75to', 'A Royal Stink'),
+            _yt('ZtRMyNLqJHc', 'Wish Gone Wild'),
+            _yt('udasrtIevFM', 'Hino Tari Hullabaloo'),
+            _yt('JGsRBTsdByw', 'The Living Sea'),
+            _yt('rrfnXpOMaBk', 'Cosmic Sneeze'),
+            _yt('XJexJidKJ40', 'True Switcheroo'),
+            _yt('C2QdOGwOvA0', 'Fee Fi Fo Frookie'),
+            _yt('4WvVEx82gHs', 'Queens of the Day and Night'),
+            _yt('EADKPbor8FY', 'Woo-Woo Skyblubbs'),
+            _yt('VhnWn1pV58I', 'Princess Grizbot'),
+            _yt('g0wpy3IUIQQ', 'Where\'s Cumulo'),
+            _yt('dhRG-zFHhDI', 'A Snoozy Sleepover'),
+            _yt('KvcX-IJerZ0', 'True\'s Birthday'),
+            _yt('NGsImyZX_CU', 'Big Green Bounce'),
+            _yt('QMsz9EtO1yo', 'Yeti Sitting'),
+            _yt('8h-4rZDqdVs', 'Itty Bitty Yeti'),
+            _yt('oubI2koYq0M', 'The Ni Ni Tree'),
+            _yt('6otsqlZQUNU', 'Scratch & Share'),
+          ],
+        ),
+        // Official Sesame Street English full episodes (~26 min). Follow off:
+        // the official playlist also dumps Halloween / Christmas compilations.
+        _channel(
+          id: 'sesame',
+          title: 'Sesame Street',
+          order: 49,
+          color: 0xFFE53935,
+          playlist: _sesameFullEpisodesPlaylist,
+          followUploads: false,
+          videos: [
+            _yt('cO1x0WYdGjI', 'Abby, Rosita, and Zoe Make a Story'),
+            _yt('_9BWusWvAFg', 'Elmo Makes a Glitter Jar'),
+            _yt('1OdKl-ekvQc', 'The Three Little Pigs with Elmo and Friends'),
+            _yt('BO8na5wRj7c', 'Watch the Seasons Change on Sesame Street'),
+            _yt('bbSIqMAoPC8', 'Elmo, Abby, and Cookie Monster Build a Cardboard Castle'),
+            _yt('W3XOWs70uwY', 'Let\'s Learn How to Measure with Elmo'),
+            _yt('DpedQ_vbI18', 'Elmo and Friends Go Camping'),
+            _yt('K_L3KLgN-2w', 'Elmo Races Ping Pong Balls Down the Ramp'),
+            _yt('cSeZeCsRGwc', 'Elmo Runs the Race'),
+            _yt('ijiAR7zxxYU', 'Elmo and Abby Are Fish in the Ocean'),
+            _yt('DNUmF8qALn0', 'Elmo Goes to Summer Camp'),
+            _yt('lnjpVSUJqec', 'Elmo\'s Farm Animal Dance Party'),
+            _yt('vQ1s_FjuofY', 'Elmo and Abby\'s Fairy Garden Games'),
+            _yt('ygh5u_KDZd0', 'Abby Cadabby\'s Earth Day Cleanup'),
+            _yt('VkOhW0sOQ1Q', 'Twinkle Twinkle Little Elmo'),
+            _yt('KfupGyMScrQ', 'Elmo Finds the Missing Animals with Bert and Ernie'),
+            _yt('CPxUkHTmEi8', 'Sesame Street Singing Show'),
+            _yt('mVma4fjus28', 'Elmo, Abby, and Cookie Monster Play Grocery Games'),
+            _yt('avyZ67cRZiY', 'Elmo the Grouch'),
+            _yt('-em3lmerUFQ', 'Elmo Creates a New Nursery Rhyme'),
+            _yt('rxwwLV5DivU', 'Elmo and Abby\'s Bubble Fun'),
+            _yt('jd9Sg8wEPhM', 'Elmo Plays a Numbers and Letters Game'),
+            _yt('2kjTMzlXloQ', 'Bye Bye Pacifier'),
+            _yt('_BR2WnlTaqU', 'Elmo and Abby\'s Morning Routine'),
+            _yt('7Q6GATkhUF0', 'Elmo Makes a Friend for Rocco'),
+            _yt('_MfgdSkb4mE', 'Elmo and Abby\'s Sleepover Party'),
+            _yt('Rwhn5R4SezE', 'Abby Changes the Seasons for Elmo'),
+            _yt('ke3u3s6yKTg', 'Elmo, Abby, and Grover\'s Farm Party'),
+            _yt('GAEt9YNAc4A', 'Cookie Monster is a Veggie Monster'),
+            _yt('nC9WLC6JZco', 'It\'s the Sesame Circus Show'),
+            _yt('eJppwdQWAr8', 'Elmo Goes to Chicken School'),
+            _yt('Rzom_Kr2XjM', 'Game Day on Sesame Street'),
+            _yt('1Wqv-kUX8ao', 'A Trip to the Dentist'),
+          ],
+        ),
+        // Official Arabic Sesame (افتح يا سمسم) on the Ahlan Simsim channel.
+        // Season 1 full episodes; Follow off so shorts / other brands stay out.
+        _channel(
+          id: 'sesame_ar',
+          title: 'افتح يا سمسم',
+          order: 49,
+          color: 0xFF00897B,
+          playlist: _iftahYaSimsimSeason1Playlist,
+          followUploads: false,
+          videos: [
+            _yt('8EdkVl27Ix0', 'افتح يا سمسم — الحلقة 1 — الجيران'),
+            _yt('V0Tg1pS89ts', 'افتح يا سمسم — الحلقة 2 — أول يوم في المدرسة'),
+            _yt('DjpOeQU3sUg', 'افتح يا سمسم — الحلقة 3 — صيف ومرح'),
+            _yt('x2K1CwKyVJo', 'افتح يا سمسم — الحلقة 4 — إلى البحار'),
+            _yt('-rUKiY0P3ns', 'افتح يا سمسم — الحلقة 5 — مهرجان التمور'),
+            _yt('5Y6canrzoP0', 'افتح يا سمسم — الحلقة 6 — عصفور صغير'),
+            _yt('K3Y3Qfp9hAQ', 'افتح يا سمسم — الحلقة 7 — مسرحية الفطور'),
+            _yt('hxJcGhzXCvA', 'افتح يا سمسم — الحلقة 8 — صديقي الآلي حديد'),
+            _yt('UGK7athElCk', 'افتح يا سمسم — الحلقة 9 — زائر من مكان بعيد'),
+            _yt('p-jfpBx5qe0', 'افتح يا سمسم — الحلقة 10 — تعال والعب معي'),
+            _yt('X7o6PpAYIPk', 'افتح يا سمسم — الحلقة 11 — لعبة الحواجز'),
+            _yt('TM7-2Xm_Lxo', 'افتح يا سمسم — الحلقة 12 — أسرع، توقف، انطلق'),
+            _yt('StdT2f3UM9E', 'افتح يا سمسم — الحلقة 13 — ذهب مع الريح'),
+            _yt('jvk2MSrbsJU', 'افتح يا سمسم — الحلقة 14 — نعمان البطل'),
+            _yt('AS1fBErFX24', 'افتح يا سمسم — الحلقة 15 — أجنحة ورقية'),
+            _yt('k8L43IO3Dyw', 'افتح يا سمسم — الحلقة 16 — أوزان ثقيلة'),
+            _yt('oMhTI-bZLbg', 'افتح يا سمسم — الحلقة 17 — يمكنني أن أكون'),
+            _yt('QL39dtsOkrk', 'افتح يا سمسم — الحلقة 18 — هيا نتخيل'),
+            _yt('c9m_OGRGWCg', 'افتح يا سمسم — الحلقة 19 — لعبة الغميضة'),
+            _yt('dTRQbG2c4WI', 'افتح يا سمسم — الحلقة 20 — نظارة أمل'),
+            _yt('IUBhHHzla2g', 'افتح يا سمسم — الحلقة 21 — ليلى والذئب'),
+            _yt('Yzyy6q1aCRE', 'افتح يا سمسم — الحلقة 22 — محبوب النظافة'),
+            _yt('4lJ2EtIXaqc', 'افتح يا سمسم — الحلقة 23 — تدريب كرة القدم'),
+            _yt('-JDQfrguH3Y', 'افتح يا سمسم — الحلقة 24 — تدريب على القيلولة'),
+            _yt('_a8m_yi2bsU', 'افتح يا سمسم — الحلقة 25 — فتوش غرغور المميز'),
+            _yt('0QlBAHSkdGc', 'افتح يا سمسم — الحلقة 26 — طفلة نائمة'),
+            _yt('tvsL5xABpW4', 'افتح يا سمسم — الحلقة 27 — الحفاظ على النشاط'),
+          ],
+        ),
+        // Official Rob the Robot ~11 min singles. Follow off: playlist has
+        // Christmas / Halloween specials and a dedicated spooky pack.
+        _channel(
+          id: 'rob_the_robot',
+          title: 'Rob the Robot',
+          order: 54,
+          color: 0xFF29B6F6,
+          playlist: _robTheRobotSinglesPlaylist,
+          followUploads: false,
+          videos: [
+            _yt('P7PQof3mLlI', 'Bend it Like Graham'),
+            _yt('u9eUFpFJzBs', 'Orbit Has a Bright Idea'),
+            _yt('ip04kMO-a2U', 'Rob the Fairytale Writer'),
+            _yt('oLattsXhz3Y', 'Ups and Downs at Elevator Planet'),
+            _yt('2CppHAPWw2Q', 'Indiana Orbit at Explorer Planet'),
+            _yt('HF-o9n_bdkE', 'Rob and Orbit Learn About Gravity'),
+            _yt('CkbSWyURaBg', 'Rob Meets a New Froggy Friend'),
+            _yt('7s-XrTca7VA', 'Rob Gets Stuck Inside a Video Game'),
+            _yt('lhpKRg-5ByI', 'Rob Thinks He\'s a Rabbit'),
+            _yt('ycR58fJg8ok', 'The Thirsty Games'),
+            _yt('rvbmKzf_MjQ', 'Rob Loves Fixing and Recycling'),
+            _yt('QsPTn-LWaUQ', 'Rob is Sad He\'s Not Up to Par'),
+            _yt('PyYKa3d1TUI', 'Snow Day in Space'),
+            _yt('affd7HZ48F4', 'The Ping Pong Goof'),
+            _yt('ulN5IyZkP4U', 'Gymnastics in the Treehouse'),
+            _yt('xWMOHehSG9A', 'Rob\'s Summer Trip to the Beach'),
+            _yt('1x8kAsNg7H8', 'The Best Show and Tell Day EVER'),
+            _yt('GPDXEImhTRE', 'Invisible Hide and Seek'),
+            _yt('l2lk-t5nsqE', 'Orbit Gets Clean at Scrubadub Planet'),
+            _yt('Y6-fyRz_SAw', 'A Fun Adventure at Cheese Planet'),
+            _yt('gfUls9AUR6A', 'Learn About History at Museum Planet'),
+            _yt('U5Nrsuk7erg', 'Orbit is In-telly-gent'),
+            _yt('b9VJ3y69LGE', 'Learn Map Reading with Rob and Friends'),
+            _yt('MB7-7mMBIzo', 'Bend it Like Orbit'),
+            _yt('nHh3VXvQK00', 'Orbit and Rob at Puzzle Planet'),
+            _yt('zJyAqZ1ujm8', 'The Most Fun at Game Planet'),
+            _yt('2fNtGUE7O-0', 'Ema Puts on a Show at Movie Planet'),
+            _yt('MRdFTS4LHlQ', 'TK is Afraid of Heights at the Fair Planet'),
+            _yt('yvooL_83Bm0', 'Learn About the Planets at Astronomy Planet'),
+            _yt('N4KZcf_2fRo', 'There\'s a New Sheriff in Town at the Old West Planet'),
+            _yt('VLfKcgt-Xxo', 'Double Trouble at Copy Cat Planet'),
+            _yt('HlHJ6D71ewA', 'Learn about Recycling at Junk Planet'),
+            _yt('l9WpweX0eto', 'Get Cracking on the Farm'),
+            _yt('sr1_CLnsd54', 'Camping at Space Camp'),
+            _yt('-xn2MpQ9tSU', 'The Mouse House'),
+            _yt('JZzJiONNgYE', 'Picnic Panic'),
+          ],
+        ),
+        // Official Disney Jr Sofia the First full episodes. Follow off: the
+        // playlist mixes clips, Halloween songs, and Christmas specials.
+        _channel(
+          id: 'sofia',
+          title: 'Sofia the First',
+          order: 48,
+          color: 0xFFAB47BC,
+          playlist: _sofiaTheFirstPlaylist,
+          followUploads: false,
+          videos: [
+            _yt('WEurGXf0grY', 'Once Upon a Princess'),
+            _yt('Xze_F5Fbyog', 'Just One of the Princes'),
+            _yt('y0Kw5xp1pLI', 'The Big Sleepover'),
+            _yt('luDcN6OPi3s', 'Let the Good Times Troll'),
+            _yt('7C_0xFp8zPY', 'Cedric\'s Apprentice'),
+            _yt('OEp8_8vl7eI', 'A Royal Mess'),
+            _yt('gJ_QQeeYOJQ', 'The Shy Princess'),
+            _yt('FcYg-0Yh9fk', 'Blue Ribbon Bunny'),
+            _yt('l6Abns8hZ-U', 'The Princess Test'),
+            _yt('pIsUC26CtXQ', 'Baileywick\'s Day Off'),
+            _yt('JD0le_ExP5o', 'The Tri-Kingdom Picnic'),
+            _yt('GHwB8wXejHg', 'Two to Tangu'),
+            _yt('4C6eJYtXx4k', 'Finding Clover'),
+            _yt('gdbVlsK1tZk', 'The Amulet of Avalor'),
+            _yt('k2ne06vCKaM', 'The Buttercups'),
+            _yt('7k3bVqj9uzY', 'The Amulet and the Anthem'),
+            _yt('P7ClsUHD3N8', 'Tea for Too Many'),
+            _yt('eLMh-sC3GmI', 'Princess Butterfly'),
+            _yt('_13dpe2WqKY', 'Great Aunt-Venture'),
+            _yt('4cHXkb35ckE', 'The Baker King'),
+            _yt('Job9-Duvyjo', 'The Floating Palace — Part 1'),
+            _yt('6PghCWi5yh4', 'The Floating Palace — Part 2'),
+            _yt('DGuHgqAUjgM', 'Four\'s a Crowd'),
+            _yt('jzRE0HXm9NY', 'Royal Magic — Welcome to Charmswell'),
+            _yt('Cfe15ehP4g4', 'Royal Magic — Abracadazzle / Show and Spell'),
           ],
         ),
         _channel(

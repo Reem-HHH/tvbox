@@ -37,6 +37,12 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [bing](bing.md) | Bing | High | High–Medium | Official full episodes + Follow (Halloween/Christmas filtered) |
 | [bakkar](bakkar.md) | بكار | High | High | Maspero أطفال الجزء الثاني + Follow |
 | [milo](milo.md) | Milo | High | High | Official preschool cat job adventures |
+| [sofia](sofia.md) | Sofia the First | High | Medium–High | Disney Jr season 1 + Royal Magic (no Follow; holidays skipped) |
+| [rob_the_robot](rob_the_robot.md) | Rob the Robot | High | High | Official ~11 min space adventures (no Follow; holidays skipped) |
+| [sesame](sesame.md) | Sesame Street | High | Medium–High | Official English full episodes (no Follow; holidays skipped) |
+| [sesame_ar](sesame_ar.md) | افتح يا سمسم | High | High | Official Arabic Sesame season 1 (no Follow) |
+| [true_magical](true_magical.md) | True's Magical Adventure | High | High | Official Rainbow Kingdom full episodes (no Follow; holidays skipped) |
+| [ana_wa_akhi](ana_wa_akhi.md) | أنا وأخي | High | High–Medium | Spacetoon Arabic full episodes (curated; no Follow) |
 | [muka_muka](muka_muka.md) | موكا موكا | High | High–Medium | Green dinosaur classic — theme pack until full eps on YT |
 | [ben_and_holly](ben_and_holly.md) | Ben & Holly | High | High | Curated official starters (no Christmas) |
 | [lego_duplo](lego_duplo.md) | LEGO DUPLO | High | Medium–High | Toy play / unboxings |

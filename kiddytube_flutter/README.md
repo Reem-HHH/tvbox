@@ -10,7 +10,7 @@ Cross-platform kids browser for:
 
 ## Features (current)
 
-- Curated catalog seed **v43** (allowlisted channels / videos)
+- Curated catalog seed **v48** (allowlisted channels / videos)
 - Home **Shows | Mix** side-by-side toggle (selected mode highlighted; change gated behind parent PIN)
 - Shows tiles use a **random recent episode thumb** (changes on refresh); 16:9 image fits inside the tile; episodes sort **newest first**
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel; seek scrub overlay when allowed)
@@ -21,7 +21,7 @@ Cross-platform kids browser for:
 - **Cloud family catalog**: pair each device with a 6-digit code, pull shared channels from [`../cloud`](../cloud)
 - Release builds block kid playback until the factory PIN is changed
 - **Family title + tag filter** on playlist sync (skips Halloween / Thanksgiving / LGBTQ-related titles and YouTube tags)
-- Recent seed highlights: مكة مباشر، القرآن مباشر، ماشا والدب، بليبي بالعربي، Disney Songs، ماروكو الصغيرة، بابار، حديقة المرح
+- Recent seed highlights: Sofia the First، Rob the Robot، Sesame Street، افتح يا سمسم، True's Magical Adventure، أنا وأخي، مكة مباشر، القرآن مباشر، ماشا والدب، بليبي بالعربي، Disney Songs، ماروكو الصغيرة، بابار، حديقة المرح
 - TV-friendly grids and lighter scroll decoding
 
 ## Docs
