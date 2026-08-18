@@ -391,7 +391,7 @@ class _ChannelDetailPane extends StatelessWidget {
       await onChanged();
       toast(value.isEmpty ? 'Playlist cleared' : 'Playlist updated');
     } catch (e) {
-      toast('$e');
+      toast(friendlyParentError(e));
     }
   }
 
@@ -492,7 +492,7 @@ class _ChannelDetailPane extends StatelessWidget {
       await onChanged();
       toast('Direct video added');
     } catch (e) {
-      toast('$e');
+      toast(friendlyParentError(e));
     }
   }
 

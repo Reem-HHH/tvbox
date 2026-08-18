@@ -115,7 +115,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
       await _reloadCloud();
       widget.toast('Cloud URL saved');
     } catch (e) {
-      widget.toast('$e');
+      widget.toast(friendlyParentError(e));
     }
   }
 
@@ -185,7 +185,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
       await _reloadCloud();
       widget.toast(summary);
     } catch (e) {
-      widget.toast('$e');
+      widget.toast(friendlyParentError(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -200,7 +200,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
       await _reloadCloud();
       widget.toast(summary);
     } catch (e) {
-      widget.toast('$e');
+      widget.toast(friendlyParentError(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -213,7 +213,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
       final summary = await widget.repository.syncWatchWithCloud();
       widget.toast(summary);
     } catch (e) {
-      widget.toast('$e');
+      widget.toast(friendlyParentError(e));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -312,7 +312,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
       await widget.onChanged();
       widget.toast(summary);
     } catch (e) {
-      widget.toast('Import failed: $e');
+      widget.toast(friendlyParentError(e));
     }
   }
 

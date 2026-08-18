@@ -13,6 +13,7 @@ import '../catalog/catalog_repository.dart';
 import '../catalog/models.dart';
 import '../catalog/recent_watch.dart';
 import '../ui/app_orientations.dart';
+import '../ui/friendly_message.dart';
 import 'youtube_iframe.dart';
 
 class _ScrubUi {
@@ -170,6 +171,7 @@ class _PlayerScreenState extends State<PlayerScreen>
       channelId: item.channelId,
       video: item.video,
       positionMs: clampedResumePosition(snap.pos, snap.dur),
+      durationMs: snap.dur,
     );
   }
 
@@ -343,7 +345,7 @@ class _PlayerScreenState extends State<PlayerScreen>
     } catch (e) {
       await controller.dispose();
       if (!mounted) return;
-      await _onPlaybackError(fallbackMessage: 'Could not play media');
+      await _onPlaybackError();
     }
   }
 
@@ -375,7 +377,7 @@ class _PlayerScreenState extends State<PlayerScreen>
 
   /// Skip broken live / unavailable items; stop if the whole queue fails.
   Future<void> _onPlaybackError({
-    String fallbackMessage = 'Playback error',
+    String fallbackMessage = kKidPlaybackMessage,
   }) async {
     if (!mounted) return;
     _consecutiveErrors++;
@@ -634,9 +636,13 @@ class _PlayerScreenState extends State<PlayerScreen>
                   ),
                 if (_error != null)
                   Center(
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white, fontSize: 18),
+                      ),
                     ),
                   ),
                 ValueListenableBuilder<String?>(

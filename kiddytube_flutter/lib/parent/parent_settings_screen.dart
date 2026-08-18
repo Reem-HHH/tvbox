@@ -9,6 +9,7 @@ import 'package:share_plus/share_plus.dart';
 import '../catalog/catalog_repository.dart';
 import '../catalog/models.dart';
 import '../ui/focus_tile.dart';
+import '../ui/friendly_message.dart';
 import '../ui/layout_metrics.dart';
 import '../ui/tv_text_dialog.dart';
 import 'parent_biometrics.dart';

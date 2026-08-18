@@ -953,12 +953,14 @@ class CatalogRepository {
     required String channelId,
     required VideoItem video,
     int positionMs = 0,
+    int durationMs = 0,
   }) async {
     final now = DateTime.now().millisecondsSinceEpoch;
     await recentWatch.record(
       channelId: channelId,
       video: video,
       positionMs: positionMs,
+      durationMs: durationMs,
     );
     try {
       await pushWatchToCloud(
@@ -970,6 +972,7 @@ class CatalogRepository {
             youtubeVideoId: video.youtubeVideoId,
             directUrl: video.directUrl,
             positionMs: positionMs,
+            durationMs: durationMs,
             updatedAtMs: now,
           ),
         ],
@@ -1030,6 +1033,7 @@ class CatalogRepository {
         if (item.youtubeVideoId != null) 'youtube_video_id': item.youtubeVideoId,
         if (item.directUrl != null) 'direct_url': item.directUrl,
         'position_ms': item.positionMs,
+        if (item.durationMs > 0) 'duration_ms': item.durationMs,
         'updated_at_ms': item.updatedAtMs,
       };
 
@@ -1040,6 +1044,7 @@ class CatalogRepository {
         youtubeVideoId: json['youtube_video_id'] as String?,
         directUrl: json['direct_url'] as String?,
         positionMs: (json['position_ms'] as num?)?.toInt() ?? 0,
+        durationMs: (json['duration_ms'] as num?)?.toInt() ?? 0,
         updatedAtMs: (json['updated_at_ms'] as num?)?.toInt() ?? 0,
       );
 

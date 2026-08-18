@@ -15,6 +15,7 @@ import '../parent/pin_gate.dart';
 import '../parent/release_pin_policy.dart';
 import '../player/player_screen.dart';
 import 'focus_tile.dart';
+import 'friendly_message.dart';
 import 'layout_metrics.dart';
 
 const _ytRed = Color(0xFFFF0000);
@@ -137,10 +138,18 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _onPullToRefresh() async {
     _dailySyncTimer?.cancel();
     widget.repository.reshuffleHome();
+    var failed = false;
     try {
       await widget.repository.refreshAllPlaylists(force: true);
-    } catch (_) {}
+    } catch (_) {
+      failed = true;
+    }
     await _reloadAfterSync();
+    if (failed && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(kKidRefreshMessage)),
+      );
+    }
   }
 
   Future<void> _setHomeMode(HomeLibraryMode mode) async {
@@ -216,13 +225,22 @@ class _HomeScreenState extends State<HomeScreen> {
       for (final v in videos)
         PlayableVideo(channelId: item.channelId, video: v),
     ];
+    var startMs = startPositionMs;
+    if (startMs <= 0) {
+      for (final r in _recent) {
+        if (r.channelId == item.channelId && r.videoId == item.video.id) {
+          startMs = resumeStartMs(r.positionMs, r.durationMs);
+          break;
+        }
+      }
+    }
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PlayerScreen(
           repository: widget.repository,
           queue: queue,
           startIndex: index,
-          startPositionMs: startPositionMs,
+          startPositionMs: startMs,
         ),
       ),
     );
@@ -234,7 +252,30 @@ class _HomeScreenState extends State<HomeScreen> {
     final settings = _settings;
     if (_error != null) {
       return Scaffold(
-        body: Center(child: Text('Failed to load catalog: $_error')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  kKidCatalogLoadMessage,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18),
+                ),
+                const SizedBox(height: 20),
+                FocusTile(
+                  autofocus: true,
+                  onActivated: _reload,
+                  child: FilledButton(
+                    onPressed: _reload,
+                    child: const Text('Retry'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     }
     if (settings == null) {
@@ -362,14 +403,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         separatorBuilder: (_, _) => const SizedBox(width: 12),
                         itemBuilder: (context, index) {
                           final item = _recent[index];
-                          final progress = item.positionMs > 0 ? 0.35 : 0.0;
+                          final progress = watchProgressFraction(
+                            item.positionMs,
+                            item.durationMs,
+                          );
                           return SizedBox(
                             width: layout.continueWidth,
                             child: FocusTile(
                               autofocus: index == 0,
                               onActivated: () => _openVideo(
                                 item.toPlayable(),
-                                startPositionMs: item.positionMs,
+                                startPositionMs: resumeStartMs(
+                                  item.positionMs,
+                                  item.durationMs,
+                                ),
                               ),
                               child: YtCard(
                                 title: item.title,
@@ -859,7 +906,7 @@ class YtCard extends StatelessWidget {
   }
 }
 
-class LibraryScreen extends StatelessWidget {
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
     super.key,
     required this.channel,
@@ -870,6 +917,39 @@ class LibraryScreen extends StatelessWidget {
   final ContentChannel channel;
   final CatalogRepository repository;
   final Future<void> Function()? onPlayed;
+
+  @override
+  State<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  List<RecentWatchItem> _recent = const [];
+
+  ContentChannel get channel => widget.channel;
+  CatalogRepository get repository => widget.repository;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadRecent());
+  }
+
+  Future<void> _loadRecent() async {
+    try {
+      final recent = await repository.recentWatch.load();
+      if (!mounted) return;
+      setState(() => _recent = recent);
+    } catch (_) {}
+  }
+
+  RecentWatchItem? _watchFor(VideoItem video) {
+    for (final item in _recent) {
+      if (item.channelId == channel.id && item.videoId == video.id) {
+        return item;
+      }
+    }
+    return null;
+  }
 
   Future<void> _play(BuildContext context, int index) async {
     final settings = await repository.load();
@@ -894,16 +974,21 @@ class LibraryScreen extends StatelessWidget {
         PlayableVideo(channelId: channel.id, video: v),
     ];
     if (!context.mounted) return;
+    final watch = _watchFor(videos[index]);
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => PlayerScreen(
           repository: repository,
           queue: queue,
           startIndex: index,
+          startPositionMs: watch == null
+              ? 0
+              : resumeStartMs(watch.positionMs, watch.durationMs),
         ),
       ),
     );
-    await onPlayed?.call();
+    await _loadRecent();
+    await widget.onPlayed?.call();
   }
 
   @override
@@ -949,6 +1034,13 @@ class LibraryScreen extends StatelessWidget {
                   itemCount: videos.length,
                   itemBuilder: (context, index) {
                     final video = videos[index];
+                    final watch = _watchFor(video);
+                    final progress = watch == null
+                        ? 0.0
+                        : watchProgressFraction(
+                            watch.positionMs,
+                            watch.durationMs,
+                          );
                     return FocusTile(
                       key: ValueKey('lib-${channel.id}-${video.id}'),
                       autofocus: index == 0,
@@ -961,6 +1053,7 @@ class LibraryScreen extends StatelessWidget {
                         memCacheWidth: memCacheWidth,
                         placeholderColor: Color(channel.color),
                         imageFit: BoxFit.contain,
+                        progress: progress,
                       ),
                     );
                   },

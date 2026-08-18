@@ -80,7 +80,7 @@ class _SecurityTabState extends State<_SecurityTab> {
       await onChanged();
       toast('PIN updated');
     } catch (e) {
-      toast('$e');
+      toast(friendlyParentError(e));
     } finally {
       controller.dispose();
     }
@@ -93,7 +93,7 @@ class _SecurityTabState extends State<_SecurityTab> {
       await onChanged();
       toast(value ? 'Release ready on' : 'Release ready off');
     } catch (e) {
-      toast('$e');
+      toast(friendlyParentError(e));
     }
   }
 
@@ -104,7 +104,7 @@ class _SecurityTabState extends State<_SecurityTab> {
       await onChanged();
       toast(value ? 'Biometric unlock on' : 'Biometric unlock off');
     } catch (e) {
-      toast('$e');
+      toast(friendlyParentError(e));
     }
   }
 
