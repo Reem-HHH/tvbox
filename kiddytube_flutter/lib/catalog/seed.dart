@@ -4,7 +4,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 48;
+  static const seedVersion = 49;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -376,7 +376,7 @@ class DefaultChannels {
         _channel(
           id: 'omar_hana',
           title: 'Omar & Hana',
-          order: 0,
+          order: 2,
           color: 0xFF66BB6A,
           playlist: _uploadsOf('UC178EmfQAV3OT-UpuO6WUMg'),
           videos: [
@@ -430,7 +430,7 @@ class DefaultChannels {
         _channel(
           id: 'mini_muslim',
           title: 'Mini Muslim',
-          order: 1,
+          order: 3,
           color: 0xFF26A69A,
           playlist: _uploadsOf('UCIDYe6rgdROl77DDevNIcPA'),
           videos: [
@@ -484,7 +484,7 @@ class DefaultChannels {
         _channel(
           id: 'dawood',
           title: 'داوود',
-          order: 2,
+          order: 1,
           color: 0xFF00897B,
           playlist: _dawoodHubPlaylist,
           followUploads: true,
@@ -539,7 +539,7 @@ class DefaultChannels {
         _channel(
           id: 'kids_music',
           title: 'Kids Music',
-          order: 3,
+          order: 5,
           color: 0xFFEC407A,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -588,7 +588,7 @@ class DefaultChannels {
         _channel(
           id: 'spacetoon',
           title: 'Spacetoon أناشيد',
-          order: 14,
+          order: 6,
           color: 0xFF5C6BC0,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -622,7 +622,7 @@ class DefaultChannels {
         _channel(
           id: 'moda_modi',
           title: 'مودا مودي',
-          order: 15,
+          order: 7,
           color: 0xFF7E57C2,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -650,7 +650,7 @@ class DefaultChannels {
         _channel(
           id: 'smarta',
           title: 'سمارتا وحقيبتها العجيبة',
-          order: 16,
+          order: 8,
           color: 0xFF42A5F5,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -701,7 +701,7 @@ class DefaultChannels {
         _channel(
           id: 'adam_mishmish',
           title: 'Adam & Mishmish',
-          order: 18,
+          order: 19,
           color: 0xFFFFA726,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -755,7 +755,7 @@ class DefaultChannels {
         _channel(
           id: 'zakaria',
           title: 'Zakaria',
-          order: 19,
+          order: 20,
           color: 0xFF29B6F6,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -809,7 +809,7 @@ class DefaultChannels {
         _channel(
           id: 'kiki_nadoush',
           title: 'Kiki wa Nadoush',
-          order: 20,
+          order: 21,
           color: 0xFFEF5350,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -863,7 +863,7 @@ class DefaultChannels {
         _channel(
           id: 'rayan',
           title: 'Rayan',
-          order: 21,
+          order: 22,
           color: 0xFFAB47BC,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -914,7 +914,7 @@ class DefaultChannels {
         _channel(
           id: 'sweet_kalima',
           title: 'Sweet Kalima',
-          order: 22,
+          order: 23,
           color: 0xFFFFCA28,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -951,7 +951,7 @@ class DefaultChannels {
         _channel(
           id: 'abata',
           title: 'Abata',
-          order: 23,
+          order: 24,
           color: 0xFF8D6E63,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -999,7 +999,7 @@ class DefaultChannels {
         _channel(
           id: 'sara_duck',
           title: 'Sarah & Duck',
-          order: 24,
+          order: 35,
           color: 0xFF26C6DA,
           playlist: _uploadsOf('UC3OUMU3s7Oy6Ta0wnpZFBWw'),
           videos: [
@@ -1053,7 +1053,7 @@ class DefaultChannels {
         _channel(
           id: 'twirlywoos',
           title: 'Twirlywoos',
-          order: 25,
+          order: 36,
           color: 0xFFFF7043,
           playlist: _uploadsOf('UC6-m1hdh8xEu-XBJK3v1TPg'),
           videos: [
@@ -1107,7 +1107,7 @@ class DefaultChannels {
         _channel(
           id: 'barney',
           title: 'Barney & Friends',
-          order: 26,
+          order: 34,
           color: 0xFF7CB342,
           playlist: _uploadsOf('UCelJG1JV-pKYGOG3AM17Wvg'),
           videos: [
@@ -1161,7 +1161,7 @@ class DefaultChannels {
         _channel(
           id: 'dora',
           title: 'Dora the Explorer',
-          order: 27,
+          order: 33,
           color: 0xFFFF7043,
           playlist: _uploadsOf('UCkvPyGW-gsYucCK37UR0q2g'),
           videos: [
@@ -1215,7 +1215,7 @@ class DefaultChannels {
         _channel(
           id: 'peppa',
           title: 'Peppa Pig',
-          order: 28,
+          order: 30,
           color: 0xFFEF5350,
           playlist: _uploadsOf('UCAOtE1V7Ots4DjM8JLlrYgg'),
           videos: [
@@ -1264,7 +1264,7 @@ class DefaultChannels {
         _channel(
           id: 'ben_and_holly',
           title: "Ben & Holly",
-          order: 29,
+          order: 32,
           color: 0xFF66BB6A,
           playlist: _uploadsOf('UC2UhuvjTIrR0Ck2KrkvRcuA'),
           videos: [
@@ -1318,7 +1318,7 @@ class DefaultChannels {
         _channel(
           id: 'lego_duplo',
           title: 'LEGO DUPLO',
-          order: 30,
+          order: 50,
           color: 0xFFFDD835,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -1369,7 +1369,7 @@ class DefaultChannels {
         _channel(
           id: 'play_doh',
           title: 'Play-Doh',
-          order: 31,
+          order: 52,
           color: 0xFFFF8A65,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -1416,7 +1416,7 @@ class DefaultChannels {
         _channel(
           id: 'toy_kitchen',
           title: 'Toy Kitchen',
-          order: 32,
+          order: 53,
           color: 0xFF90A4AE,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -1464,7 +1464,7 @@ class DefaultChannels {
         _channel(
           id: 'dancing_fruit',
           title: 'Dancing Fruit',
-          order: 33,
+          order: 54,
           color: 0xFFEC407A,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -1511,7 +1511,7 @@ class DefaultChannels {
         _channel(
           id: 'toyor_baby',
           title: 'طيور بيبي',
-          order: 34,
+          order: 18,
           color: 0xFF81C784,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -1553,7 +1553,7 @@ class DefaultChannels {
         _channel(
           id: 'pingu',
           title: 'Pingu',
-          order: 35,
+          order: 37,
           color: 0xFF42A5F5,
           playlist: _uploadsOf('UCM88mtSE0zRTn5ae4EbYcuw'),
           videos: [
@@ -1607,7 +1607,7 @@ class DefaultChannels {
         _channel(
           id: 'daniel_tiger',
           title: 'Daniel Tiger',
-          order: 36,
+          order: 38,
           color: 0xFFFFA726,
           playlist: _uploadsOf('UCDqgSnRMGVx3dP4sn3ATZMA'),
           videos: [
@@ -1655,7 +1655,7 @@ class DefaultChannels {
         _channel(
           id: 'hey_duggee',
           title: 'Hey Duggee',
-          order: 37,
+          order: 39,
           color: 0xFFFFCA28,
           playlist: _uploadsOf('UCj_mFUb-47d9QNiJ5556LjQ'),
           videos: [
@@ -1709,7 +1709,7 @@ class DefaultChannels {
         _channel(
           id: 'numberblocks',
           title: 'Numberblocks',
-          order: 38,
+          order: 40,
           color: 0xFFAB47BC,
           playlist: _numberblocksSeason1Playlist,
           followUploads: true,
@@ -1764,7 +1764,7 @@ class DefaultChannels {
         _channel(
           id: 'pocoyo',
           title: 'Pocoyo',
-          order: 39,
+          order: 44,
           color: 0xFF29B6F6,
           playlist: _uploadsOf('UChT6ex4rsEDXjJKW7wJAb8w'),
           videos: [
@@ -1818,7 +1818,7 @@ class DefaultChannels {
         _channel(
           id: 'cocomelon',
           title: 'CoComelon',
-          order: 40,
+          order: 45,
           color: 0xFFFFEE58,
           playlist: _uploadsOf('UCbCmjCuTUZos6Inko4u57UQ'),
           videos: [
@@ -1871,7 +1871,7 @@ class DefaultChannels {
         _channel(
           id: 'masha',
           title: 'Masha and the Bear',
-          order: 41,
+          order: 46,
           color: 0xFFEF5350,
           playlist: _uploadsOf('UCu59yAFE8fM0sVNTipR4edw'),
           videos: [
@@ -1925,7 +1925,7 @@ class DefaultChannels {
         _channel(
           id: 'mansour',
           title: 'منصور',
-          order: 42,
+          order: 14,
           color: 0xFF5C6BC0,
           playlist: _uploadsOf('UCqiIbqnJB0AVTg6Z6QnZNdw'),
           videos: [
@@ -1979,7 +1979,7 @@ class DefaultChannels {
         _channel(
           id: 'maruko',
           title: 'ماروكو الصغيرة',
-          order: 43,
+          order: 11,
           color: 0xFFEC407A,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2024,7 +2024,7 @@ class DefaultChannels {
         _channel(
           id: 'live_makkah',
           title: 'قرآن للنوم ورقية',
-          order: 44,
+          order: 0,
           color: 0xFF2E7D32,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2085,7 +2085,7 @@ class DefaultChannels {
         _channel(
           id: 'masha_ar',
           title: 'ماشا والدب',
-          order: 46,
+          order: 15,
           color: 0xFFE53935,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2137,7 +2137,7 @@ class DefaultChannels {
         _channel(
           id: 'blippi_ar',
           title: 'بليبي وميكا',
-          order: 47,
+          order: 16,
           color: 0xFF039BE5,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2211,7 +2211,7 @@ class DefaultChannels {
         _channel(
           id: 'disney_songs',
           title: 'Disney Songs',
-          order: 48,
+          order: 47,
           color: 0xFF5C6BC0,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2252,7 +2252,7 @@ class DefaultChannels {
         _channel(
           id: 'babar',
           title: 'بابار',
-          order: 50,
+          order: 48,
           color: 0xFF78909C,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2303,7 +2303,7 @@ class DefaultChannels {
         _channel(
           id: 'hadikat_almarah',
           title: 'حديقة المرح',
-          order: 51,
+          order: 17,
           color: 0xFFAB47BC,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2357,7 +2357,7 @@ class DefaultChannels {
         _channel(
           id: 'minecraft',
           title: 'Minecraft',
-          order: 52,
+          order: 49,
           color: 0xFF7CB342,
           playlist: _dadOliviaMinecraftPlaylist,
           videos: [
@@ -2408,7 +2408,7 @@ class DefaultChannels {
         _channel(
           id: 'ana_wa_akhi',
           title: 'أنا وأخي',
-          order: 53,
+          order: 10,
           color: 0xFF8E24AA,
           sourceType: SourceType.youtubeVideoList,
           followUploads: false,
@@ -2455,7 +2455,7 @@ class DefaultChannels {
         _channel(
           id: 'muka_muka',
           title: 'موكا موكا',
-          order: 53,
+          order: 12,
           color: 0xFF43A047,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -2471,7 +2471,7 @@ class DefaultChannels {
         _channel(
           id: 'milo',
           title: 'Milo',
-          order: 54,
+          order: 29,
           color: 0xFF5C6BC0,
           playlist: _miloOfficialUploads,
           // Keep off: many official uploads are non-embeddable compilations.
@@ -2533,7 +2533,7 @@ class DefaultChannels {
         _channel(
           id: 'true_magical',
           title: 'True\'s Magical Adventure',
-          order: 54,
+          order: 27,
           color: 0xFFEC407A,
           playlist: _trueMagicalSeriesPlaylist,
           followUploads: false,
@@ -2573,7 +2573,7 @@ class DefaultChannels {
         _channel(
           id: 'sesame',
           title: 'Sesame Street',
-          order: 49,
+          order: 25,
           color: 0xFFE53935,
           playlist: _sesameFullEpisodesPlaylist,
           followUploads: false,
@@ -2618,7 +2618,7 @@ class DefaultChannels {
         _channel(
           id: 'sesame_ar',
           title: 'افتح يا سمسم',
-          order: 49,
+          order: 9,
           color: 0xFF00897B,
           playlist: _iftahYaSimsimSeason1Playlist,
           followUploads: false,
@@ -2657,7 +2657,7 @@ class DefaultChannels {
         _channel(
           id: 'rob_the_robot',
           title: 'Rob the Robot',
-          order: 54,
+          order: 28,
           color: 0xFF29B6F6,
           playlist: _robTheRobotSinglesPlaylist,
           followUploads: false,
@@ -2705,7 +2705,7 @@ class DefaultChannels {
         _channel(
           id: 'sofia',
           title: 'Sofia the First',
-          order: 48,
+          order: 26,
           color: 0xFFAB47BC,
           playlist: _sofiaTheFirstPlaylist,
           followUploads: false,
@@ -2740,7 +2740,7 @@ class DefaultChannels {
         _channel(
           id: 'zaky',
           title: 'Zaky',
-          order: 56,
+          order: 4,
           color: 0xFF43A047,
           playlist: _zakyCompilationsPlaylist,
           followUploads: true,
@@ -2857,7 +2857,7 @@ class DefaultChannels {
         _channel(
           id: 'colourblocks',
           title: 'Colourblocks',
-          order: 57,
+          order: 41,
           color: 0xFFEF5350,
           playlist: _colourblocksSeason1Playlist,
           followUploads: true,
@@ -2909,7 +2909,7 @@ class DefaultChannels {
         _channel(
           id: 'alphablocks',
           title: 'Alphablocks',
-          order: 58,
+          order: 42,
           color: 0xFF5C6BC0,
           playlist: _alphablocksFullEpisodesPlaylist,
           followUploads: true,
@@ -2992,7 +2992,7 @@ class DefaultChannels {
         _channel(
           id: 'bing',
           title: 'Bing',
-          order: 59,
+          order: 43,
           color: 0xFFFFCA28,
           playlist: _bingFullEpisodesPlaylist,
           followUploads: true,
@@ -3105,7 +3105,7 @@ class DefaultChannels {
         _channel(
           id: 'bakkar',
           title: 'بكار',
-          order: 60,
+          order: 13,
           color: 0xFF8D6E63,
           playlist: _bakkarSeason2Playlist,
           followUploads: true,
@@ -3146,7 +3146,7 @@ class DefaultChannels {
         _channel(
           id: 'peppa_toys',
           title: 'Peppa Pig Toys',
-          order: 55,
+          order: 31,
           color: 0xFFEC407A,
           sourceType: SourceType.youtubeVideoList,
           videos: [
@@ -3184,7 +3184,7 @@ class DefaultChannels {
         _channel(
           id: 'lego_cooking',
           title: 'LEGO Cooking',
-          order: 61,
+          order: 51,
           color: 0xFFFFB74D,
           sourceType: SourceType.youtubeVideoList,
           videos: [
