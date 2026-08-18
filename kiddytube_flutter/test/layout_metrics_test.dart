@@ -6,10 +6,10 @@ void main() {
   test('Google TV-like 960x540 landscape is not one-column phone', () {
     final m = LayoutMetrics(const Size(960, 540));
     expect(m.isTvLike, isTrue);
-    // Shows and Mix share TV density so thumbnails stay equally large.
-    expect(m.gridColumns(isMix: false), 4);
+    expect(m.gridColumns(isMix: false), 3);
     expect(m.gridColumns(isMix: true), 4);
     expect(m.libraryColumns(), 4);
+    expect(m.channelCardAspect, lessThan(m.youtubeCardAspect));
   });
 
   test('phone portrait stays at two columns', () {

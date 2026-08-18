@@ -18,7 +18,7 @@ class CatalogSanitize {
     }
     return channel.copyWith(
       title: channel.title.trim().isEmpty ? id : channel.title.trim(),
-      videos: videos,
+      videos: newestVideosFirst(videos),
       youtubePlaylistId: MediaIds.extractPlaylistId(channel.youtubePlaylistId),
     );
   }

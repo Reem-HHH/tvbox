@@ -21,6 +21,19 @@ class MediaIds {
     return _validVideoId.hasMatch(id.trim());
   }
 
+  /// Uploads playlist `UU…` maps 1:1 to channel id `UC…`.
+  static String? channelIdFromUploadsPlaylist(String? playlistId) {
+    final id = playlistId?.trim();
+    if (id == null || id.length < 24) return null;
+    if (id.startsWith('UU')) return 'UC${id.substring(2)}';
+    return null;
+  }
+
+  static bool isHttpsUrl(String? url) {
+    final uri = Uri.tryParse(url?.trim() ?? '');
+    return uri != null && uri.scheme.toLowerCase() == 'https' && uri.host.isNotEmpty;
+  }
+
   static String? extractVideoId(String? input) {
     if (input == null || input.trim().isEmpty) return null;
     final trimmed = input.trim();

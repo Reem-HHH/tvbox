@@ -55,17 +55,17 @@ class LayoutMetrics {
     return 180;
   }
 
-  /// Kid-friendly tiles: large enough to tap/click, not one per row on TV.
-  /// Shows and Mix use the same column count so thumbnails stay equally large.
+  /// Kid-friendly tiles: Shows uses fewer columns so folder art is larger.
+  /// Mix / episode grids stay denser.
   int gridColumns({required bool isMix}) {
-    if (isTvLike) {
-      return isLandscape ? 4 : 3;
+    if (isMix) {
+      if (isTvLike) return isLandscape ? 4 : 3;
+      if (isTablet) return isLandscape ? 4 : 3;
+      return isLandscape ? 3 : 2;
     }
-    if (isTablet) {
-      return isLandscape ? 4 : 3;
-    }
-    // Phone
-    return isLandscape ? 3 : 2;
+    if (isTvLike) return isLandscape ? 3 : 2;
+    if (isTablet) return isLandscape ? 3 : 2;
+    return 2;
   }
 
   int libraryColumns() {
@@ -74,6 +74,9 @@ class LayoutMetrics {
     return isLandscape ? 3 : 2;
   }
 
-  /// Grid cell: 16:9 image + title block under.
+  /// Grid cell: 16:9 image + title block under (episodes / Mix).
   double get youtubeCardAspect => 16 / 12.2;
+
+  /// Show folder: near-square YouTube channel avatar + title.
+  double get channelCardAspect => 1 / 1.18;
 }

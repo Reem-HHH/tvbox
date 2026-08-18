@@ -41,9 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<RecentWatchItem> _recent = const [];
   Object? _error;
 
-  List<ContentChannel> _shuffledChannels = const [];
-  List<PlayableVideo> _shuffledVideos = const [];
-  int? _shuffleToken;
+  List<ContentChannel> _homeChannels = const [];
+  List<PlayableVideo> _homeVideos = const [];
+  int? _homeListToken;
   Timer? _dailySyncTimer;
 
   @override
@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _settings = settings;
         _recent = recent;
         _error = null;
-        _refreshShuffled(settings);
+        _refreshHomeLists(settings);
       });
       // Let first frame paint before network sync (avoids hitchy startup).
       _dailySyncTimer?.cancel();
@@ -80,27 +80,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _refreshShuffled(CatalogSettings settings) {
+  void _refreshHomeLists(CatalogSettings settings) {
     final token = Object.hash(
-      widget.repository.channelShuffleSeed,
-      widget.repository.videoShuffleSeed,
       settings.homeLibraryMode,
       Object.hashAll(
         settings.channels.map(
-          (c) => Object.hash(c.id, c.enabled, c.videos.length, c.previewVideoId),
+          (c) => Object.hash(
+            c.id,
+            c.enabled,
+            c.sortOrder,
+            c.videos.length,
+            c.artworkUrl,
+            c.previewVideoId,
+            c.videos.isEmpty ? 0 : c.videos.first.id,
+          ),
         ),
       ),
     );
-    if (_shuffleToken == token) return;
-    _shuffleToken = token;
-    _shuffledChannels = shuffleEnabledChannels(
-      settings.channels,
-      widget.repository.channelShuffleSeed,
-    );
-    _shuffledVideos = flattenEnabledVideos(
-      settings.channels,
-      widget.repository.videoShuffleSeed,
-    );
+    if (_homeListToken == token) return;
+    _homeListToken = token;
+    _homeChannels = enabledChannelsInCatalogOrder(settings.channels);
+    _homeVideos = flattenEnabledVideos(settings.channels);
   }
 
   Future<void> _maybeDailySync() async {
@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _settings = settings;
         _recent = recent;
-        _refreshShuffled(settings);
+        _refreshHomeLists(settings);
       });
     } catch (_) {}
   }
@@ -140,7 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       await widget.repository.refreshAllPlaylists(force: true);
     } catch (_) {}
-    widget.repository.reshuffleHome();
     await _reloadAfterSync();
   }
 
@@ -248,8 +247,8 @@ class _HomeScreenState extends State<HomeScreen> {
     // Tablets (incl. iPad landscape) stay eligible even when also "tv-like" wide.
     final allowPullRefresh = layout.isTablet || !layout.isTvLike;
     final isMix = settings.homeLibraryMode == HomeLibraryMode.mixVideos;
-    final channels = _shuffledChannels;
-    final videos = _shuffledVideos;
+    final channels = _homeChannels;
+    final videos = _homeVideos;
     final crossAxisCount = layout.gridColumns(isMix: isMix);
     final tileCacheWidth = _tileMemCacheWidth(context, crossAxisCount);
 
@@ -438,7 +437,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     memCacheWidth: tileCacheWidth,
                     onOpen: _openChannel,
                     autofocusFirst: _recent.isEmpty,
-                    aspectRatio: layout.youtubeCardAspect,
+                    aspectRatio: layout.channelCardAspect,
                   ),
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
@@ -585,16 +584,22 @@ class ChannelGridSliver extends StatelessWidget {
           (context, index) {
             final channel = channels[index];
             return FocusTile(
-              key: ValueKey('channel-${channel.id}-${channel.previewVideoId}'),
+              key: ValueKey('channel-${channel.id}-${channel.artworkUrl ?? channel.previewVideoId}'),
               autofocus: autofocusFirst && index == 0,
               onActivated: () => onOpen(channel),
               child: YtCard(
                 title: channel.title,
                 subtitle: '${channel.videos.length} videos',
-                imageUrl: channel.previewThumbnail,
-                contentKey: channel.previewVideoId ?? channel.id,
+                imageUrl: channel.tileArtwork,
+                fallbackImageUrl: channel.artworkUrl != null
+                    ? channel.previewThumbnail
+                    : null,
+                contentKey: channel.artworkUrl != null
+                    ? 'art-${channel.id}'
+                    : (channel.previewVideoId ?? channel.id),
                 memCacheWidth: memCacheWidth,
                 placeholderColor: Color(channel.color),
+                imageFit: BoxFit.cover,
               ),
             );
           },
@@ -668,21 +673,25 @@ class YtCard extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.imageUrl,
+    this.fallbackImageUrl,
     this.contentKey,
     this.memCacheWidth,
     this.placeholderColor,
     this.progress = 0,
     this.accent = _ytRed,
+    this.imageFit = BoxFit.cover,
   });
 
   final String title;
   final String? subtitle;
   final String? imageUrl;
+  final String? fallbackImageUrl;
   final String? contentKey;
   final int? memCacheWidth;
   final Color? placeholderColor;
   final double progress;
   final Color accent;
+  final BoxFit imageFit;
 
   @override
   Widget build(BuildContext context) {
@@ -710,13 +719,29 @@ class YtCard extends StatelessWidget {
                     cacheKey:
                         contentKey == null ? imageUrl : 'yt-mq-$contentKey',
                     imageUrl: imageUrl!,
-                    fit: BoxFit.cover,
+                    fit: imageFit,
                     fadeInDuration: Duration.zero,
                     fadeOutDuration: Duration.zero,
                     filterQuality: FilterQuality.low,
                     memCacheWidth: memWidth,
                     placeholder: (_, _) => ColoredBox(color: fill),
                     errorWidget: (_, url, _) {
+                      final fallback = fallbackImageUrl;
+                      if (fallback != null &&
+                          fallback.isNotEmpty &&
+                          fallback != url) {
+                        return CachedNetworkImage(
+                          key: ValueKey('thumb-fallback-$contentKey'),
+                          cacheKey: 'yt-fb-$contentKey',
+                          imageUrl: fallback,
+                          fit: imageFit,
+                          fadeInDuration: Duration.zero,
+                          filterQuality: FilterQuality.low,
+                          memCacheWidth: memWidth,
+                          placeholder: (_, _) => ColoredBox(color: fill),
+                          errorWidget: (_, _, _) => ColoredBox(color: fill),
+                        );
+                      }
                       final id = contentKey;
                       if (id != null &&
                           id.length == 11 &&
@@ -725,7 +750,7 @@ class YtCard extends StatelessWidget {
                           key: ValueKey('thumb-hq-$id'),
                           cacheKey: 'yt-hq-$id',
                           imageUrl: 'https://i.ytimg.com/vi/$id/hqdefault.jpg',
-                          fit: BoxFit.cover,
+                          fit: imageFit,
                           fadeInDuration: Duration.zero,
                           filterQuality: FilterQuality.low,
                           memCacheWidth: memWidth,
@@ -819,8 +844,9 @@ class LibraryScreen extends StatelessWidget {
       }
       return;
     }
+    final videos = newestVideosFirst(channel.videos);
     final queue = [
-      for (final v in channel.videos)
+      for (final v in videos)
         PlayableVideo(channelId: channel.id, video: v),
     ];
     if (!context.mounted) return;
@@ -846,6 +872,7 @@ class LibraryScreen extends StatelessWidget {
         (MediaQuery.sizeOf(context).width / crossAxisCount * dpr)
             .clamp(160.0, 480.0)
             .round();
+    final videos = newestVideosFirst(channel.videos);
     return Scaffold(
       backgroundColor: scheme.surface,
       appBar: AppBar(
@@ -863,7 +890,7 @@ class LibraryScreen extends StatelessWidget {
       body: Center(
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: layout.maxContentWidth),
-          child: channel.videos.isEmpty
+          child: videos.isEmpty
               ? const Center(child: Text('No videos yet.'))
               : GridView.builder(
                   padding: EdgeInsets.all(layout.pagePadding),
@@ -875,9 +902,9 @@ class LibraryScreen extends StatelessWidget {
                     crossAxisSpacing: 12,
                     childAspectRatio: layout.youtubeCardAspect,
                   ),
-                  itemCount: channel.videos.length,
+                  itemCount: videos.length,
                   itemBuilder: (context, index) {
-                    final video = channel.videos[index];
+                    final video = videos[index];
                     return FocusTile(
                       key: ValueKey('lib-${channel.id}-${video.id}'),
                       autofocus: index == 0,

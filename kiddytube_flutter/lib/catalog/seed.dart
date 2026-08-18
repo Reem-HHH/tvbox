@@ -1,4 +1,5 @@
 import 'catalog_sanitize.dart';
+import 'media_ids.dart';
 import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
@@ -3079,12 +3080,24 @@ class DefaultChannels {
           followUploads: current.playlistManagedByParent
               ? current.followUploads
               : seedCh.followUploads,
+          youtubeChannelId: (current.youtubeChannelId == null ||
+                  current.youtubeChannelId!.isEmpty)
+              ? seedCh.youtubeChannelId
+              : current.youtubeChannelId,
         );
       } else if (current.sortOrder != seedCh.sortOrder ||
-          current.color != seedCh.color) {
+          current.color != seedCh.color ||
+          ((current.youtubeChannelId == null ||
+                  current.youtubeChannelId!.isEmpty) &&
+              seedCh.youtubeChannelId != null &&
+              seedCh.youtubeChannelId!.isNotEmpty)) {
         byId[seedCh.id] = current.copyWith(
           sortOrder: seedCh.sortOrder,
           color: seedCh.color,
+          youtubeChannelId: (current.youtubeChannelId == null ||
+                  current.youtubeChannelId!.isEmpty)
+              ? seedCh.youtubeChannelId
+              : current.youtubeChannelId,
         );
       }
     }
@@ -3118,6 +3131,7 @@ class DefaultChannels {
       sortOrder: order,
       color: color,
       followUploads: followUploads,
+      youtubeChannelId: MediaIds.channelIdFromUploadsPlaylist(playlist),
     );
   }
 

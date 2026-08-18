@@ -11,7 +11,7 @@ enum SourceType {
   }
 }
 
-/// Kids home: channel tiles vs a flat shuffled video mix.
+/// Kids home: channel tiles vs a flat newest-first video mix.
 enum HomeLibraryMode {
   channels,
   mixVideos;
@@ -118,6 +118,8 @@ class ContentChannel {
     this.color = 0xFF42A5F5,
     this.playlistManagedByParent = false,
     this.defaultAllowSeek = true,
+    this.youtubeChannelId,
+    this.artworkUrl,
   });
 
   final String id;
@@ -132,6 +134,17 @@ class ContentChannel {
   final int color;
   final bool playlistManagedByParent;
   final bool defaultAllowSeek;
+  /// YouTube `UC…` id used to fetch the channel's cartoon avatar.
+  final String? youtubeChannelId;
+  /// HTTPS URL of the YouTube channel profile image (not an episode thumb).
+  final String? artworkUrl;
+
+  /// Show-folder image: channel avatar when fetched, else first episode thumb.
+  String? get tileArtwork {
+    final art = artworkUrl?.trim();
+    if (art != null && art.isNotEmpty) return art;
+    return previewThumbnail;
+  }
 
   /// Preview thumb from the first YouTube video when available.
   String? get previewThumbnail {
@@ -165,6 +178,8 @@ class ContentChannel {
     int? color,
     bool? playlistManagedByParent,
     bool? defaultAllowSeek,
+    String? youtubeChannelId,
+    String? artworkUrl,
   }) {
     return ContentChannel(
       id: id,
@@ -180,6 +195,8 @@ class ContentChannel {
       playlistManagedByParent:
           playlistManagedByParent ?? this.playlistManagedByParent,
       defaultAllowSeek: defaultAllowSeek ?? this.defaultAllowSeek,
+      youtubeChannelId: youtubeChannelId ?? this.youtubeChannelId,
+      artworkUrl: artworkUrl ?? this.artworkUrl,
     );
   }
 
@@ -195,6 +212,8 @@ class ContentChannel {
         'color': color,
         'playlistManagedByParent': playlistManagedByParent,
         'defaultAllowSeek': defaultAllowSeek,
+        if (youtubeChannelId != null) 'youtubeChannelId': youtubeChannelId,
+        if (artworkUrl != null) 'artworkUrl': artworkUrl,
       };
 
   factory ContentChannel.fromJson(Map<String, dynamic> json) => ContentChannel(
@@ -212,6 +231,8 @@ class ContentChannel {
         playlistManagedByParent:
             json['playlistManagedByParent'] as bool? ?? false,
         defaultAllowSeek: json['defaultAllowSeek'] as bool? ?? true,
+        youtubeChannelId: json['youtubeChannelId'] as String?,
+        artworkUrl: json['artworkUrl'] as String?,
       );
 }
 

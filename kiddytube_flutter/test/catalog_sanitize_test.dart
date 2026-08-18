@@ -45,4 +45,15 @@ void main() {
       'abcdefghijk',
     );
   });
+
+  test('channelIdFromUploadsPlaylist maps UU uploads to UC channel', () {
+    expect(
+      MediaIds.channelIdFromUploadsPlaylist(
+        'UU178EmfQAV3OT-UpuO6WUMg',
+      ),
+      'UC178EmfQAV3OT-UpuO6WUMg',
+    );
+    expect(MediaIds.channelIdFromUploadsPlaylist('PL9swKX1PviEr9UfByZqJYiN8KX3AXqyXm'), isNull);
+    expect(MediaIds.channelIdFromUploadsPlaylist(null), isNull);
+  });
 }

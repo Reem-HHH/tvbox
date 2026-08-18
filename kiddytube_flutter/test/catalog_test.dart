@@ -19,16 +19,27 @@ void main() {
     expect(HomeLibraryMode.fromStored('mixVideos'), HomeLibraryMode.mixVideos);
   });
 
-  test('flattenEnabledVideos only includes enabled channels and is seed-stable', () {
+  test('flattenEnabledVideos only includes enabled channels, newest first', () {
     final channels = [
       ContentChannel(
         id: 'a',
         title: 'A',
         sourceType: SourceType.youtubeVideoList,
         enabled: true,
+        sortOrder: 1,
         videos: const [
-          VideoItem(id: '1', title: 'One', youtubeVideoId: '1'),
-          VideoItem(id: '2', title: 'Two', youtubeVideoId: '2'),
+          VideoItem(
+            id: '1',
+            title: 'One',
+            youtubeVideoId: '1',
+            publishedAtMs: 100,
+          ),
+          VideoItem(
+            id: '2',
+            title: 'Two',
+            youtubeVideoId: '2',
+            publishedAtMs: 300,
+          ),
         ],
       ),
       ContentChannel(
@@ -37,19 +48,66 @@ void main() {
         sourceType: SourceType.youtubeVideoList,
         enabled: false,
         videos: const [
-          VideoItem(id: '3', title: 'Three', youtubeVideoId: '3'),
+          VideoItem(
+            id: '3',
+            title: 'Three',
+            youtubeVideoId: '3',
+            publishedAtMs: 999,
+          ),
         ],
       ),
     ];
 
-    final first = flattenEnabledVideos(channels, 42);
-    final second = flattenEnabledVideos(channels, 42);
-    expect(first.map((e) => e.video.id).toSet(), {'1', '2'});
+    final first = flattenEnabledVideos(channels);
+    expect(first.map((e) => e.video.id).toList(), ['2', '1']);
     expect(first.every((e) => e.channelId == 'a'), isTrue);
     expect(
+      flattenEnabledVideos(channels).map((e) => e.video.id).toList(),
       first.map((e) => e.video.id).toList(),
-      second.map((e) => e.video.id).toList(),
     );
+  });
+
+  test('enabledChannelsInCatalogOrder follows sortOrder not shuffle', () {
+    final channels = [
+      ContentChannel(
+        id: 'z',
+        title: 'Z',
+        sourceType: SourceType.youtubeVideoList,
+        enabled: true,
+        sortOrder: 2,
+      ),
+      ContentChannel(
+        id: 'a',
+        title: 'A',
+        sourceType: SourceType.youtubeVideoList,
+        enabled: true,
+        sortOrder: 0,
+      ),
+      ContentChannel(
+        id: 'off',
+        title: 'Off',
+        sourceType: SourceType.youtubeVideoList,
+        enabled: false,
+        sortOrder: 1,
+      ),
+    ];
+    expect(
+      enabledChannelsInCatalogOrder(channels).map((c) => c.id).toList(),
+      ['a', 'z'],
+    );
+  });
+
+  test('newestVideosFirst puts dated items before undated', () {
+    const items = [
+      VideoItem(id: 'old', title: 'Old', publishedAtMs: 10),
+      VideoItem(id: 'none', title: 'None'),
+      VideoItem(id: 'new', title: 'New', publishedAtMs: 50),
+    ];
+    expect(newestVideosFirst(items).map((v) => v.id).toList(), [
+      'new',
+      'old',
+      'none',
+    ]);
   });
 
 
@@ -359,6 +417,7 @@ void main() {
     expect(total, greaterThanOrEqualTo(1900));
     final omar = seed.firstWhere((c) => c.id == 'omar_hana');
     expect(omar.videos.length, greaterThanOrEqualTo(40));
+    expect(omar.youtubeChannelId, 'UC178EmfQAV3OT-UpuO6WUMg');
     final maruko = seed.firstWhere((c) => c.id == 'maruko');
     expect(maruko.videos.length, greaterThanOrEqualTo(30));
     final toys = seed.firstWhere((c) => c.id == 'peppa_toys');

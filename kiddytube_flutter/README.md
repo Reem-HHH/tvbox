@@ -12,6 +12,7 @@ Cross-platform kids browser for:
 
 - Curated catalog seed **v43** (allowlisted channels / videos)
 - Home **Shows | Mix** side-by-side toggle (selected mode highlighted; change gated behind parent PIN)
+- Shows tiles use **YouTube channel artwork** (cartoon avatar) in a larger grid; episodes sort **newest first**
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel; seek scrub overlay when allowed)
 - Continue watching with **periodic resume progress** (clamped near start/end)
 - Parent dashboard tabs: **Channels** · **Security** · **Home & Sync**
@@ -21,7 +22,7 @@ Cross-platform kids browser for:
 - Release builds block kid playback until the factory PIN is changed
 - **Family title + tag filter** on playlist sync (skips Halloween / Thanksgiving / LGBTQ-related titles and YouTube tags)
 - Recent seed highlights: مكة مباشر، القرآن مباشر، ماشا والدب، بليبي بالعربي، Disney Songs، ماروكو الصغيرة، بابار، حديقة المرح
-- Channel tiles use YouTube preview thumbs; TV-friendly grids and lighter scroll decoding
+- TV-friendly grids and lighter scroll decoding
 
 ## Docs
 

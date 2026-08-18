@@ -207,7 +207,12 @@ class YoutubeCatalogSource {
         }
         final base = byId[id];
         if (base == null) continue;
-        kept.add(base.copyWith(title: title));
+        kept.add(
+          base.copyWith(
+            title: title,
+            publishedAtMs: _parseIso8601(snippet['publishedAt'] as String?),
+          ),
+        );
       }
       // Drop IDs the videos.list call did not return (unavailable / region).
       for (final id in chunk) {
@@ -339,5 +344,131 @@ class YoutubeCatalogSource {
       for (final item in raw)
         if (item is String && item.trim().isNotEmpty) item.trim(),
     ];
+  }
+
+  /// Highest-res HTTPS thumbnail from a YouTube `snippet.thumbnails` map.
+  static String? thumbnailUrlFromSnippet(Map<String, dynamic>? thumbnails) {
+    if (thumbnails == null) return null;
+    for (final key in const ['high', 'medium', 'default']) {
+      final url = (thumbnails[key] as Map?)?['url'] as String?;
+      if (url != null && url.startsWith('https://')) return url;
+    }
+    return null;
+  }
+
+  /// Channel id (`UC…`) for each playlist id (`snippet.channelId`).
+  Future<Map<String, String>> fetchPlaylistChannelIds({
+    required String apiKey,
+    required List<String> playlistIds,
+  }) async {
+    final out = <String, String>{};
+    final unique = {
+      for (final raw in playlistIds)
+        if (raw.trim().isNotEmpty) raw.trim(),
+    }.toList();
+    for (var i = 0; i < unique.length; i += 50) {
+      final chunk = unique.skip(i).take(50).toList();
+      final uri = Uri.https(
+        'www.googleapis.com',
+        '/youtube/v3/playlists',
+        {
+          'part': 'snippet',
+          'id': chunk.join(','),
+          'key': apiKey,
+        },
+      );
+      final response = await _client.get(uri).timeout(_requestTimeout);
+      if (response.statusCode != 200) continue;
+      final root = jsonDecode(response.body) as Map<String, dynamic>;
+      for (final raw in root['items'] as List<dynamic>? ?? const []) {
+        final item = Map<String, dynamic>.from(raw as Map);
+        final playlistId = item['id'] as String?;
+        final snippet =
+            Map<String, dynamic>.from(item['snippet'] as Map? ?? const {});
+        final channelId = (snippet['channelId'] as String?)?.trim();
+        if (playlistId == null || channelId == null || channelId.isEmpty) {
+          continue;
+        }
+        out[playlistId] = channelId;
+      }
+    }
+    return out;
+  }
+
+  /// YouTube channel profile image (cartoon avatar) keyed by `UC…` id.
+  Future<Map<String, String>> fetchChannelArtwork({
+    required String apiKey,
+    required List<String> channelIds,
+  }) async {
+    final out = <String, String>{};
+    final unique = {
+      for (final raw in channelIds)
+        if (raw.trim().isNotEmpty) raw.trim(),
+    }.toList();
+    for (var i = 0; i < unique.length; i += 50) {
+      final chunk = unique.skip(i).take(50).toList();
+      final uri = Uri.https(
+        'www.googleapis.com',
+        '/youtube/v3/channels',
+        {
+          'part': 'snippet',
+          'id': chunk.join(','),
+          'key': apiKey,
+        },
+      );
+      final response = await _client.get(uri).timeout(_requestTimeout);
+      if (response.statusCode != 200) continue;
+      final root = jsonDecode(response.body) as Map<String, dynamic>;
+      for (final raw in root['items'] as List<dynamic>? ?? const []) {
+        final item = Map<String, dynamic>.from(raw as Map);
+        final id = item['id'] as String?;
+        final snippet =
+            Map<String, dynamic>.from(item['snippet'] as Map? ?? const {});
+        final thumbs = Map<String, dynamic>.from(
+          snippet['thumbnails'] as Map? ?? const {},
+        );
+        final url = thumbnailUrlFromSnippet(thumbs);
+        if (id == null || url == null) continue;
+        out[id] = url;
+      }
+    }
+    return out;
+  }
+
+  /// `snippet.publishedAt` for each video id (does not filter Shorts).
+  Future<Map<String, int>> fetchPublishedAtById({
+    required String apiKey,
+    required List<String> videoIds,
+  }) async {
+    final out = <String, int>{};
+    final unique = {
+      for (final raw in videoIds)
+        if (raw.trim().isNotEmpty) raw.trim(),
+    }.toList();
+    for (var i = 0; i < unique.length; i += 50) {
+      final chunk = unique.skip(i).take(50).toList();
+      final uri = Uri.https(
+        'www.googleapis.com',
+        '/youtube/v3/videos',
+        {
+          'part': 'snippet',
+          'id': chunk.join(','),
+          'key': apiKey,
+        },
+      );
+      final response = await _client.get(uri).timeout(_requestTimeout);
+      if (response.statusCode != 200) continue;
+      final root = jsonDecode(response.body) as Map<String, dynamic>;
+      for (final raw in root['items'] as List<dynamic>? ?? const []) {
+        final item = Map<String, dynamic>.from(raw as Map);
+        final id = item['id'] as String?;
+        final snippet =
+            Map<String, dynamic>.from(item['snippet'] as Map? ?? const {});
+        final ms = _parseIso8601(snippet['publishedAt'] as String?);
+        if (id == null || ms == null) continue;
+        out[id] = ms;
+      }
+    }
+    return out;
   }
 }

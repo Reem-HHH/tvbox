@@ -221,18 +221,6 @@ class CatalogRepository {
   CatalogSettings? _cached;
   Future<void>? _updateChain;
 
-  /// Stable until [reshuffleHome] (mirrors Kotlin home shuffle seeds).
-  int channelShuffleSeed = DateTime.now().microsecondsSinceEpoch;
-  int videoShuffleSeed =
-      DateTime.now().microsecondsSinceEpoch ^ 0x5f3759df;
-
-  /// New home order for Shows / Mix (e.g. after pull-to-refresh).
-  void reshuffleHome() {
-    channelShuffleSeed = DateTime.now().microsecondsSinceEpoch;
-    videoShuffleSeed =
-        DateTime.now().microsecondsSinceEpoch ^ 0x5f3759df;
-  }
-
   static const _modeKey = 'home_library_mode';
   static const _seedKey = 'seed_version';
   static const _catalogKey = 'catalog_channels_v1';
@@ -248,6 +236,7 @@ class CatalogRepository {
   static const _lastCloudRevisionKey = 'last_cloud_revision';
   static const _cloudAutoEnrollOptOutKey = 'cloud_auto_enroll_opt_out';
   static const _shortsPurgedKey = 'catalog_shorts_purged_v4';
+  static const _datesBackfilledKey = 'catalog_dates_backfilled_v1';
   static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
@@ -294,9 +283,22 @@ class CatalogRepository {
     final cleaned = DefaultChannels.dropRetiredMedia(
       CatalogSanitize.channels(channels),
     );
-    if (!_sameChannelVideoIds(channels, cleaned)) {
-      channels = cleaned;
+    var nextChannels = [
+      for (final ch in cleaned)
+        ch.copyWith(
+          videos: newestVideosFirst(ch.videos),
+          youtubeChannelId: (ch.youtubeChannelId != null &&
+                  ch.youtubeChannelId!.trim().isNotEmpty)
+              ? ch.youtubeChannelId
+              : MediaIds.channelIdFromUploadsPlaylist(ch.youtubePlaylistId),
+        ),
+    ];
+    if (!_sameChannelVideoIds(channels, nextChannels) ||
+        !_sameChannelMeta(channels, nextChannels)) {
+      channels = nextChannels;
       await _persistChannels(channels);
+    } else {
+      channels = nextChannels;
     }
 
     final sanitized = await ReleasePinPolicy.sanitizePinFlagsAsync(
@@ -362,6 +364,19 @@ class CatalogRepository {
       for (var j = 0; j < a[i].videos.length; j++) {
         if (a[i].videos[j].id != b[i].videos[j].id) return false;
       }
+    }
+    return true;
+  }
+
+  static bool _sameChannelMeta(
+    List<ContentChannel> a,
+    List<ContentChannel> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+      if (a[i].youtubeChannelId != b[i].youtubeChannelId) return false;
+      if (a[i].artworkUrl != b[i].artworkUrl) return false;
     }
     return true;
   }
@@ -874,7 +889,7 @@ class CatalogRepository {
         .toList();
     final channels = DefaultChannels.dropRetiredMedia(
       CatalogSanitize.channels(parsed),
-    );
+    ).map((ch) => ch.copyWith(videos: newestVideosFirst(ch.videos))).toList();
     final mode = HomeLibraryMode.fromStored(
       payload['homeLibraryMode'] as String?,
     );
@@ -1099,6 +1114,7 @@ class CatalogRepository {
             : s.lastSyncMs,
       ),
     );
+    await maybeRefreshChannelArtwork();
     if (errors.isNotEmpty) {
       return 'Updated $updated playlists; ${errors.length} failed.\n'
           '${errors.take(3).join('\n')}';
@@ -1112,12 +1128,159 @@ class CatalogRepository {
     final apiKey = settings.youtubeApiKey?.trim();
     if (apiKey == null || apiKey.isEmpty) return false;
     final purged = await maybePurgeShortVideos();
+    final dated = await maybeBackfillPublishDates();
+    final art = await maybeRefreshChannelArtwork();
     final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - settings.lastSyncMs < syncTtlMs) return purged;
+    if (now - settings.lastSyncMs < syncTtlMs) return purged || dated || art;
     final summary = await refreshAllPlaylists(force: true);
     final synced = !summary.startsWith('Already synced') &&
         !summary.startsWith('Add a YouTube');
-    return purged || synced;
+    return purged || dated || art || synced;
+  }
+
+  /// Fill missing [VideoItem.publishedAtMs] so libraries can sort newest-first.
+  Future<bool> maybeBackfillPublishDates({bool force = false}) async {
+    await _ensurePrefs();
+    if (!force && (_prefs!.getBool(_datesBackfilledKey) ?? false)) {
+      return false;
+    }
+    final settings = await load();
+    final apiKey = settings.youtubeApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return false;
+
+    final missing = <String>[];
+    final seen = <String>{};
+    for (final ch in settings.channels) {
+      for (final v in ch.videos) {
+        if (v.publishedAtMs != null) continue;
+        final yt = v.youtubeVideoId?.trim();
+        if (yt == null || yt.isEmpty || !MediaIds.isValidVideoId(yt)) continue;
+        if (seen.add(yt)) missing.add(yt);
+      }
+    }
+    if (missing.isEmpty) {
+      await _prefs!.setBool(_datesBackfilledKey, true);
+      return false;
+    }
+
+    final dates = await _youtube.fetchPublishedAtById(
+      apiKey: apiKey,
+      videoIds: missing,
+    );
+    if (dates.isEmpty) {
+      await _prefs!.setBool(_datesBackfilledKey, true);
+      return false;
+    }
+
+    var changed = false;
+    final next = [
+      for (final ch in settings.channels)
+        ch.copyWith(
+          videos: newestVideosFirst([
+            for (final v in ch.videos)
+              v.copyWith(publishedAtMs: dates[v.youtubeVideoId ?? v.id] ?? v.publishedAtMs),
+          ]),
+        ),
+    ];
+    if (!_sameChannelVideoIds(settings.channels, next) ||
+        !_samePublishDates(settings.channels, next)) {
+      changed = true;
+      await update((s) => s.copyWith(channels: next));
+    }
+    await _prefs!.setBool(_datesBackfilledKey, true);
+    return changed;
+  }
+
+  static bool _samePublishDates(
+    List<ContentChannel> a,
+    List<ContentChannel> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].videos.length != b[i].videos.length) return false;
+      for (var j = 0; j < a[i].videos.length; j++) {
+        if (a[i].videos[j].publishedAtMs != b[i].videos[j].publishedAtMs) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /// Fetch YouTube channel profile images for show tiles that still use episode thumbs.
+  Future<bool> maybeRefreshChannelArtwork() async {
+    final settings = await load();
+    final apiKey = settings.youtubeApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return false;
+
+    var channels = [...settings.channels];
+    final needPlaylistLookup = <String>[];
+    for (final ch in channels) {
+      if (ch.artworkUrl != null && ch.artworkUrl!.trim().isNotEmpty) continue;
+      final known = ch.youtubeChannelId?.trim();
+      if (known != null && known.isNotEmpty) continue;
+      final fromUploads =
+          MediaIds.channelIdFromUploadsPlaylist(ch.youtubePlaylistId);
+      if (fromUploads != null) continue;
+      final playlist = ch.youtubePlaylistId?.trim();
+      if (playlist != null && playlist.isNotEmpty) {
+        needPlaylistLookup.add(playlist);
+      }
+    }
+
+    Map<String, String> playlistOwners = const {};
+    if (needPlaylistLookup.isNotEmpty) {
+      playlistOwners = await _youtube.fetchPlaylistChannelIds(
+        apiKey: apiKey,
+        playlistIds: needPlaylistLookup,
+      );
+    }
+
+    final channelIds = <String>{};
+    channels = [
+      for (final ch in channels)
+        ch.copyWith(
+          youtubeChannelId: _resolvedYoutubeChannelId(ch, playlistOwners),
+        ),
+    ];
+    for (final ch in channels) {
+      if (ch.artworkUrl != null && ch.artworkUrl!.trim().isNotEmpty) continue;
+      final id = ch.youtubeChannelId?.trim();
+      if (id != null && id.isNotEmpty) channelIds.add(id);
+    }
+    if (channelIds.isEmpty) {
+      if (!_sameChannelMeta(settings.channels, channels)) {
+        await update((s) => s.copyWith(channels: channels));
+        return true;
+      }
+      return false;
+    }
+
+    final art = await _youtube.fetchChannelArtwork(
+      apiKey: apiKey,
+      channelIds: channelIds.toList(),
+    );
+    final next = [
+      for (final ch in channels)
+        ch.copyWith(
+          artworkUrl: (ch.artworkUrl != null && ch.artworkUrl!.trim().isNotEmpty)
+              ? ch.artworkUrl
+              : art[ch.youtubeChannelId],
+        ),
+    ];
+    if (_sameChannelMeta(settings.channels, next)) return false;
+    await update((s) => s.copyWith(channels: next));
+    return true;
+  }
+
+  static String? _resolvedYoutubeChannelId(
+    ContentChannel ch,
+    Map<String, String> playlistOwners,
+  ) {
+    final existing = ch.youtubeChannelId?.trim();
+    if (existing != null && existing.isNotEmpty) return existing;
+    return MediaIds.channelIdFromUploadsPlaylist(ch.youtubePlaylistId) ??
+        playlistOwners[ch.youtubePlaylistId?.trim() ?? ''];
   }
 
   /// One-shot: drop leftover Shorts (sub-60s, #shorts labels/tags, or
