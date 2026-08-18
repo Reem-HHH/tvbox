@@ -5,6 +5,37 @@ import 'models.dart';
 /// Caps Mix size so Android TV does not decode hundreds of thumbs at once.
 const kMixVideoCap = 100;
 
+/// Arabic / Islamic household tiles on Shows (everything else is English).
+const kArabicHomeChannelIds = {
+  'live_makkah',
+  'dawood',
+  'omar_hana',
+  'mini_muslim',
+  'zaky',
+  'kids_music',
+  'spacetoon',
+  'moda_modi',
+  'smarta',
+  'sesame_ar',
+  'ana_wa_akhi',
+  'maruko',
+  'muka_muka',
+  'bakkar',
+  'mansour',
+  'masha_ar',
+  'blippi_ar',
+  'hadikat_almarah',
+  'toyor_baby',
+  'adam_mishmish',
+  'zakaria',
+  'kiki_nadoush',
+  'rayan',
+  'sweet_kalima',
+  'abata',
+};
+
+bool isArabicHomeChannel(String id) => kArabicHomeChannelIds.contains(id);
+
 /// Enabled channels in catalog [ContentChannel.sortOrder] (no shuffle).
 List<ContentChannel> enabledChannelsInCatalogOrder(
   List<ContentChannel> channels,
@@ -16,6 +47,21 @@ List<ContentChannel> enabledChannelsInCatalogOrder(
     return a.id.compareTo(b.id);
   });
   return enabled;
+}
+
+/// Shows home: Arabic tiles, then English tiles (parent-added ids go English).
+({List<ContentChannel> arabic, List<ContentChannel> english})
+    splitEnabledChannelsByHomeSection(List<ContentChannel> channels) {
+  final arabic = <ContentChannel>[];
+  final english = <ContentChannel>[];
+  for (final ch in enabledChannelsInCatalogOrder(channels)) {
+    if (isArabicHomeChannel(ch.id)) {
+      arabic.add(ch);
+    } else {
+      english.add(ch);
+    }
+  }
+  return (arabic: arabic, english: english);
 }
 
 /// Flatten enabled libraries, newest publish date first.

@@ -10,9 +10,9 @@ Cross-platform kids browser for:
 
 ## Features (current)
 
-- Curated catalog seed **v49** (allowlisted channels / videos)
+- Curated catalog seed **v50** (allowlisted channels / videos)
 - Home **Shows | Mix** side-by-side toggle (selected mode highlighted; change gated behind parent PIN)
-- Shows tiles use a **random recent episode thumb** (changes on refresh); 16:9 image fits inside the tile; **Arabic shows first**, then English; episodes sort **newest first**
+- Shows tiles use a **random recent episode thumb** (changes on refresh); 16:9 image fits inside the tile; sections **Arabic Shows** then **English Shows**; episodes sort **newest first**
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel; seek scrub overlay when allowed)
 - Continue watching with **periodic resume progress** (clamped near start/end)
 - Parent dashboard tabs: **Channels** · **Security** · **Home & Sync**

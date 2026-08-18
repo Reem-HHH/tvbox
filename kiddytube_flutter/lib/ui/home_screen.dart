@@ -248,6 +248,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final allowPullRefresh = layout.isTablet || !layout.isTvLike;
     final isMix = settings.homeLibraryMode == HomeLibraryMode.mixVideos;
     final channels = _homeChannels;
+    final sections = splitEnabledChannelsByHomeSection(channels);
+    final arabicChannels = sections.arabic;
+    final englishChannels = sections.english;
     final videos = _homeVideos;
     final crossAxisCount = layout.gridColumns(isMix: isMix);
     final tileCacheWidth = _tileMemCacheWidth(context, crossAxisCount);
@@ -387,59 +390,65 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
                 ],
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                      layout.pagePadding,
-                      0,
-                      layout.pagePadding,
-                      10,
-                    ),
-                    child: Text(
-                      isMix ? 'Recommended' : 'Shows',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: layout.sectionTitleSize,
-                        color: scheme.onSurface,
-                        letterSpacing: -0.2,
+                if (isMix) ...[
+                  _HomeSectionTitle(label: 'Recommended', layout: layout),
+                  if (videos.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(
+                        child: Text(
+                          'No videos yet.\nAsk a parent to sync playlists.',
+                          textAlign: TextAlign.center,
+                        ),
                       ),
+                    )
+                  else
+                    VideoGridSliver(
+                      items: videos,
+                      crossAxisCount: crossAxisCount,
+                      memCacheWidth: tileCacheWidth,
+                      onOpen: _openVideo,
+                      autofocusFirst: _recent.isEmpty,
+                      aspectRatio: layout.youtubeCardAspect,
                     ),
-                  ),
-                ),
-                if (!isMix && channels.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(child: Text('No channels yet.')),
-                  )
-                else if (isMix && videos.isEmpty)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Text(
-                        'No videos yet.\nAsk a parent to sync playlists.',
-                        textAlign: TextAlign.center,
+                ] else ...[
+                  if (channels.isEmpty)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Center(child: Text('No channels yet.')),
+                    )
+                  else ...[
+                    if (arabicChannels.isNotEmpty) ...[
+                      _HomeSectionTitle(label: 'Arabic Shows', layout: layout),
+                      ChannelGridSliver(
+                        channels: arabicChannels,
+                        thumbSeed: widget.repository.channelThumbSeed,
+                        crossAxisCount: crossAxisCount,
+                        memCacheWidth: tileCacheWidth,
+                        onOpen: _openChannel,
+                        autofocusFirst: _recent.isEmpty,
+                        aspectRatio: layout.youtubeCardAspect,
                       ),
-                    ),
-                  )
-                else if (isMix)
-                  VideoGridSliver(
-                    items: videos,
-                    crossAxisCount: crossAxisCount,
-                    memCacheWidth: tileCacheWidth,
-                    onOpen: _openVideo,
-                    autofocusFirst: _recent.isEmpty,
-                    aspectRatio: layout.youtubeCardAspect,
-                  )
-                else
-                  ChannelGridSliver(
-                    channels: channels,
-                    thumbSeed: widget.repository.channelThumbSeed,
-                    crossAxisCount: crossAxisCount,
-                    memCacheWidth: tileCacheWidth,
-                    onOpen: _openChannel,
-                    autofocusFirst: _recent.isEmpty,
-                    aspectRatio: layout.youtubeCardAspect,
-                  ),
+                    ],
+                    if (englishChannels.isNotEmpty) ...[
+                      _HomeSectionTitle(
+                        label: 'English Shows',
+                        layout: layout,
+                        padTop: arabicChannels.isNotEmpty,
+                      ),
+                      ChannelGridSliver(
+                        channels: englishChannels,
+                        thumbSeed: widget.repository.channelThumbSeed,
+                        crossAxisCount: crossAxisCount,
+                        memCacheWidth: tileCacheWidth,
+                        onOpen: _openChannel,
+                        autofocusFirst:
+                            _recent.isEmpty && arabicChannels.isEmpty,
+                        aspectRatio: layout.youtubeCardAspect,
+                      ),
+                    ],
+                  ],
+                ],
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
             );
@@ -468,6 +477,42 @@ class _HomeScreenState extends State<HomeScreen> {
     final cols = crossAxisCount.clamp(1, 8);
     final tileLogical = mq.size.width / cols;
     return (tileLogical * mq.devicePixelRatio).clamp(160.0, 480.0).round();
+  }
+}
+
+class _HomeSectionTitle extends StatelessWidget {
+  const _HomeSectionTitle({
+    required this.label,
+    required this.layout,
+    this.padTop = false,
+  });
+
+  final String label;
+  final LayoutMetrics layout;
+  final bool padTop;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          layout.pagePadding,
+          padTop ? 12 : 0,
+          layout.pagePadding,
+          10,
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: layout.sectionTitleSize,
+            color: scheme.onSurface,
+            letterSpacing: -0.2,
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -29,7 +29,7 @@ Day-to-day use is this Flutter app. The older Kotlin Android TV app was moved ou
 
 ### Home screen
 
-- **Shows** — one tile per channel, **Arabic shows first**, then English. The picture is a **random recent episode thumb** (changes when you pull-to-refresh). The 16:9 image fits inside the tile.
+- **Shows** — one tile per channel, under **Arabic Shows** then **English Shows**. The picture is a **random recent episode thumb** (changes when you pull-to-refresh). The 16:9 image fits inside the tile.
 - **Mix** — newest videos from enabled channels in one grid (capped so the TV stays smooth).
 - Inside a show, episodes are **newest first**.
 - **Continue watching** — resumes near where they left off.

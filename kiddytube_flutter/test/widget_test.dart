@@ -19,6 +19,7 @@ void main() {
     expect(find.byType(Image), findsWidgets); // header logo
     expect(find.text('D·0.1.0'), findsOneWidget); // debug build stamp
     expect(find.text('Shows'), findsAtLeastNWidgets(1));
+    expect(find.text('Arabic Shows'), findsOneWidget);
     expect(find.text('Mix'), findsAtLeastNWidgets(1));
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
   });

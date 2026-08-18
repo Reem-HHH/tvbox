@@ -4,7 +4,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 49;
+  static const seedVersion = 50;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -279,6 +279,88 @@ class DefaultChannels {
     'zwDbROwMMjs',
   };
 
+  /// Family-gate leftovers (holiday/scary tags or titles). Purged on load/merge.
+  static const retiredFamilyGateVideoIds = {
+    '-yj335Pq75c',
+    '0umQOYtl_M0',
+    '37Cz9nqz5fg',
+    '3GwX5JO85WY',
+    '3QCsaMMt3I4',
+    '3w1Z_YhB008',
+    '4Jr6Nfngto0',
+    '4dFs8Wfuu3Y',
+    '4sZIp-yfdKY',
+    '4vtNAhsBv2U',
+    '7Y4M-iZ9Zmg',
+    '8CU7aJRXb7U',
+    'AWD6XYd8iOA',
+    'AWWywfv69ww',
+    'Awa80gx3aK4',
+    'BWOyOKf3f3Q',
+    'CUBciV4iPzs',
+    'EQDjXLo10qE',
+    'GvGFWEJq2oE',
+    'GzxW_whnX3I',
+    'IHpqFYdp9v0',
+    'JE0MivjUzOc',
+    'JW5i6sPqniM',
+    'PDlcqXoOIFI',
+    'PImVm3A0Z28',
+    'PlKszSbTh1E',
+    'QUkhjd127ho',
+    'R1ughplVzd4',
+    'SVWo8e0E0ks',
+    'TAs1xWSDgzw',
+    'VM_5p1Ga2lE',
+    'Vl1F5cB8pqE',
+    'VmW0xskEOHE',
+    'W2BL8KauvqY',
+    'WOddu_AdGPU',
+    'YMZ7OjHhdFw',
+    'ZmpZW2E8Ri0',
+    '_LmXqt73EVA',
+    '_ZS3ciHF38k',
+    'bMBlgrQHVC8',
+    'bMJo6seSjLs',
+    'cBgBsBKcLus',
+    'cLGqn3nnuUk',
+    'dKCi3XN4vFk',
+    'dR0UCe5DXjk',
+    'edAhVTPprT0',
+    'es4Q6dKBqCw',
+    'f1VwheJRX_k',
+    'g-bNPrZWmXg',
+    'gGwY4GpMxns',
+    'gHga2hc_NsE',
+    'ghv0qtbeyeY',
+    'gwgxudRQANk',
+    'hCblA3qIFGs',
+    'hoT5HIAhTQ8',
+    'iMDZv-7pRrM',
+    'iNPnH3tiLeo',
+    'it_Z9yZ77fM',
+    'k4vpiSkdOZQ',
+    'kpkwyrTBKO0',
+    'kx8ZZr8EJPM',
+    'mLHPMMKTNRI',
+    'md_VeXQDluE',
+    'nVWmbJ3cbsw',
+    'oZhNEaKeI4U',
+    'rSnyLUfALNU',
+    'rZ5kKVQkqM4',
+    'rj28Np5xmAs',
+    't5x7QurObts',
+    'tWWz_FebiRc',
+    'uilO6OTjo-4',
+    'uwLH7U-AJ5M',
+    'vZI5YVyj71Q',
+    'wbAxdX2ATgY',
+    'xoItOBMR2aA',
+    'y8NONGTOpnI',
+    'yRA452u2SDQ',
+    'yXGXaJb_8jw',
+  };
+
   static const _spacetoonUploadsPlaylist = 'UUuQKih3Ac3NABADQKQdeV6A';
   static const _dawoodHubPlaylist = 'PLKhm8Z5pXdOUWVTnTojfHw_Cr7Ac-HLyR';
   static const _numberblocksSeason1Playlist =
@@ -354,7 +436,7 @@ class DefaultChannels {
   /// Built-in catalog. Cached after first build (large object graph).
   static List<ContentChannel> seed() => _seedCache ??= _buildSeed();
 
-  /// Strip live IDs, Shorts, and non-embeddable rows from persisted catalogs.
+  /// Strip live IDs, Shorts, non-embeddable rows, and family-gate leftovers.
   static List<ContentChannel> dropRetiredMedia(List<ContentChannel> input) {
     return [
       for (final ch in input)
@@ -364,7 +446,8 @@ class DefaultChannels {
               if (v.id != _retiredKidsMusicVideoId &&
                   !retiredLiveVideoIds.contains(v.id) &&
                   !retiredShortVideoIds.contains(v.id) &&
-                  !retiredUnplayableVideoIds.contains(v.id))
+                  !retiredUnplayableVideoIds.contains(v.id) &&
+                  !retiredFamilyGateVideoIds.contains(v.id))
                 v,
           ],
         ),
@@ -737,7 +820,6 @@ class DefaultChannels {
             _yt('0uirY9wS6Zw', 'أغاني تعليمية للأطفال: الأبجدية والمفردات 35 دقيقة 🎓🔤 | آدم ومشمش'),
             _yt('-ADRXI0onzI', 'أغنية جديدة من آدم ومشمش - المجموعات الغذائية الخمسة | New Song - The 5 Food Groups'),
             _yt('vX6gD7UI3zM', 'أغاني أجزاء الجسم للأطفال 10 دقائق 🧒✋ | آدم ومشمش'),
-            _yt('cBgBsBKcLus', 'أغاني العيد للأطفال 6 دقائق 🎉🎈 | آدم ومشمش'),
             _yt('1ZKjnMdRuXs', 'أغنية الحروف البطيئة والمزيد 34 دقيقة 🐣✏️ | آدم ومشمش'),
             _yt('kucU9nRTIB4', 'من أنت؟ - قصة محكية للأطفال 🐸🌿 | آدم ومشمش'),
             _yt('gNNm16evQ6w', 'أغنية العيد والاحتفالات العربية والمزيد 🌙🎉 | آدم ومشمش'),
@@ -1119,7 +1201,6 @@ class DefaultChannels {
             _yt('gzw6-AbAbK4', 'Let\'s Play Together! — Barney'),
             _yt('dIQCqktBrXc', 'A Friend Like You! — Barney'),
             _yt('OUsNcAxAq8M', 'Full Episodes — Love — Barney'),
-            _yt('PDlcqXoOIFI', 'Good Manners & Best Behavior — Barney'),
             _yt('-NpnkSB90-E', 'Up, Down, and Around! — Barney'),
             _yt('4FwrbFxYOOQ', 'My Family and Me — Barney'),
             _yt('pf93hIE1xBU', 'Splish! Splash! — Barney'),
@@ -1250,7 +1331,6 @@ class DefaultChannels {
             _yt('Hth0C5MODRc', 'Peppa Pig New Episodes - Molly Mole - Kids Videos | New Peppa Pig'),
             _yt('cnRkYgd6qUM', 'Peppa Pig | Undersea Party | Peppa Pig Official | Family Kids Cartoon'),
             _yt('mM4BvDXuDEU', 'Peppa wins the duck race 🦆 | Peppa Pig | ABC Kids'),
-            _yt('_ZS3ciHF38k', 'Peppa Pig | The Owl | Peppa Pig Official | Family Kids Cartoon'),
             _yt('H8jMqmIs__M', 'Peppa Pig And The Biggest Marble Run Ever | Marble Run Fun'),
             _yt('E2MPOr2g0zg', 'Peppa Pig Season 1 Episode 3 - Best Friend - Cartoons for Children'),
             _yt('6a_xjS9w1Js', 'Grandpa Pig has a hospital sleepover 🏥 | Peppa Pig | ABC Kids'),
@@ -1268,35 +1348,8 @@ class DefaultChannels {
           color: 0xFF66BB6A,
           playlist: _uploadsOf('UC2UhuvjTIrR0Ck2KrkvRcuA'),
           videos: [
-            _yt('mLHPMMKTNRI', 'The Royal Fairy Picnic — Ben & Holly'),
-            _yt('edAhVTPprT0', 'The Toy Robot — Ben & Holly'),
-            _yt('37Cz9nqz5fg', 'King Thistle\'s Busiest Day — Ben & Holly'),
-            _yt('gHga2hc_NsE', 'The Elf Farm — Ben & Holly'),
-            _yt('dR0UCe5DXjk', 'Gaston Moves Into the Castle — Ben & Holly'),
-            _yt('3w1Z_YhB008', 'Holly Goes to Elf School — Ben & Holly'),
-            _yt('3QCsaMMt3I4', 'Gaston Goes To School — Ben & Holly'),
-            _yt('it_Z9yZ77fM', 'Ben Turned Into a Frog — Ben & Holly'),
-            _yt('AWD6XYd8iOA', 'Holly Forgets Ben\'s Birthday — Ben & Holly'),
-            _yt('AWWywfv69ww', 'The Elf Band Saves the Day — Ben & Holly'),
-            _yt('rZ5kKVQkqM4', 'Ben Learns to Tell Time — Ben & Holly'),
-            _yt('WOddu_AdGPU', 'What are Ben and Holly Cooking? — Ben & Holly'),
-            _yt('hCblA3qIFGs', 'Learn to Share — Ben & Holly'),
-            _yt('t5x7QurObts', 'Holly Needs Help — Ben & Holly'),
-            _yt('GvGFWEJq2oE', 'King Thistle Has a Cold — Ben & Holly'),
-            _yt('g-bNPrZWmXg', 'King Thistle\'s Clothes Shrink — Ben & Holly'),
-            _yt('iMDZv-7pRrM', 'The Mystery of the Lost Egg — Ben & Holly'),
-            _yt('4Jr6Nfngto0', 'Nanny Plum\'s Windmill — Ben & Holly'),
-            _yt('GzxW_whnX3I', 'Betty\'s Butterfly Surprise — Ben & Holly'),
-            _yt('ghv0qtbeyeY', 'Holly\'s Sandcastle Surprise — Ben & Holly'),
-            _yt('4vtNAhsBv2U', '🚀 Granny & Grandpa’s WILDEST Magic Party! ✨🏰 | Ben & Holly | Cartoons for Kids'),
-            _yt('rSnyLUfALNU', '🚨 Gaston Goes to the Vet & Elf Rescue Saves the Day! 🐞| Ben and Holly’s | Cartoons for…'),
-            _yt('JW5i6sPqniM', '🐜 The Ants STEAL Everything 😂 | Ben & Holly | Cartoons for Kids'),
-            _yt('vZI5YVyj71Q', '👑 Queen Holly\'s Ice Cream Disaster! 😂 | Ben and Holly’s Little Kingdom | Cartoons for Kids'),
             _yt('mX3AAq4fLpo', 'Ben and Holly\'s Little Kingdom ✨ Spaceship Food and Drink Maker! 🥤 Cartoons For Kids'),
             _yt('LevDq_11MKk', 'Ben and Holly\'s Little Kingdom | Nanny Plum\'s Giant Pudding! - Full Episode | Kids Cart…'),
-            _yt('W2BL8KauvqY', 'Ben and Holly\'s Little Kingdom | Triple Episode: The Best Meal EVER!!! | Cartoons For Kids'),
-            _yt('-yj335Pq75c', 'Lucy\'s Picnic | Ben and Holly\'s Little Kingdom | Cartoons For Kids'),
-            _yt('0umQOYtl_M0', 'Ben and Holly’s Little Kingdom | Morning Magic | Cartoon for Kids'),
             _yt('B-shOepR8JI', 'Ben and Holly’s Little Kingdom | King Thistle Loses His Chill | Kids Videos'),
             _yt('8TmuUMcXA9Y', '🔴 LIVE! Ben and Holly\'s Little Kingdom Full Episodes ✨ Kids Cartoons - SEASON 2 🔴'),
             _yt('6l4vy_jFOr4', '🔴 LIVE! Ben and Holly\'s Little Kingdom Full Episodes ✨ Kids Cartoons - SEASON 2 🔴'),
@@ -1358,7 +1411,6 @@ class DefaultChannels {
             _yt('DJabLlbptSI', 'Can We Build It Together? 😆 | Kids Songs & Nursery Rhymes 🎵 | LEGO Little Ones'),
             _yt('sisgipTCVrA', 'Cars and Vehicles for Kids! 🏍️ 😄 (15 MIN) Fun Nursery Rhymes and Songs | LEGO Little Ones'),
             _yt('RUEkl-RFfLk', 'Classic Nursery Rhymes Marathon 🎵🌈 30+ Minutes of Kids Songs & Fun 🎵 | LEGO Little Ones'),
-            _yt('YMZ7OjHhdFw', 'Fun in Any Weather! ☀️🍃🌧️☃️ | Kids’ Storytime + Songs 🎵 | 20+ Mins | LEGO® DUPLO | LEGO…'),
             _yt('pNyLDe9yG2M', 'Yummy Cotton Candy Dreamland! 🍭🦄 + MORE Fun Songs for Kids 🎵 | LEGO Little Ones'),
             _yt('m_l9S7us5ks', 'Travel Adventures with Friends! ✈️🌍 | Kids Songs & Storytime 🎶📚 | LEGO Little Ones'),
             _yt('LXp0gB5n4aQ', 'Sing Along with LEGO Animals! 🎤 30+ Minutes of Cartoons and Kids Songs 🎵 | LEGO Little…'),
@@ -1408,7 +1460,6 @@ class DefaultChannels {
             _yt('F1cZJ0LawOE', 'Learn How To Make Colorful Rainbow PlayDoh Cake & Cupcakes | Amazing Playdoh Activities F…'),
             _yt('eCqr3VQbYPQ', 'Play Doh Rainbow Swirl Desserts!'),
             _yt('UCJv1afYY6Y', 'Blippi\'s Art Trip to the Play-Doh Factory! | Blippi for Kids | Moonbug Kids - Art for Kid…'),
-            _yt('k4vpiSkdOZQ', 'Play-Doh Care & Carry Vet Set and Pizza Oven 🐶🍕 Fun & Easy DIY Arts and Crafts!'),
             _yt('dxwzrFpyYlk', 'Play Doh Meal Makin Kitchen Playset Toys For Kids! Pretend Play Food DIY Breakfast Sweet …'),
             _yt('Yih0FiE1Byo', 'Adel is Making Shapes with Play-Doh | Best Learning Video for Toddlers!'),
           ],
@@ -1451,7 +1502,6 @@ class DefaultChannels {
             _yt('b2GoAlnCAKY', 'Watch us Create an Entire Pretend Kitchen from Scratch'),
             _yt('zt4rV7pRpFY', 'Vlad and Niki cooking for Mom and other funny stories for kids'),
             _yt('rl4xO-fLeeg', 'Kids Pretend Play Outdoor Cooking with BBQ Grill Play Set!'),
-            _yt('CUBciV4iPzs', 'Baking With Blippi | Food Videos For Kids | Educational Videos For Toddlers'),
             _yt('sbOdf9qZNEE', 'Chris Learn to Share Food and Pretend Cook Toy Food'),
             _yt('dqZseoM8ktk', 'Jannie & Emma Pretend Play w/ Kitchen Restaurant Cooking Kids Toys'),
             _yt('AXZevHkl6yo', '20 Minutes Unboxing Sanrio Cooking Toys ASMR Kuromi Kitchen Playset Satisfying Compilation'),
@@ -1746,7 +1796,6 @@ class DefaultChannels {
             _yt('q16nsP6Joq4', 'The Space Signal - Full Episode | Series 8 E30 | Numberblocks'),
             _yt('7Cnc-NBmVpA', 'Colourful Maths - RAINBOWS and ADDITION! 🌈 | 123 Counting for Kids | @Numberblocks'),
             _yt('FVYqpqWj4SE', 'Numberblocks | The Numberblocks Express 🚂⭐✈️🚗| Full Episodes for kids | 123 Learn to Count'),
-            _yt('SVWo8e0E0ks', 'The Treasure of Hexagon Island 🏴‍☠️ - Special Episode! | 123 Learn to Count | @Numberbloc…'),
             _yt('HZvPSQmZkPg', 'Happy Campers - Full Episode | Series 8 E22 | Numberblocks'),
             _yt('88Tgsaw7wfE', 'Five\'s Super Sorter - Full Episode | Series 8 E16 | Numberblocks'),
             _yt('OEImTjGGheE', 'One\'s Fix-it Shop - Full Episode | Series 8 E21 | Numberblocks'),
@@ -1908,7 +1957,6 @@ class DefaultChannels {
             _yt('CFjH9BM1JDs', 'Masha and the Bear 2026 🎬 NEW EPISODE! 🧑‍🚒 Firefighter of the Day 🧯🔥 Best cartoon collect…'),
             _yt('JHC4AUjg8_Q', 'Masha and the Bear 2026 🐻🏠 When Dad Isn\'t Home… 👧👑 Best episodes cartoon collection 🎬'),
             _yt('oBjwpcUBtfA', 'Masha and the Bear 2026 🍓🎉 Jam Day and more popular episodes 🍭🍫 Best episodes collection 🎬'),
-            _yt('PImVm3A0Z28', '👧💭 Masha Reacts to: Scary Stories? 👻🕯️ Best episodes cartoon collection 🎬 Masha and the B…'),
             _yt('xmUdqdsYj_E', 'Masha and the Bear 2026 🎈🎉 Best episodes cartoon collection 🎬 Watch Right Now! 📺🍿'),
             _yt('8meYUcZvFz8', 'Masha and the Bear 🎉 NEW EPISODE 2026 🧑‍🚒 Firefighter of the Day 🧯🔥 (Episode 95)'),
             _yt('8dlGpvdqBgg', 'Masha and the Bear 2026 🎬 NEW EPISODE! 🍀 Lucky Charms🤞🧿 Best cartoon collection'),
@@ -2126,7 +2174,6 @@ class DefaultChannels {
             _yt('lkBMHfmk5h0', 'ماشا والدب 🐻👱‍♀️ فرقة الغابة 🐼🐯 Masha and the Bear'),
             _yt('cyPZTELAGXE', '💥 سلسلة جديدة 🌟 الضيف الغامض 🕵️‍♂️🏠 ماشا والدب 👱‍♀️ Masha and the Bear'),
             _yt('NoS-em-I4io', 'ماشا والدب 🐻👱‍♀️ أيام مزدحمة 🍓🥧 Masha and the Bear'),
-            _yt('md_VeXQDluE', 'ماشا والدب 👱‍♀️🐻 من يجد شيئاً يحتفظ به 🔍🗝️ الحلقة 86 📺 كرتون للأطفال | Masha and the Bear'),
             _yt('0NAAgaSm2tc', 'ماشا والدب 👱‍♀️🐻 الدب VS الذئاب 🐻🐺 كرتون للأطفال | Cartoons for kids'),
             _yt('pcBFyv1ctWY', '💥 سلسلة جديدة 🌟 حلوى الغيوم 🍬☁️ ماشا والدب 👱‍♀️ Masha and the Bear'),
             _yt('rP2ndoCCaV8', '💥الحلقة الكاملة 🐒 أعمال القردة 😄 الحلقة 74 🐻 ماشا والدب 👱‍♀️ Masha and the Bear'),
@@ -2145,20 +2192,9 @@ class DefaultChannels {
             _yt('fKBp_i03wSE', 'بليبي يزور مصنع للشوكولاتة'),
             _yt('XXyqtYoBXLg', 'بليبي يستكشف حيوانات الغابة'),
             _yt('si138Y1-xs0', 'بلبي يتعلم مهارات السيرك'),
-            _yt('JE0MivjUzOc', 'قفزات بلبي على الترامبولين'),
-            _yt('uwLH7U-AJ5M', 'سيارات بليبي السريعة'),
-            _yt('8CU7aJRXb7U', 'ملعب بلِّيبي الداخلي الملون'),
             _yt('Ng2YGHBVRHw', 'اللعب بالصلصال مع بليبي'),
-            _yt('TAs1xWSDgzw', 'بليبي يكتشف سيارات غو كارت'),
-            _yt('cLGqn3nnuUk', 'اللعب بالصلصال مع بليبي — طين للأطفال'),
-            _yt('wbAxdX2ATgY', 'بليبي يزور حوض سمك | تعلم الحيوانات البحرية | برنامج بليبي التعليمي | Blippi - بليبي با…'),
-            _yt('kpkwyrTBKO0', 'بلippi يزور حديقة الحيوانات ويتعلم عن الحيوانات | برنامج بليبي التعليمي | Blippi - بليب…'),
-            _yt('VM_5p1Ga2lE', 'بليبي يقفز بالمظلة | برنامج بليبي التعليمي | برامج كرتون و أغاني للأطفال | Blippi'),
             _yt('Zn3qPo5hfOA', 'أغاني للأطفال | بليبي يستكشف سيارة شرطة | برامج كرتون للصغار | Arabic Blippi Explores a…'),
             _yt('C7T4dFUDBjU', '| بليبي يزور ملعب داخلي | برامج و أفلام للصغار  | Arabic Blippi Visits an Indoor Playgr…'),
-            _yt('IHpqFYdp9v0', 'متحفُ التاريخِ الطبيعي مع بليبي | Blippi\'s Dinosaurs! | افلام ومسلسلات كرتون واغاني اطفال'),
-            _yt('4sZIp-yfdKY', 'بليبي يستكشف سيارة شرطة | برنامج بليبي التعليمي | بليبي بالعربي'),
-            _yt('es4Q6dKBqCw', 'مرح بلايبي مع الآيس كريم | برنامج بليبي التعليمي | Blippi\'s Ice Cream Store | Blippi -…'),
             _yt('gciHeFxXPts', 'حلقة المحقق بليبي ++ | بلبي بالعربي | كرتون اطفال و أغاني بليبي للصغار | Blippi Arabic'),
             _yt('5sfTgOpNofM', 'Blippi بالعربي  بلبي يستكشف الحواس الخمسة | افلام كرتون بلبي | العاب اطفال بلي بي | مسلسل'),
             _yt('6U0EqW5kppI', 'يوم الألعاب مع (ميكا) في (بيلي بيز)'),
@@ -2173,38 +2209,16 @@ class DefaultChannels {
             _yt('8nG3naJhTeQ', '(بابل بوب) — ميكا'),
             _yt('nhaaCL2diBU', '(ميكا) في (ديغ ات)'),
             _yt('O0Q5_he9kOU', 'مغامرة (ميكا) الجوية والبحرية'),
-            _yt('tWWz_FebiRc', 'أغنية القطار البخاري — بليبي'),
-            _yt('VmW0xskEOHE', 'أغنية بلِبّي عن الجرافة — بليبي'),
-            _yt('3GwX5JO85WY', 'أغنية ساحة اللعب — بليبي'),
-            _yt('dKCi3XN4vFk', 'أغنية عربة الإطفاء — بليبي'),
-            _yt('Awa80gx3aK4', 'اللعب في الثلج مع بليبي'),
-            _yt('bMBlgrQHVC8', 'بليبي ولوح التزلج'),
-            _yt('f1VwheJRX_k', 'بليبي يتعلم عن الجرافات والحفارات!'),
-            _yt('kx8ZZr8EJPM', 'بليبي يتعلم كيفية التزلج على الثلج'),
-            _yt('4dFs8Wfuu3Y', 'بليبي يجد الديناصورات في حوض الكرات!'),
-            _yt('R1ughplVzd4', 'بليبي يحب الشوكولا'),
-            _yt('bMJo6seSjLs', 'بليبي يريد أن يكون رجل إطفاء'),
-            _yt('BWOyOKf3f3Q', 'بليبي يزور منتجع تزلج | دروس تعليم التزلج'),
-            _yt('y8NONGTOpnI', 'بليبي يستكشف قطار بخاري | قطارات للأطفال'),
-            _yt('iNPnH3tiLeo', 'بليبي يقوم بالقفز الحر الداخلي مع الألعاب'),
-            _yt('xoItOBMR2aA', 'بليبي يلعب بعربة الثلج'),
-            _yt('yRA452u2SDQ', 'بليبي يلعب مع الحيوانات في حديقة الحيوانات'),
-            _yt('gwgxudRQANk', 'بلّيبي لا يستطيع التوقف عن الرقص — بليبي'),
-            _yt('7Y4M-iZ9Zmg', 'تعلم كيف تغسل شاحنات اللعب | شاحنات ألعاب للأطفال — بليبي'),
-            _yt('rj28Np5xmAs', 'تعلم الألوان والعد في الشاطئ | بليبي بالعربي | برنامج بليبي التعليمي | Blippi Arabic Beac…'),
-            _yt('EQDjXLo10qE', 'حركات ملعب إيمي | بيت النفخ الأحمر الممتع | برنامج بليبي التعليمي | Blippi - بليبي بالعربي'),
             _yt('VLVcZMo_Mzc', 'حلقة بليبي يزور حوض سمك إودي | بلبي بالعربي | كرتون اطفال | Blippi Arabic Visits an Aquar…'),
             _yt('cnGQFlkUZro', 'الفرق بين الخضر والفواكه | بليبي بالعربي | كرتون بليبي - Fruit & Vegetables🥕🍓'),
             _yt('bcPeJMcFElY', 'Arabic Blippi | حلقتان من المتعة | افلام اطفال بليبي | برامج اطفال بلي بي | مسلسل و فيديو…'),
             _yt('1MpmT57Nzr0', 'حلقة بلبي الكثافة والطفو | بلبي بالعربي | بليبي للصغار | Arabic Blippi Sink Or Float Game'),
             _yt('rxtUFl5dsXU', 'Arabic Blippi | بليبي يزور حوض سمك - عالم البحار | افلام اطفال بليبي | برامج اطفال بليبي |'),
-            _yt('nVWmbJ3cbsw', 'زيارة بليبّي إلى محميّة الحيوانات البرّيّة | برنامج بليبي التعليمي | بليبي بالعربي'),
             _yt('HQZkVYU3c-k', 'كيف تصنع الشّوكولا؟ 🍫| بليبي بالعربي | كرتون اطفال - Chocolate Factory🍫'),
             _yt('3ZxmO3XfrN4', 'حلقة تعليم أسماء الديناصورات مع بلبي | بلبي بالعربي | بليبي للصغار | Blippi Arabic Learn …'),
             _yt('Wj_Hy0vDSKo', 'حلقة بليبي الغرق أم الطفو | بلبي بالعربي | كرتون اطفال وأغاني للصغار | Blippi Arabic Sink…'),
             _yt('oFQpQcARtDA', 'ميكا والإنقلابات في سكاي زون | Meekah بالعربية | فيديوهات تعليمية للأطفال'),
             _yt('01v6g7kUVzY', 'اكتشاف الديناصورات مع (ميكا) | Meekah بالعربية | فيديوهات تعليمية للأطفال'),
-            _yt('gGwY4GpMxns', 'مصنع الألوان مع بليبي وميكاه | Color Factory with Blippi & Meekah'),
             _yt('jCH68ZT2z1U', 'Blippi & Meekah: البحث عن الكنز في الحديقة المائية | Meekah بالعربية | فيديوهات تعليمية ل…'),
           ],
         ),
@@ -2246,7 +2260,6 @@ class DefaultChannels {
             _yt('yeHRHjNAOgI', 'Sing-Along Nursery Rhymes Part 1 | 🎶 Disney Junior Music Nursery Rhymes | @disneyjr'),
             _yt('u3C-7bWxh78', 'Sing Along with Sofia, Lion Guard, and more! | 🎶 Disney Junior Music Nursery Rhymes | Dis…'),
             _yt('saW9fb-DynQ', 'Sing Along with Mickey Mouse Part 2 🐭! |🎶 Disney Junior Music Nursery Rhymes | @disneyjr'),
-            _yt('yXGXaJb_8jw', 'Every Disney Junior Lullaby EVER 😴| Compilation | 🎶 Disney Junior Music Lullabies | @disn…'),
           ],
         ),
         _channel(
@@ -2268,12 +2281,6 @@ class DefaultChannels {
             _yt('IBRWCeWhSGQ', 'Babar — My Dinner with Rataxes (Ep. 33)'),
             _yt('OhGOJoLKOts', 'Babar — Helping Hands (Ep. 54)'),
             _yt('8Z5jvr_JJUk', 'Babar & Badou — Kite Fight / Zoomerblimps (Ep. 9)'),
-            _yt('uilO6OTjo-4', 'Babar & Badou — The Brave Guy / Starring Ms. Strich (Ep. 14)'),
-            _yt('PlKszSbTh1E', 'Babar & Badou — The Unhidden Courtyard / The Rhino Rule (Ep. 36)'),
-            _yt('hoT5HIAhTQ8', 'Babar & Badou — Fair is Fair / Savanna Surfing (Ep. 55)'),
-            _yt('QUkhjd127ho', 'Babar & Badou — Ruby Rumpus / Dandy Andi (Ep. 17)'),
-            _yt('Vl1F5cB8pqE', 'Babar & Badou — The Thunderclap / Junior Marching Band (Ep. 4)'),
-            _yt('_LmXqt73EVA', 'Babar & Badou — Spy Trap / Sneazles (Ep. 1)'),
             _yt('iqiNjhgTO2Q', 'Babar And The Adventures Of Badou | Tutu Badou/Hidden Courtyard - Ep.  2'),
             _yt('-RCl1vE8NiE', 'Babar And The Adventures Of Badou | Gone Wild/Operation Secret Suitcase - Ep. 10'),
             _yt('-oMd9V9aEbc', 'Babar And The Adventures Of Badou | Spytrap/Sneazles - Ep. 1'),
@@ -2296,8 +2303,6 @@ class DefaultChannels {
             _yt('mhFttrVO2Yw', 'Babar: The Celesteville Enquirer - Ep.28'),
             _yt('iprOdgYYB0Q', 'Babar - No Place Like Home - Ep. 8'),
             _yt('HJHPkj_r878', 'Babar: Alexander the Great - Ep.40'),
-            _yt('oZhNEaKeI4U', 'Babar | Witches Potion: Ep. 30'),
-            _yt('ZmpZW2E8Ri0', 'Babar and The Adventures of Badou - 59 - Monkey Idol / Quill Fu To Do'),
           ],
         ),
         _channel(
@@ -3213,7 +3218,7 @@ class DefaultChannels {
         ),
     ];
     // Drop blocked titles even from the built-in seed.
-    return CatalogSanitize.channels(channels);
+    return CatalogSanitize.channels(dropRetiredMedia(channels));
   }
 
   /// Merge newer seed defaults onto an existing catalog without wiping parent toggles.
@@ -3282,14 +3287,17 @@ class DefaultChannels {
           current.videos.any((v) => retiredShortVideoIds.contains(v.id));
       final dropUnplayable =
           current.videos.any((v) => retiredUnplayableVideoIds.contains(v.id));
+      final dropFamilyGate =
+          current.videos.any((v) => retiredFamilyGateVideoIds.contains(v.id));
       // Keep prior playlist-sync items, but always prune live IDs, Shorts,
-      // and videos YouTube will not embed.
+      // videos YouTube will not embed, and family-gate leftovers.
       final baseVideos = [
         for (final v in current.videos)
           if ((!dropWrongKidsMusic || v.id != _retiredKidsMusicVideoId) &&
               (!dropRetiredLive || !retiredLiveVideoIds.contains(v.id)) &&
               !retiredShortVideoIds.contains(v.id) &&
-              !retiredUnplayableVideoIds.contains(v.id))
+              !retiredUnplayableVideoIds.contains(v.id) &&
+              !retiredFamilyGateVideoIds.contains(v.id))
             v,
       ];
       final existingIds = baseVideos.map((v) => v.id).toSet();
@@ -3312,6 +3320,7 @@ class DefaultChannels {
           dropRetiredLive ||
           dropRetiredShorts ||
           dropUnplayable ||
+          dropFamilyGate ||
           titleStale ||
           disableFromSeed) {
         final List<VideoItem> videos;
@@ -3323,7 +3332,8 @@ class DefaultChannels {
             dropWrongKidsMusic ||
             dropRetiredLive ||
             dropRetiredShorts ||
-            dropUnplayable) {
+            dropUnplayable ||
+            dropFamilyGate) {
           videos = [...baseVideos, ...missingVideos];
         } else {
           videos = current.videos;
