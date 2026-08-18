@@ -231,7 +231,9 @@ class YoutubeCatalogSource {
         t.contains('livestream') ||
         t.contains('live stream') ||
         t.contains('live broadcast') ||
-        RegExp(r'(^|[^a-z])live\s*[:\-|]').hasMatch(t) ||
+        (t.contains('🔴') && t.contains('live')) ||
+        RegExp(r'(^|[^a-z])live\s*[:\-|!]').hasMatch(t) ||
+        RegExp(r'^live\b').hasMatch(t) ||
         RegExp(r'(^|[^a-z])livestream([^a-z]|$)').hasMatch(t)) {
       return true;
     }

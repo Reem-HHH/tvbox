@@ -10,7 +10,7 @@ Cross-platform kids browser for:
 
 ## Features (current)
 
-- Curated catalog seed **v25** (allowlisted channels / videos)
+- Curated catalog seed **v43** (allowlisted channels / videos)
 - Home **Shows | Mix** side-by-side toggle (selected mode highlighted; change gated behind parent PIN)
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel; seek scrub overlay when allowed)
 - Continue watching with **periodic resume progress** (clamped near start/end)

@@ -35,6 +35,12 @@ void main() {
         isTrue,
       );
       expect(
+        YoutubeCatalogSource.looksLikeShortOrLiveTitle(
+          'LIVE 🔴 ماشا والدب رسوم متحركة',
+        ),
+        isTrue,
+      );
+      expect(
         YoutubeCatalogSource.looksLikeShortOrLiveTitle('Full Episodes — Peppa'),
         isFalse,
       );
