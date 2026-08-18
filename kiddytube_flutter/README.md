@@ -12,7 +12,7 @@ Cross-platform kids browser for:
 
 - Curated catalog seed **v43** (allowlisted channels / videos)
 - Home **Shows | Mix** side-by-side toggle (selected mode highlighted; change gated behind parent PIN)
-- Shows tiles use **YouTube channel artwork** (cartoon avatar) in a larger grid; episodes sort **newest first**
+- Shows tiles use a **random recent episode thumb** (changes on refresh); 16:9 image fits inside the tile; episodes sort **newest first**
 - YouTube / direct HTTPS **player** (kid-minimal iframe chrome; autoplay next in channel; seek scrub overlay when allowed)
 - Continue watching with **periodic resume progress** (clamped near start/end)
 - Parent dashboard tabs: **Channels** · **Security** · **Home & Sync**

@@ -9,7 +9,6 @@ void main() {
     expect(m.gridColumns(isMix: false), 3);
     expect(m.gridColumns(isMix: true), 4);
     expect(m.libraryColumns(), 4);
-    expect(m.channelCardAspect, lessThan(m.youtubeCardAspect));
   });
 
   test('phone portrait stays at two columns', () {

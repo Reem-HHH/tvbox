@@ -221,6 +221,13 @@ class CatalogRepository {
   CatalogSettings? _cached;
   Future<void>? _updateChain;
 
+  /// Changes which latest-episode thumb each show tile uses (pull-to-refresh).
+  int channelThumbSeed = DateTime.now().microsecondsSinceEpoch;
+
+  void reshuffleHome() {
+    channelThumbSeed = DateTime.now().microsecondsSinceEpoch;
+  }
+
   static const _modeKey = 'home_library_mode';
   static const _seedKey = 'seed_version';
   static const _catalogKey = 'catalog_channels_v1';
@@ -376,7 +383,6 @@ class CatalogRepository {
     for (var i = 0; i < a.length; i++) {
       if (a[i].id != b[i].id) return false;
       if (a[i].youtubeChannelId != b[i].youtubeChannelId) return false;
-      if (a[i].artworkUrl != b[i].artworkUrl) return false;
     }
     return true;
   }
@@ -1114,7 +1120,6 @@ class CatalogRepository {
             : s.lastSyncMs,
       ),
     );
-    await maybeRefreshChannelArtwork();
     if (errors.isNotEmpty) {
       return 'Updated $updated playlists; ${errors.length} failed.\n'
           '${errors.take(3).join('\n')}';
@@ -1129,13 +1134,12 @@ class CatalogRepository {
     if (apiKey == null || apiKey.isEmpty) return false;
     final purged = await maybePurgeShortVideos();
     final dated = await maybeBackfillPublishDates();
-    final art = await maybeRefreshChannelArtwork();
     final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - settings.lastSyncMs < syncTtlMs) return purged || dated || art;
+    if (now - settings.lastSyncMs < syncTtlMs) return purged || dated;
     final summary = await refreshAllPlaylists(force: true);
     final synced = !summary.startsWith('Already synced') &&
         !summary.startsWith('Add a YouTube');
-    return purged || dated || art || synced;
+    return purged || dated || synced;
   }
 
   /// Fill missing [VideoItem.publishedAtMs] so libraries can sort newest-first.
@@ -1205,82 +1209,6 @@ class CatalogRepository {
       }
     }
     return true;
-  }
-
-  /// Fetch YouTube channel profile images for show tiles that still use episode thumbs.
-  Future<bool> maybeRefreshChannelArtwork() async {
-    final settings = await load();
-    final apiKey = settings.youtubeApiKey?.trim();
-    if (apiKey == null || apiKey.isEmpty) return false;
-
-    var channels = [...settings.channels];
-    final needPlaylistLookup = <String>[];
-    for (final ch in channels) {
-      if (ch.artworkUrl != null && ch.artworkUrl!.trim().isNotEmpty) continue;
-      final known = ch.youtubeChannelId?.trim();
-      if (known != null && known.isNotEmpty) continue;
-      final fromUploads =
-          MediaIds.channelIdFromUploadsPlaylist(ch.youtubePlaylistId);
-      if (fromUploads != null) continue;
-      final playlist = ch.youtubePlaylistId?.trim();
-      if (playlist != null && playlist.isNotEmpty) {
-        needPlaylistLookup.add(playlist);
-      }
-    }
-
-    Map<String, String> playlistOwners = const {};
-    if (needPlaylistLookup.isNotEmpty) {
-      playlistOwners = await _youtube.fetchPlaylistChannelIds(
-        apiKey: apiKey,
-        playlistIds: needPlaylistLookup,
-      );
-    }
-
-    final channelIds = <String>{};
-    channels = [
-      for (final ch in channels)
-        ch.copyWith(
-          youtubeChannelId: _resolvedYoutubeChannelId(ch, playlistOwners),
-        ),
-    ];
-    for (final ch in channels) {
-      if (ch.artworkUrl != null && ch.artworkUrl!.trim().isNotEmpty) continue;
-      final id = ch.youtubeChannelId?.trim();
-      if (id != null && id.isNotEmpty) channelIds.add(id);
-    }
-    if (channelIds.isEmpty) {
-      if (!_sameChannelMeta(settings.channels, channels)) {
-        await update((s) => s.copyWith(channels: channels));
-        return true;
-      }
-      return false;
-    }
-
-    final art = await _youtube.fetchChannelArtwork(
-      apiKey: apiKey,
-      channelIds: channelIds.toList(),
-    );
-    final next = [
-      for (final ch in channels)
-        ch.copyWith(
-          artworkUrl: (ch.artworkUrl != null && ch.artworkUrl!.trim().isNotEmpty)
-              ? ch.artworkUrl
-              : art[ch.youtubeChannelId],
-        ),
-    ];
-    if (_sameChannelMeta(settings.channels, next)) return false;
-    await update((s) => s.copyWith(channels: next));
-    return true;
-  }
-
-  static String? _resolvedYoutubeChannelId(
-    ContentChannel ch,
-    Map<String, String> playlistOwners,
-  ) {
-    final existing = ch.youtubeChannelId?.trim();
-    if (existing != null && existing.isNotEmpty) return existing;
-    return MediaIds.channelIdFromUploadsPlaylist(ch.youtubePlaylistId) ??
-        playlistOwners[ch.youtubePlaylistId?.trim() ?? ''];
   }
 
   /// One-shot: drop leftover Shorts (sub-60s, #shorts labels/tags, or

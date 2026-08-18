@@ -74,9 +74,6 @@ class LayoutMetrics {
     return isLandscape ? 3 : 2;
   }
 
-  /// Grid cell: 16:9 image + title block under (episodes / Mix).
+  /// Grid cell: 16:9 image + title block under.
   double get youtubeCardAspect => 16 / 12.2;
-
-  /// Show folder: near-square YouTube channel avatar + title.
-  double get channelCardAspect => 1 / 1.18;
 }

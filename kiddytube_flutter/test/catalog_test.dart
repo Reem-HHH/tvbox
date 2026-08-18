@@ -110,6 +110,43 @@ void main() {
     ]);
   });
 
+  test('previewVideoForChannel picks from latest videos and is seed-stable', () {
+    final channel = ContentChannel(
+      id: 'show',
+      title: 'Show',
+      sourceType: SourceType.youtubeVideoList,
+      videos: const [
+        VideoItem(
+          id: 'old',
+          title: 'Old',
+          youtubeVideoId: 'AAAAAAAAAAA',
+          publishedAtMs: 1,
+        ),
+        VideoItem(
+          id: 'mid',
+          title: 'Mid',
+          youtubeVideoId: 'BBBBBBBBBBB',
+          publishedAtMs: 2,
+        ),
+        VideoItem(
+          id: 'new',
+          title: 'New',
+          youtubeVideoId: 'CCCCCCCCCCC',
+          publishedAtMs: 3,
+        ),
+      ],
+    );
+    expect(previewVideoForChannel(channel, 1)?.id, previewVideoForChannel(channel, 1)?.id);
+    expect(
+      {'old', 'mid', 'new'}.contains(previewVideoForChannel(channel, 7, latestPool: 8)?.id),
+      isTrue,
+    );
+    expect(
+      previewVideoForChannel(channel, 3, latestPool: 1)?.id,
+      'new',
+    );
+  });
+
 
   test('seed keeps Twirlywoos expanded starters', () {
     expect(DefaultChannels.seedVersion, 43);

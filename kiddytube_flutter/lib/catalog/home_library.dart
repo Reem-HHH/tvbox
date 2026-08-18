@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'models.dart';
 
 /// Caps Mix size so Android TV does not decode hundreds of thumbs at once.
@@ -38,4 +40,24 @@ List<PlayableVideo> flattenEnabledVideos(
   });
   if (items.length <= maxItems) return items;
   return items.sublist(0, maxItems);
+}
+
+/// Newest episodes considered for a rotating show-tile thumb.
+const kChannelThumbPool = 8;
+
+/// Random thumb from the latest [latestPool] videos. Same [seed] + channel
+/// always picks the same episode; [reshuffleHome] changes the seed.
+VideoItem? previewVideoForChannel(
+  ContentChannel channel,
+  int seed, {
+  int latestPool = kChannelThumbPool,
+}) {
+  final withThumbs = [
+    for (final v in newestVideosFirst(channel.videos))
+      if (v.youtubeThumbnail != null && v.youtubeThumbnail!.isNotEmpty) v,
+  ];
+  if (withThumbs.isEmpty) return null;
+  final n = latestPool < 1 ? 1 : latestPool;
+  final pool = withThumbs.take(n).toList();
+  return pool[Random(seed ^ channel.id.hashCode).nextInt(pool.length)];
 }

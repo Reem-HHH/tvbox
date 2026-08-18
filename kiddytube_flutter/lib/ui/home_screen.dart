@@ -82,6 +82,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _refreshHomeLists(CatalogSettings settings) {
     final token = Object.hash(
+      widget.repository.channelThumbSeed,
       settings.homeLibraryMode,
       Object.hashAll(
         settings.channels.map(
@@ -90,8 +91,6 @@ class _HomeScreenState extends State<HomeScreen> {
             c.enabled,
             c.sortOrder,
             c.videos.length,
-            c.artworkUrl,
-            c.previewVideoId,
             c.videos.isEmpty ? 0 : c.videos.first.id,
           ),
         ),
@@ -137,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Phone/tablet pull-down: refresh YouTube playlists only (not cloud).
   Future<void> _onPullToRefresh() async {
     _dailySyncTimer?.cancel();
+    widget.repository.reshuffleHome();
     try {
       await widget.repository.refreshAllPlaylists(force: true);
     } catch (_) {}
@@ -433,11 +433,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 else
                   ChannelGridSliver(
                     channels: channels,
+                    thumbSeed: widget.repository.channelThumbSeed,
                     crossAxisCount: crossAxisCount,
                     memCacheWidth: tileCacheWidth,
                     onOpen: _openChannel,
                     autofocusFirst: _recent.isEmpty,
-                    aspectRatio: layout.channelCardAspect,
+                    aspectRatio: layout.youtubeCardAspect,
                   ),
                 const SliverToBoxAdapter(child: SizedBox(height: 40)),
               ],
@@ -554,6 +555,7 @@ class ChannelGridSliver extends StatelessWidget {
   const ChannelGridSliver({
     super.key,
     required this.channels,
+    required this.thumbSeed,
     required this.crossAxisCount,
     required this.memCacheWidth,
     required this.onOpen,
@@ -562,6 +564,7 @@ class ChannelGridSliver extends StatelessWidget {
   });
 
   final List<ContentChannel> channels;
+  final int thumbSeed;
   final int crossAxisCount;
   final int memCacheWidth;
   final double aspectRatio;
@@ -583,23 +586,21 @@ class ChannelGridSliver extends StatelessWidget {
         delegate: SliverChildBuilderDelegate(
           (context, index) {
             final channel = channels[index];
+            final preview = previewVideoForChannel(channel, thumbSeed);
             return FocusTile(
-              key: ValueKey('channel-${channel.id}-${channel.artworkUrl ?? channel.previewVideoId}'),
+              key: ValueKey(
+                'channel-${channel.id}-${preview?.id ?? 'none'}-$thumbSeed',
+              ),
               autofocus: autofocusFirst && index == 0,
               onActivated: () => onOpen(channel),
               child: YtCard(
                 title: channel.title,
                 subtitle: '${channel.videos.length} videos',
-                imageUrl: channel.tileArtwork,
-                fallbackImageUrl: channel.artworkUrl != null
-                    ? channel.previewThumbnail
-                    : null,
-                contentKey: channel.artworkUrl != null
-                    ? 'art-${channel.id}'
-                    : (channel.previewVideoId ?? channel.id),
+                imageUrl: preview?.youtubeThumbnail,
+                contentKey: preview?.youtubeVideoId ?? preview?.id,
                 memCacheWidth: memCacheWidth,
                 placeholderColor: Color(channel.color),
-                imageFit: BoxFit.cover,
+                imageFit: BoxFit.contain,
               ),
             );
           },
@@ -655,6 +656,7 @@ class VideoGridSliver extends StatelessWidget {
                 imageUrl: video.youtubeThumbnail,
                 contentKey: video.youtubeVideoId ?? video.id,
                 memCacheWidth: memCacheWidth,
+                imageFit: BoxFit.contain,
               ),
             );
           },
@@ -679,7 +681,7 @@ class YtCard extends StatelessWidget {
     this.placeholderColor,
     this.progress = 0,
     this.accent = _ytRed,
-    this.imageFit = BoxFit.cover,
+    this.imageFit = BoxFit.contain,
   });
 
   final String title;
@@ -703,82 +705,79 @@ class YtCard extends StatelessWidget {
     final titleSize = layout.isTvLike ? 14.0 : (layout.isTablet ? 13.0 : 12.0);
     final subtitleSize = titleSize - 1.5;
     final fill = placeholderColor ?? scheme.surfaceContainerHighest;
+    final thumb = ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ColoredBox(color: fill),
+          if (imageUrl != null)
+            CachedNetworkImage(
+              key: ValueKey('thumb-${contentKey ?? imageUrl}'),
+              cacheKey: contentKey == null ? imageUrl : 'yt-mq-$contentKey',
+              imageUrl: imageUrl!,
+              fit: imageFit,
+              fadeInDuration: Duration.zero,
+              fadeOutDuration: Duration.zero,
+              filterQuality: FilterQuality.low,
+              memCacheWidth: memWidth,
+              placeholder: (_, _) => const SizedBox.shrink(),
+              errorWidget: (_, url, _) {
+                final fallback = fallbackImageUrl;
+                if (fallback != null &&
+                    fallback.isNotEmpty &&
+                    fallback != url) {
+                  return CachedNetworkImage(
+                    key: ValueKey('thumb-fallback-$contentKey'),
+                    cacheKey: 'yt-fb-$contentKey',
+                    imageUrl: fallback,
+                    fit: imageFit,
+                    fadeInDuration: Duration.zero,
+                    filterQuality: FilterQuality.low,
+                    memCacheWidth: memWidth,
+                    placeholder: (_, _) => const SizedBox.shrink(),
+                    errorWidget: (_, _, _) => const SizedBox.shrink(),
+                  );
+                }
+                final id = contentKey;
+                if (id != null &&
+                    id.length == 11 &&
+                    !url.contains('hqdefault')) {
+                  return CachedNetworkImage(
+                    key: ValueKey('thumb-hq-$id'),
+                    cacheKey: 'yt-hq-$id',
+                    imageUrl: 'https://i.ytimg.com/vi/$id/hqdefault.jpg',
+                    fit: imageFit,
+                    fadeInDuration: Duration.zero,
+                    filterQuality: FilterQuality.low,
+                    memCacheWidth: memWidth,
+                    placeholder: (_, _) => const SizedBox.shrink(),
+                    errorWidget: (_, _, _) => const SizedBox.shrink(),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          if (progress > 0)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: LinearProgressIndicator(
+                value: progress.clamp(0.0, 1.0),
+                minHeight: 3,
+                backgroundColor: Colors.white24,
+                color: accent,
+              ),
+            ),
+        ],
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                if (imageUrl != null)
-                  CachedNetworkImage(
-                    key: ValueKey('thumb-${contentKey ?? imageUrl}'),
-                    cacheKey:
-                        contentKey == null ? imageUrl : 'yt-mq-$contentKey',
-                    imageUrl: imageUrl!,
-                    fit: imageFit,
-                    fadeInDuration: Duration.zero,
-                    fadeOutDuration: Duration.zero,
-                    filterQuality: FilterQuality.low,
-                    memCacheWidth: memWidth,
-                    placeholder: (_, _) => ColoredBox(color: fill),
-                    errorWidget: (_, url, _) {
-                      final fallback = fallbackImageUrl;
-                      if (fallback != null &&
-                          fallback.isNotEmpty &&
-                          fallback != url) {
-                        return CachedNetworkImage(
-                          key: ValueKey('thumb-fallback-$contentKey'),
-                          cacheKey: 'yt-fb-$contentKey',
-                          imageUrl: fallback,
-                          fit: imageFit,
-                          fadeInDuration: Duration.zero,
-                          filterQuality: FilterQuality.low,
-                          memCacheWidth: memWidth,
-                          placeholder: (_, _) => ColoredBox(color: fill),
-                          errorWidget: (_, _, _) => ColoredBox(color: fill),
-                        );
-                      }
-                      final id = contentKey;
-                      if (id != null &&
-                          id.length == 11 &&
-                          !url.contains('hqdefault')) {
-                        return CachedNetworkImage(
-                          key: ValueKey('thumb-hq-$id'),
-                          cacheKey: 'yt-hq-$id',
-                          imageUrl: 'https://i.ytimg.com/vi/$id/hqdefault.jpg',
-                          fit: imageFit,
-                          fadeInDuration: Duration.zero,
-                          filterQuality: FilterQuality.low,
-                          memCacheWidth: memWidth,
-                          placeholder: (_, _) => ColoredBox(color: fill),
-                          errorWidget: (_, _, _) => ColoredBox(color: fill),
-                        );
-                      }
-                      return ColoredBox(color: fill);
-                    },
-                  )
-                else
-                  ColoredBox(color: fill),
-                if (progress > 0)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: LinearProgressIndicator(
-                      value: progress.clamp(0.0, 1.0),
-                      minHeight: 3,
-                      backgroundColor: Colors.white24,
-                      color: accent,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
+        Expanded(child: thumb),
         Padding(
           padding: const EdgeInsets.fromLTRB(2, 8, 2, 0),
           child: Text(
@@ -916,6 +915,7 @@ class LibraryScreen extends StatelessWidget {
                         contentKey: video.youtubeVideoId ?? video.id,
                         memCacheWidth: memCacheWidth,
                         placeholderColor: Color(channel.color),
+                        imageFit: BoxFit.contain,
                       ),
                     );
                   },

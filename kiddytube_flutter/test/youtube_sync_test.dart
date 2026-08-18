@@ -187,23 +187,5 @@ void main() {
         const Duration(seconds: 180),
       );
     });
-
-    test('thumbnailUrlFromSnippet prefers high HTTPS art', () {
-      expect(YoutubeCatalogSource.thumbnailUrlFromSnippet(null), isNull);
-      expect(
-        YoutubeCatalogSource.thumbnailUrlFromSnippet({
-          'default': {'url': 'https://yt3.ggpht.com/default.jpg'},
-          'high': {'url': 'https://yt3.ggpht.com/high.jpg'},
-        }),
-        'https://yt3.ggpht.com/high.jpg',
-      );
-      expect(
-        YoutubeCatalogSource.thumbnailUrlFromSnippet({
-          'high': {'url': 'http://insecure.example/x.jpg'},
-          'medium': {'url': 'https://yt3.ggpht.com/ok.jpg'},
-        }),
-        'https://yt3.ggpht.com/ok.jpg',
-      );
-    });
   });
 }

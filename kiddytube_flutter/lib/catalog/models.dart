@@ -139,13 +139,6 @@ class ContentChannel {
   /// HTTPS URL of the YouTube channel profile image (not an episode thumb).
   final String? artworkUrl;
 
-  /// Show-folder image: channel avatar when fetched, else first episode thumb.
-  String? get tileArtwork {
-    final art = artworkUrl?.trim();
-    if (art != null && art.isNotEmpty) return art;
-    return previewThumbnail;
-  }
-
   /// Preview thumb from the first YouTube video when available.
   String? get previewThumbnail {
     for (final v in videos) {
