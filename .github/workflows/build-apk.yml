@@ -5,6 +5,9 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,7 +27,26 @@ jobs:
       - name: Build APK
         run: ./gradlew assembleDebug
         working-directory: KiddyTube
+      - name: Name the phone install file
+        run: cp KiddyTube/app/build/outputs/apk/debug/app-debug.apk KiddyTube-2.1.0.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: KiddyTube-debug-apk
-          path: KiddyTube/app/build/outputs/apk/debug/app-debug.apk
+          name: KiddyTube-android
+          path: KiddyTube-2.1.0.apk
+      - name: Publish GitHub Release download
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: KiddyTube Android
+          body: |
+            Sideload this APK on an Android phone, tablet, or TV.
+
+            1. Download **KiddyTube-2.1.0.apk**
+            2. Open the file and allow installs from the browser if asked
+            3. Tap Install, then open KiddyTube
+
+            Parent PIN for this debug build: `2580`
+          files: KiddyTube-2.1.0.apk
+          make_latest: true
+          allow_updates: true

@@ -83,7 +83,20 @@ cd KiddyTube
 
 APK: `app/build/outputs/apk/debug/app-debug.apk`
 
-## Install
+## Install on a phone (sideload)
+
+A ready-to-install Android package lives in [`dist/KiddyTube-2.1.0.apk`](../dist/KiddyTube-2.1.0.apk). On the phone, open the **Download APK** page or the APK file itself.
+
+Phone steps:
+
+1. Open the link in Chrome (or another Android browser)
+2. Tap the downloaded **KiddyTube-2.1.0.apk**
+3. Allow installs from that browser if Android asks
+4. Tap **Install**, then open **KiddyTube**
+
+This debug build is signed for sideloading (not Play Store). Parent PIN: `2580`.
+
+From a computer with USB debugging:
 
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
