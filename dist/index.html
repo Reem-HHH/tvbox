@@ -35,6 +35,7 @@
       border-radius: 1.25rem;
       padding: 1.5rem 1.25rem;
       box-shadow: 0 8px 24px rgba(30, 58, 95, 0.08);
+      margin-bottom: 1rem;
     }
     .btn {
       display: block;
@@ -46,6 +47,12 @@
       text-decoration: none;
       padding: 1rem 1.25rem;
       border-radius: 999px;
+    }
+    .btn.secondary {
+      background: transparent;
+      color: var(--navy);
+      border: 2px solid #d6e8f7;
+      margin-top: 0.75rem;
     }
     .meta { font-size: 0.85rem; color: var(--muted); margin: 0.85rem 0 0; }
     ol { text-align: left; padding-left: 1.2rem; line-height: 1.55; }
@@ -62,17 +69,18 @@
 <body>
   <main>
     <h1>KiddyTube</h1>
-    <p class="sub">Kids channel browser for Android phones, tablets, and TV.</p>
+    <p class="sub">Latest Flutter build for Android phones (64-bit).</p>
     <div class="card">
-      <a class="btn" href="KiddyTube-2.1.0.apk" download="KiddyTube-2.1.0.apk">Download APK</a>
-      <p class="meta">Version 2.1.0 · 13 MB · Android 6.0+</p>
+      <a class="btn" href="KiddyTube-flutter-0.1.0.apk" download="KiddyTube-flutter-0.1.0.apk">Download Flutter APK</a>
+      <p class="meta">Flutter 0.1.0 · catalog seed v50 · 22 MB · Android 7.0+</p>
       <ol>
-        <li>Tap <strong>Download APK</strong> above.</li>
+        <li>Tap <strong>Download Flutter APK</strong> above.</li>
         <li>Open the downloaded file.</li>
         <li>If Android asks, allow installs from this browser.</li>
         <li>Tap <strong>Install</strong>, then open <strong>KiddyTube</strong>.</li>
       </ol>
-      <p class="pin">Parent PIN for this build: <strong>2580</strong><br>Change it in Parent settings before kids use the app.</p>
+      <p class="pin">Parent PIN for this build: <strong>2580</strong><br>This is a different app ID than the older Kotlin APK, so both can be installed at once. Uninstall the old one if you only want this version.</p>
+      <a class="btn secondary" href="KiddyTube-2.1.0.apk" download="KiddyTube-2.1.0.apk">Older Kotlin APK (2.1.0)</a>
     </div>
   </main>
 </body>
