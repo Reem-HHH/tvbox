@@ -85,18 +85,21 @@ APK: `app/build/outputs/apk/debug/app-debug.apk`
 
 ## Install on a phone (sideload)
 
-A ready-to-install Android package lives in [`dist/KiddyTube-2.1.0.apk`](../dist/KiddyTube-2.1.0.apk). On the phone, open the **Download APK** page or the APK file itself.
+Sideload packages live in [`dist/`](../dist/):
+
+- **Flutter (latest):** [`dist/KiddyTube-flutter-0.1.0.apk`](../dist/KiddyTube-flutter-0.1.0.apk) — catalog seed v50, package `ae.kiddytube.kiddytube`
+- **Kotlin (merged main):** [`dist/KiddyTube-2.1.0.apk`](../dist/KiddyTube-2.1.0.apk) — version 2.1.0, package `ae.kiddytube.app`
 
 Phone steps:
 
-1. Open the link in Chrome (or another Android browser)
-2. Tap the downloaded **KiddyTube-2.1.0.apk**
+1. Open the APK link in Chrome (or another Android browser)
+2. Tap the downloaded file
 3. Allow installs from that browser if Android asks
 4. Tap **Install**, then open **KiddyTube**
 
-This debug build is signed for sideloading (not Play Store). Parent PIN: `2580`.
+These builds are signed for sideloading (not Play Store). Parent PIN: `2580`. The Flutter and Kotlin APKs use different package IDs, so both can be installed at once.
 
-From a computer with USB debugging:
+From a computer with USB debugging (Kotlin app):
 
 ```bash
 adb install -r app/build/outputs/apk/debug/app-debug.apk
