@@ -37,6 +37,9 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [bing](bing.md) | Bing | High | High–Medium | Official full episodes + Follow (Halloween/Christmas filtered) |
 | [bakkar](bakkar.md) | بكار | High | High | Maspero أطفال الجزء الثاني + Follow |
 | [milo](milo.md) | Milo | High | High | Official preschool cat job adventures |
+| [gabby_dollhouse](gabby_dollhouse.md) | Gabby's Dollhouse | High | High | Official DreamWorks preschool (no Follow; Halloween skipped) |
+| [sheriff_labrador](sheriff_labrador.md) | Sheriff Labrador | High | High | Official BabyBus safety cartoons (no Follow) |
+| [jojo_gran_gran](jojo_gran_gran.md) | JoJo & Gran Gran | High | High | Official CBeebies (no Follow; Halloween skipped) |
 | [sofia](sofia.md) | Sofia the First | High | Medium–High | Disney Jr season 1 + Royal Magic (no Follow; holidays skipped) |
 | [rob_the_robot](rob_the_robot.md) | Rob the Robot | High | High | Official ~11 min space adventures (no Follow; holidays skipped) |
 | [sesame](sesame.md) | Sesame Street | High | Medium–High | Official English full episodes (no Follow; holidays skipped) |
