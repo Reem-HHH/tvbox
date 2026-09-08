@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Catalog · KiddyTube Admin{% endblock %}
+{% block content %}
+<div class="catalog-page">
+  <header class="page-head catalog-head">
+    <div>
+      <h1>Catalog</h1>
+      <p class="lede">
+        Shared library for paired devices. Changes stay here until a parent taps
+        <strong>Pull catalog from cloud</strong>.
+      </p>
+    </div>
+    <div class="catalog-stats" aria-label="Catalog summary">
+      <div class="catalog-stat">
+        <span class="catalog-stat-value">{{ channels|length }}</span>
+        <span class="catalog-stat-label">channels</span>
+      </div>
+      <div class="catalog-stat">
+        <span class="catalog-stat-value">{{ video_count }}</span>
+        <span class="catalog-stat-label">videos</span>
+      </div>
+    </div>
+  </header>
+
+  {% if flash %}<div class="banner ok" role="status">{{ flash }}</div>{% endif %}
+  {% if error %}<div class="banner error" role="alert">{{ error }}</div>{% endif %}
+
+  <div class="catalog-toolbar" role="search">
+    <label class="catalog-search">
+      <span class="sr-only">Filter channels</span>
+      <input
+        id="catalog-filter"
+        type="search"
+        placeholder="Filter by title or id…"
+        autocomplete="off"
+      />
+    </label>
+    <div class="btn-row catalog-toolbar-actions">
+      <button type="button" class="secondary" id="expand-all">Expand all</button>
+      <button type="button" class="secondary" id="collapse-all">Collapse all</button>
+      <a class="btn secondary" href="#add-channel">Add channel</a>
+      <a class="btn secondary" href="#import-catalog">Import</a>
+    </div>
+  </div>
+
+  <div class="catalog-tools">
+    <details class="card tool-panel" id="add-channel">
+      <summary>
+        <span class="tool-panel-title">Add channel</span>
+        <span class="muted small">New tile for the app home</span>
+      </summary>
+      <form method="post" action="/admin/catalog/channels" class="tool-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+        <label>Id
+          <span class="hint">Stable key, e.g. peppa</span>
+          <input name="channel_key" required placeholder="peppa" autocomplete="off" />
+        </label>
+        <label>Title
+          <span class="hint">Shown in the app</span>
+          <input name="title" required placeholder="Peppa Pig" />
+        </label>
+        <label>Playlist id (optional)
+          <span class="hint">YouTube PL… if you follow a playlist</span>
+          <input name="playlist_id" placeholder="PL…" autocomplete="off" />
+        </label>
+        <div class="btn-row">
+          <button type="submit">Add channel</button>
+        </div>
+      </form>
+    </details>
+
+    <details class="card tool-panel" id="import-catalog">
+      <summary>
+        <span class="tool-panel-title">Import catalog</span>
+        <span class="muted small">Replaces everything</span>
+      </summary>
+      <div class="import-body">
+        <p class="muted small">
+          Upload a Flutter export (recommended). Import <strong>replaces</strong> the entire cloud catalog.
+          Devices update only after a manual pull.
+        </p>
+        <form method="post" action="/admin/catalog/import" enctype="multipart/form-data" class="stack">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <label>Upload .json file
+            <span class="hint">Best for large exports — browser paste often fails</span>
+            <input type="file" name="catalog_file" accept=".json,application/json" />
+          </label>
+          <label>Or paste JSON (small only)
+            <textarea name="catalog_json" rows="5" placeholder='{"seedVersion":34,"channels":[...]}'></textarea>
+          </label>
+          <div class="btn-row">
+            <button type="submit" class="danger" onclick="return confirm('Replace the entire cloud catalog with this JSON?');">Import &amp; replace</button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </div>
+
+  {% if channels %}
+  <p class="catalog-count muted small" id="catalog-count">
+    {{ channels|length }} channel{{ "" if channels|length == 1 else "s" }} — expand one to edit videos
+  </p>
+
+  <div class="channel-list" id="channel-list">
+    {% for ch in channels %}
+    <details
+      class="channel-panel{% if not ch.enabled %} is-disabled{% endif %}"
+      data-search="{{ (ch.title ~ ' ' ~ ch.channel_key)|lower }}"
+    >
+      <summary class="channel-summary">
+        <span class="channel-swatch" style="background: {{ ch.color|argb_css }}" aria-hidden="true"></span>
+        <span class="channel-summary-main">
+          <span class="channel-summary-title">{{ ch.title }}</span>
+          <span class="channel-summary-meta">
+            <code>{{ ch.channel_key }}</code>
+            <span>{{ ch.videos|length }} video{{ "" if ch.videos|length == 1 else "s" }}</span>
+            {% if ch.youtube_playlist_id %}
+            <span class="channel-playlist" title="{{ ch.youtube_playlist_id }}">playlist</span>
+            {% endif %}
+          </span>
+        </span>
+        {% if ch.enabled %}
+        <span class="badge on">On</span>
+        {% else %}
+        <span class="badge off">Off</span>
+        {% endif %}
+        <span class="channel-chevron" aria-hidden="true"></span>
+      </summary>
+
+      <div class="channel-body">
+        <div class="channel-actions">
+          <form method="post" action="/admin/catalog/channels/{{ ch.id }}/toggle">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <button type="submit" class="secondary">{{ "Disable" if ch.enabled else "Enable" }}</button>
+          </form>
+          <form method="post" action="/admin/catalog/channels/{{ ch.id }}/delete" onsubmit="return confirm('Delete channel and its videos?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <button type="submit" class="danger">Delete</button>
+          </form>
+          {% if ch.youtube_playlist_id %}
+          <span class="muted small channel-playlist-id"><code>{{ ch.youtube_playlist_id }}</code></span>
+          {% endif %}
+        </div>
+
+        <form method="post" action="/admin/catalog/channels/{{ ch.id }}/videos" class="add-video-bar">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+          <label class="grow">
+            <span class="sr-only">YouTube id or URL</span>
+            <input name="video_input" required placeholder="YouTube id or URL" autocomplete="off" />
+          </label>
+          <label class="add-title">
+            <span class="sr-only">Title</span>
+            <input name="title" placeholder="Title (optional)" />
+          </label>
+          <button type="submit">Add</button>
+        </form>
+
+        {% if ch.videos %}
+        <ul class="videos">
+          {% for v in ch.videos %}
+          <li>
+            <div class="video-main">
+              <img
+                class="thumb"
+                src="{{ v.thumbnail_url or ('https://img.youtube.com/vi/' ~ v.video_key ~ '/mqdefault.jpg') }}"
+                alt=""
+                loading="lazy"
+                width="72"
+                height="40"
+              />
+              <div class="video-text">
+                <strong>{{ v.title }}</strong>
+                <div class="muted small">
+                  <code>{{ v.video_key }}</code>
+                  {% if v.manual %}<span class="badge manual">manual</span>{% endif %}
+                </div>
+              </div>
+            </div>
+            <form method="post" action="/admin/catalog/videos/{{ v.id }}/delete" onsubmit="return confirm('Remove this video?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+              <button type="submit" class="ghost danger-text">Remove</button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-videos muted">No videos yet — paste a YouTube link above.</p>
+        {% endif %}
+      </div>
+    </details>
+    {% endfor %}
+  </div>
+  <p class="muted small catalog-empty-filter" id="catalog-empty-filter" hidden>No channels match that filter.</p>
+  {% else %}
+  <section class="card">
+    <div class="empty">
+      <strong>No channels yet</strong>
+      Add one above, or import a catalog JSON export from the app.
+    </div>
+  </section>
+  {% endif %}
+</div>
+
+<script>
+(() => {
+  const filter = document.getElementById("catalog-filter");
+  const list = document.getElementById("channel-list");
+  const empty = document.getElementById("catalog-empty-filter");
+  const count = document.getElementById("catalog-count");
+  const panels = () => Array.from(document.querySelectorAll(".channel-panel"));
+
+  function applyFilter() {
+    if (!list) return;
+    const q = (filter?.value || "").trim().toLowerCase();
+    let shown = 0;
+    for (const el of panels()) {
+      const hit = !q || (el.dataset.search || "").includes(q);
+      el.hidden = !hit;
+      if (hit) shown += 1;
+    }
+    if (empty) empty.hidden = shown > 0;
+    if (count) {
+      count.textContent = q
+        ? `${shown} match${shown === 1 ? "" : "es"}`
+        : `${panels().length} channels — expand one to edit videos`;
+    }
+  }
+
+  filter?.addEventListener("input", applyFilter);
+  document.getElementById("expand-all")?.addEventListener("click", () => {
+    for (const el of panels()) if (!el.hidden) el.open = true;
+  });
+  document.getElementById("collapse-all")?.addEventListener("click", () => {
+    for (const el of panels()) el.open = false;
+  });
+})();
+</script>
+{% endblock %}

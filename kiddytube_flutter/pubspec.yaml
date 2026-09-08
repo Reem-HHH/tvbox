@@ -19,6 +19,9 @@ dependencies:
   crypto: ^3.0.6
   http: ^1.4.0
   share_plus: ^11.0.0
+  wakelock_plus: ^1.5.2
+  cached_network_image: ^3.4.1
+  local_auth: ^3.0.2
 
 dev_dependencies:
   flutter_test:
@@ -27,3 +30,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/kiddytube_logo.png
+    - assets/kiddytube_logo_full.png
+    - assets/kiddytube_logo_header.png
+    - assets/kiddytube_logo_splash.png

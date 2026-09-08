@@ -1,4 +1,5 @@
 /// In-memory parent unlock session (~5 minutes), mirrors Kotlin [ParentSession].
+/// Activity calls [touch] to slide the TTL while the parent settings screen is open.
 class ParentSession {
   ParentSession._();
 
@@ -10,6 +11,12 @@ class ParentSession {
     _unlockedUntilMs = now + unlockTtlMs;
   }
 
+  /// Extends the session when still active (sliding expiration).
+  static void touch([int? nowMs]) {
+    if (!isActive(nowMs)) return;
+    grant(nowMs);
+  }
+
   static void clear() {
     _unlockedUntilMs = 0;
   }
@@ -17,5 +24,12 @@ class ParentSession {
   static bool isActive([int? nowMs]) {
     final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
     return now < _unlockedUntilMs;
+  }
+
+  /// Milliseconds remaining, or 0 if expired.
+  static int remainingMs([int? nowMs]) {
+    final now = nowMs ?? DateTime.now().millisecondsSinceEpoch;
+    final left = _unlockedUntilMs - now;
+    return left > 0 ? left : 0;
   }
 }

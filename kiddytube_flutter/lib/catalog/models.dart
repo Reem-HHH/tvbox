@@ -11,7 +11,7 @@ enum SourceType {
   }
 }
 
-/// Kids home: channel tiles vs a flat shuffled video mix.
+/// Kids home: channel tiles vs a flat newest-first video mix.
 enum HomeLibraryMode {
   channels,
   mixVideos;
@@ -50,11 +50,15 @@ class VideoItem {
   bool get isYoutube => youtubeVideoId != null && youtubeVideoId!.isNotEmpty;
   bool get isDirect => directUrl != null && directUrl!.isNotEmpty;
 
-  /// YouTube hqdefault thumbnail when an id is present.
+  /// YouTube thumbnail for this video. Always derived from the video id so
+  /// kids see the correct episode art when catalog content changes.
+  /// Uses mqdefault (320×180) for faster decode/scroll than sd/hq.
   String? get youtubeThumbnail {
     final id = youtubeVideoId;
-    if (id == null || id.isEmpty) return thumbnailUrl;
-    return thumbnailUrl ?? 'https://i.ytimg.com/vi/$id/hqdefault.jpg';
+    if (id != null && id.isNotEmpty) {
+      return 'https://i.ytimg.com/vi/$id/mqdefault.jpg';
+    }
+    return thumbnailUrl;
   }
 
   VideoItem copyWith({
@@ -113,6 +117,9 @@ class ContentChannel {
     this.followUploads = false,
     this.color = 0xFF42A5F5,
     this.playlistManagedByParent = false,
+    this.defaultAllowSeek = true,
+    this.youtubeChannelId,
+    this.artworkUrl,
   });
 
   final String id;
@@ -126,6 +133,31 @@ class ContentChannel {
   /// ARGB seed tile color until artwork assets are ported.
   final int color;
   final bool playlistManagedByParent;
+  final bool defaultAllowSeek;
+  /// YouTube `UC…` id used to fetch the channel's cartoon avatar.
+  final String? youtubeChannelId;
+  /// HTTPS URL of the YouTube channel profile image (not an episode thumb).
+  final String? artworkUrl;
+
+  /// Preview thumb from the first YouTube video when available.
+  String? get previewThumbnail {
+    for (final v in videos) {
+      final t = v.youtubeThumbnail;
+      if (t != null && t.isNotEmpty) return t;
+    }
+    return null;
+  }
+
+  /// Stable id of the video used for the channel tile image (for cache keys).
+  String? get previewVideoId {
+    for (final v in videos) {
+      if (v.youtubeVideoId != null && v.youtubeVideoId!.isNotEmpty) {
+        return v.youtubeVideoId;
+      }
+      if (v.thumbnailUrl != null && v.thumbnailUrl!.isNotEmpty) return v.id;
+    }
+    return null;
+  }
 
   ContentChannel copyWith({
     String? title,
@@ -138,6 +170,9 @@ class ContentChannel {
     bool? followUploads,
     int? color,
     bool? playlistManagedByParent,
+    bool? defaultAllowSeek,
+    String? youtubeChannelId,
+    String? artworkUrl,
   }) {
     return ContentChannel(
       id: id,
@@ -152,6 +187,9 @@ class ContentChannel {
       color: color ?? this.color,
       playlistManagedByParent:
           playlistManagedByParent ?? this.playlistManagedByParent,
+      defaultAllowSeek: defaultAllowSeek ?? this.defaultAllowSeek,
+      youtubeChannelId: youtubeChannelId ?? this.youtubeChannelId,
+      artworkUrl: artworkUrl ?? this.artworkUrl,
     );
   }
 
@@ -166,6 +204,9 @@ class ContentChannel {
         'followUploads': followUploads,
         'color': color,
         'playlistManagedByParent': playlistManagedByParent,
+        'defaultAllowSeek': defaultAllowSeek,
+        if (youtubeChannelId != null) 'youtubeChannelId': youtubeChannelId,
+        if (artworkUrl != null) 'artworkUrl': artworkUrl,
       };
 
   factory ContentChannel.fromJson(Map<String, dynamic> json) => ContentChannel(
@@ -182,7 +223,23 @@ class ContentChannel {
         color: (json['color'] as num?)?.toInt() ?? 0xFF42A5F5,
         playlistManagedByParent:
             json['playlistManagedByParent'] as bool? ?? false,
+        defaultAllowSeek: json['defaultAllowSeek'] as bool? ?? true,
+        youtubeChannelId: json['youtubeChannelId'] as String?,
+        artworkUrl: json['artworkUrl'] as String?,
       );
+}
+
+/// Newest [publishedAtMs] first; stable for equal/missing dates.
+List<VideoItem> newestVideosFirst(List<VideoItem> items) {
+  final indexed = items.asMap().entries.toList();
+  indexed.sort((a, b) {
+    final aMs = a.value.publishedAtMs ?? -1;
+    final bMs = b.value.publishedAtMs ?? -1;
+    final byDate = bMs.compareTo(aMs);
+    if (byDate != 0) return byDate;
+    return a.key.compareTo(b.key);
+  });
+  return indexed.map((e) => e.value).toList();
 }
 
 /// Video tile bound to its owning channel.
