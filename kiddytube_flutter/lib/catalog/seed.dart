@@ -4,7 +4,7 @@ import 'models.dart';
 
 /// Catalog seed parity with Kotlin `DefaultChannels` SEED_VERSION 26.
 class DefaultChannels {
-  static const seedVersion = 52;
+  static const seedVersion = 53;
 
   /// Wrong upload formerly labeled مابي أنام; replaced by بنيتي الحبوبة.
   static const _retiredKidsMusicVideoId = 'ISSlEZyIRFw';
@@ -390,19 +390,19 @@ class DefaultChannels {
   static const _bakkarSeason2Playlist =
       'PL678DQfcGwUyHPVWW7u4SO1jPkfuQiDdx';
   /// True and the Rainbow Kingdom — official full-episode series list.
-  /// Follow stays off: the playlist also has Valentine/Halloween dumps.
+  /// Family title filter drops Valentine/Halloween dumps on sync.
   static const _trueMagicalSeriesPlaylist =
       'PL3cjmspE05RhaybbOA6cIJGbc9QlwYOAP';
-  /// Official Sesame Street full-episode playlist (holidays mixed — Follow off).
+  /// Official Sesame Street full-episode playlist (holidays filtered on sync).
   static const _sesameFullEpisodesPlaylist =
       'PL8TioFHubWFsnPhBmrDQ8dtoXxghDMKxr';
   /// Official Ahlan Simsim channel — افتح يا سمسم season 1 full episodes.
   static const _iftahYaSimsimSeason1Playlist =
       'PLc4t1-K0nthvSUhYtc43BiG-Z9LK2mw5D';
-  /// Official Rob the Robot single episodes (holiday specials mixed — Follow off).
+  /// Official Rob the Robot single episodes (holiday specials filtered on sync).
   static const _robTheRobotSinglesPlaylist =
       'PLCgmiKORinbJSqB2B_KK5kHx1bmeK6TmX';
-  /// Official Disney Jr Sofia the First playlist (clips + holidays — Follow off).
+  /// Official Disney Jr Sofia the First playlist (clips + holidays filtered on sync).
   static const _sofiaTheFirstPlaylist =
       'PL2m1vjiMH_hMCxxjKvsORK-mybMW4OB33';
 
@@ -586,7 +586,6 @@ class DefaultChannels {
           order: 1,
           color: 0xFF00897B,
           playlist: _dawoodHubPlaylist,
-          followUploads: true,
           videos: [
             _yt('Uf0S7FcfXOI', 'سورة النبإ - تعليم القرآن للأطفال- أحلى قرائة لسورة النبإ - قناة داوود'),
             _yt('gnuayjy28UI', 'آية الكرسي -تعليم القرآن للأطفال -أحلى قرائة لآية الكرسي - قناة داوود'),
@@ -1881,7 +1880,6 @@ class DefaultChannels {
           order: 43,
           color: 0xFFAB47BC,
           playlist: _numberblocksSeason1Playlist,
-          followUploads: true,
           videos: [
             _yt('jVeYnCehEFE', 'One — Numberblocks S1 E1'),
             _yt('bz2oWyDjgbc', 'Another One — Numberblocks S1 E2'),
@@ -2632,7 +2630,6 @@ class DefaultChannels {
           order: 10,
           color: 0xFF8E24AA,
           sourceType: SourceType.youtubeVideoList,
-          followUploads: false,
           videos: [
             _yt('_M-sZNslWM8', 'كنوز سبيستون — أنا وأخي — الحلقة 1'),
             _yt('1yxODADlgXA', 'كنوز سبيستون — أنا وأخي — الحلقة 2'),
@@ -2707,8 +2704,6 @@ class DefaultChannels {
           order: 29,
           color: 0xFF5C6BC0,
           playlist: _miloOfficialUploads,
-          // Keep off: many official uploads are non-embeddable compilations.
-          followUploads: false,
           videos: [
             _yt('mNOhUdl3yfQ', 'Milo and His Friends in Nature — Milo Cartoon'),
             _yt('4SODfWe8c20', 'MILO, MARINE BIOLOGIST — Full Episode'),
@@ -2769,14 +2764,13 @@ class DefaultChannels {
           ],
         ),
         // Official True and the Rainbow Kingdom full episodes (~22 min).
-        // Curated singles only — no Follow; official playlists mix holidays.
+        // Family title filter drops holiday specials on sync.
         _channel(
           id: 'true_magical',
           title: 'True\'s Magical Adventure',
           order: 27,
           color: 0xFFEC407A,
           playlist: _trueMagicalSeriesPlaylist,
-          followUploads: false,
           videos: [
             _yt('pnM1TEWRPm0', 'Big Mossy Mess'),
             _yt('iyA3VBjtUHw', 'Wishing Heart Hollow'),
@@ -2819,15 +2813,14 @@ class DefaultChannels {
             _yt('VQzPVUx5EpQ', 'Shark Attack Rescue!🦈 | NEW Mini Rescue + Minisode | True and the Rainbow Kingdom'),
           ],
         ),
-        // Official Sesame Street English full episodes (~26 min). Follow off:
-        // the official playlist also dumps Halloween / Christmas compilations.
+        // Official Sesame Street English full episodes (~26 min).
+        // Family title filter drops Halloween / Christmas compilations on sync.
         _channel(
           id: 'sesame',
           title: 'Sesame Street',
           order: 25,
           color: 0xFFE53935,
           playlist: _sesameFullEpisodesPlaylist,
-          followUploads: false,
           videos: [
             _yt('cO1x0WYdGjI', 'Abby, Rosita, and Zoe Make a Story'),
             _yt('_9BWusWvAFg', 'Elmo Makes a Glitter Jar'),
@@ -2877,14 +2870,13 @@ class DefaultChannels {
           ],
         ),
         // Official Arabic Sesame (افتح يا سمسم) on the Ahlan Simsim channel.
-        // Season 1 full episodes; Follow off so shorts / other brands stay out.
+        // Season 1 full episodes; Shorts and other brands are dropped on sync.
         _channel(
           id: 'sesame_ar',
           title: 'افتح يا سمسم',
           order: 9,
           color: 0xFF00897B,
           playlist: _iftahYaSimsimSeason1Playlist,
-          followUploads: false,
           videos: [
             _yt('8EdkVl27Ix0', 'افتح يا سمسم — الحلقة 1 — الجيران'),
             _yt('V0Tg1pS89ts', 'افتح يا سمسم — الحلقة 2 — أول يوم في المدرسة'),
@@ -2927,7 +2919,7 @@ class DefaultChannels {
             _yt('BUuy6EfcLd8', 'أهلًا سمسم: الموسم 13، الحلقة 6 – خطاب غرغور الكبير'),
           ],
         ),
-        // Official Rob the Robot ~11 min singles. Follow off: playlist has
+        // Official Rob the Robot ~11 min singles. Family title filter drops
         // Christmas / Halloween specials and a dedicated spooky pack.
         _channel(
           id: 'rob_the_robot',
@@ -2935,7 +2927,6 @@ class DefaultChannels {
           order: 28,
           color: 0xFF29B6F6,
           playlist: _robTheRobotSinglesPlaylist,
-          followUploads: false,
           videos: [
             _yt('P7PQof3mLlI', 'Bend it Like Graham'),
             _yt('u9eUFpFJzBs', 'Orbit Has a Bright Idea'),
@@ -2985,15 +2976,14 @@ class DefaultChannels {
             _yt('tcFLzUiBRYc', 'Rocket Band | Rob the Robot | Educational Videos for Kids | Robot Cartoons'),
           ],
         ),
-        // Official Disney Jr Sofia the First full episodes. Follow off: the
-        // playlist mixes clips, Halloween songs, and Christmas specials.
+        // Official Disney Jr Sofia the First full episodes. Family title filter
+        // drops clips titled as Halloween songs and Christmas specials.
         _channel(
           id: 'sofia',
           title: 'Sofia the First',
           order: 26,
           color: 0xFFAB47BC,
           playlist: _sofiaTheFirstPlaylist,
-          followUploads: false,
           videos: [
             _yt('WEurGXf0grY', 'Once Upon a Princess'),
             _yt('Xze_F5Fbyog', 'Just One of the Princes'),
@@ -3038,7 +3028,6 @@ class DefaultChannels {
           order: 4,
           color: 0xFF43A047,
           playlist: _zakyCompilationsPlaylist,
-          followUploads: true,
           videos: [
             _yt('SS0UQKhwuL4', 'KAZWA & BILAL | 14 EPISODES COMPILATION | 90 MINS'),
             _yt('rjZ9ENjngXs', 'A DAY WITH ZAKY AND FRIENDS | 40MIN | 6 EPISODE COMPILATION'),
@@ -3155,7 +3144,6 @@ class DefaultChannels {
           order: 44,
           color: 0xFFEF5350,
           playlist: _colourblocksSeason1Playlist,
-          followUploads: true,
           videos: [
             _yt('vNyv9-g3E5U', 'Meet Red! | FULL EPISODE - S1 E1 | Learn Colours - Kids Cartoons | Colourblocks'),
             _yt('mB_RQuC87-g', 'Meet Blue! | FULL EPISODE - S1 E2 | Learn Colours - Kids Cartoons | Colourblocks'),
@@ -3217,7 +3205,6 @@ class DefaultChannels {
           order: 45,
           color: 0xFF5C6BC0,
           playlist: _alphablocksFullEpisodesPlaylist,
-          followUploads: true,
           videos: [
             _yt('oIXIs0-6jyM', 'Taps | Alphablocks Full Episode - S2 E1 | Learn to Read | Alphablocks'),
             _yt('0MjuWvjxiLw', 'In | Alphablocks Full Episode - S2 E2 | Learn to Read | Alphablocks'),
@@ -3300,7 +3287,6 @@ class DefaultChannels {
           order: 46,
           color: 0xFFFFCA28,
           playlist: _bingFullEpisodesPlaylist,
-          followUploads: true,
           videos: [
             _yt('oRi03rfZipk', 'Fossil | Bing Full Episode | Bing English'),
             _yt('WQni1fK1xXI', 'Skipping | Bing Full Episode | Bing English'),
@@ -3413,7 +3399,6 @@ class DefaultChannels {
           order: 13,
           color: 0xFF8D6E63,
           playlist: _bakkarSeason2Playlist,
-          followUploads: true,
           videos: [
             _yt('df0t_pL86WE', 'بكار | الجزء الثاني | الحلقة الثامنة والعشرون | Bakar Episode 28'),
             _yt('3CQnRTU1ttg', 'بكار | الجزء الثاني | الحلقة السابعة والعشرون | Bakar Episode 27'),
@@ -3535,14 +3520,13 @@ class DefaultChannels {
             _yt('g-XZJ9K3cbc', 'Roasting a Whole HUGE Wild Boar on a Spit like a chicken! Outdoor Lego Cooking ASMR'),
           ],
         ),
-        // Official Gabby's Dollhouse (DreamWorks). Follow off: Halloween/holiday dumps.
+        // Official Gabby's Dollhouse (DreamWorks). Family title filter drops Halloween/holiday dumps.
         _channel(
           id: 'gabby_dollhouse',
           title: 'Gabby\'s Dollhouse',
           order: 30,
           color: 0xFFE91E63,
           playlist: _uploadsOf('UC_jCXm9x_z9_kp8DNbIs6mQ'),
-          followUploads: false,
           videos: [
             _yt('jgOu2-_Vm1Q', 'Gabby Needs Help Decorating Her Kitty Bear! | GABBY\'S DOLLHOUSE'),
             _yt('HnuH2N1KxWw', 'Gabby is GRUMPY?? 😠😡😾 Stomping through Grumpy Mushroom Forest! | GABBY\'S DOLLHOUSE'),
@@ -3588,14 +3572,13 @@ class DefaultChannels {
             _yt('trlkl1FwBIM', 'Turning Accidents into Yummy Art! | GABBY\'S DOLLHOUSE | Netflix'),
           ],
         ),
-        // Official Sheriff Labrador (BabyBus). Follow off: shorts/live dumps.
+        // Official Sheriff Labrador (BabyBus). Sync skips shorts/live dumps.
         _channel(
           id: 'sheriff_labrador',
           title: 'Sheriff Labrador',
           order: 33,
           color: 0xFF1E88E5,
           playlist: _uploadsOf('UCXIvAXVdbUDzIFhVwB9RR-g'),
-          followUploads: false,
           videos: [
             _yt('lIlCzFk4HCw', 'Police Teaches How to Make the Right Decisions | Good Habits | Cartoon | Sheriff Labrador'),
             _yt('8J7vwxJyKHk', 'The Mystery Bugs | Protect the Harvest | Police Cartoon | Sheriff Labrador'),
@@ -3641,14 +3624,13 @@ class DefaultChannels {
             _yt('H9NYHHaavu8', 'Sharing is Caring | Social Emotional Learning for Kids | Cartoon | Sheriff Labrador'),
           ],
         ),
-        // Official JoJo & Gran Gran (CBeebies). Follow off: Halloween playlist on channel.
+        // Official JoJo & Gran Gran (CBeebies). Family title filter drops Halloween playlist items.
         _channel(
           id: 'jojo_gran_gran',
           title: 'JoJo & Gran Gran',
           order: 42,
           color: 0xFFFF8F00,
           playlist: _uploadsOf('UC23bfHzrFQJcbtZyuzNSNhA'),
-          followUploads: false,
           videos: [
             _yt('fVUxK292SvI', 'Best of Series 1 | 40+ MINUTES OF FALL 🍂 | JoJo and Gran Gran Official'),
             _yt('Re_U1qSUWrw', 'Sleepy Time | JoJo and Gran Gran Official'),
@@ -3874,21 +3856,23 @@ class DefaultChannels {
     SourceType? sourceType,
     List<VideoItem> videos = const [],
     bool enabled = true,
-    bool followUploads = false,
+    bool followUploads = true,
   }) {
+    final playlistId = playlist?.trim();
+    final hasPlaylist = playlistId != null && playlistId.isNotEmpty;
     return ContentChannel(
       id: id,
       title: title,
       sourceType: sourceType ??
-          (playlist != null
+          (hasPlaylist
               ? SourceType.youtubePlaylist
               : SourceType.youtubeVideoList),
       enabled: enabled,
-      youtubePlaylistId: playlist,
+      youtubePlaylistId: hasPlaylist ? playlistId : playlist,
       videos: videos,
       sortOrder: order,
       color: color,
-      followUploads: followUploads,
+      followUploads: followUploads && hasPlaylist,
       youtubeChannelId: MediaIds.channelIdFromUploadsPlaylist(playlist),
     );
   }

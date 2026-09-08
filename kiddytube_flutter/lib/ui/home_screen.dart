@@ -111,6 +111,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (youtubeChanged) {
       await _reloadAfterSync();
     }
+    if (mounted) _scheduleNextPlaylistSync();
+  }
+
+  void _scheduleNextPlaylistSync() {
+    _dailySyncTimer?.cancel();
+    _dailySyncTimer = Timer(
+      widget.repository.nextPlaylistSyncDelay(),
+      () {
+        if (mounted) unawaited(_maybeDailySync());
+      },
+    );
   }
 
   Future<void> _reloadRecentOnly() async {
@@ -145,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
       failed = true;
     }
     await _reloadAfterSync();
+    if (mounted) _scheduleNextPlaylistSync();
     if (failed && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text(kKidRefreshMessage)),

@@ -40,6 +40,8 @@ class ContentTitleFilter {
     'spooky',
     'haunted',
     'scary',
+    'horror',
+    'zombie',
     'nightmare',
     'trick-or-treat',
     'trick or treat',

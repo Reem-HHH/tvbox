@@ -10,7 +10,7 @@ DreamWorks preschool series: Gabby and the Gabby Cats explore rooms in a dollhou
 ## What’s in the app
 
 - Curated official full episodes, songs, and toy-play packs YouTube allows in embeds
-- Official uploads playlist linked with **Follow off**
+- Official uploads playlist linked with **Follow on** (twice-daily sync; family title filter skips Halloween/holiday dumps)
 - **Skipped:** Halloween / holiday dumps, movie trailers, Roblox, and other-show crossovers
 
 ## Audience
@@ -25,4 +25,4 @@ Ages ~2–5. Bright, magical, and very accessible.
 | Clean language | High |
 | Violence / scary | None |
 | Conservative / family fit | High |
-| Parent caveats | Official feed posts Halloween and holiday specials — do not enable Follow. |
+| Parent caveats | Official feed posts Halloween and holiday specials — those titles are skipped on sync. |

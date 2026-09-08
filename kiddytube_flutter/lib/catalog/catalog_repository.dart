@@ -12,6 +12,7 @@ import '../parent/release_pin_policy.dart';
 import 'catalog_sanitize.dart';
 import 'media_ids.dart';
 import 'models.dart';
+import 'playlist_sync_schedule.dart';
 import 'recent_watch.dart';
 import 'seed.dart';
 import 'youtube_api_defaults.dart';
@@ -244,6 +245,7 @@ class CatalogRepository {
   static const _cloudAutoEnrollOptOutKey = 'cloud_auto_enroll_opt_out';
   static const _shortsPurgedKey = 'catalog_shorts_purged_v4';
   static const _datesBackfilledKey = 'catalog_dates_backfilled_v1';
+  static const _lastSyncWindowKey = 'last_playlist_sync_window';
   static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
@@ -1065,6 +1067,22 @@ class CatalogRepository {
     await update((s) => s.copyWith(pinHash: hash));
   }
 
+  Duration nextPlaylistSyncDelay({DateTime? now}) =>
+      PlaylistSyncSchedule.untilNextWindow(now ?? DateTime.now());
+
+  Future<String?> _lastSyncWindowId() async {
+    await _ensurePrefs();
+    return _prefs!.getString(_lastSyncWindowKey);
+  }
+
+  Future<void> _storeSyncWindow(DateTime now) async {
+    await _ensurePrefs();
+    await _prefs!.setString(
+      _lastSyncWindowKey,
+      PlaylistSyncSchedule.windowId(now),
+    );
+  }
+
   /// Refresh playlist-backed channels that have Follow uploads enabled.
   /// Returns a human-readable summary.
   Future<String> refreshAllPlaylists({bool force = false}) async {
@@ -1074,9 +1092,13 @@ class CatalogRepository {
       return 'Add a YouTube Data API key in Parent settings first.';
     }
 
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (!force && now - settings.lastSyncMs < syncTtlMs) {
-      return 'Already synced today.';
+    final now = DateTime.now();
+    if (!force &&
+        !PlaylistSyncSchedule.needsSync(
+          lastWindowId: await _lastSyncWindowId(),
+          now: now,
+        )) {
+      return PlaylistSyncSchedule.alreadySyncedMessage(now);
     }
 
     var updated = 0;
@@ -1117,14 +1139,16 @@ class CatalogRepository {
       }
     }
 
+    final finishedAt = DateTime.now();
     await update(
       (s) => s.copyWith(
         channels: channels,
-        lastSyncMs: updated > 0
-            ? DateTime.now().millisecondsSinceEpoch
-            : s.lastSyncMs,
+        lastSyncMs: DateTime.now().millisecondsSinceEpoch,
       ),
     );
+    if (errors.isEmpty || updated > 0) {
+      await _storeSyncWindow(finishedAt);
+    }
     if (errors.isNotEmpty) {
       return 'Updated $updated playlists; ${errors.length} failed.\n'
           '${errors.take(3).join('\n')}';
@@ -1132,15 +1156,20 @@ class CatalogRepository {
     return 'Updated $updated playlists ($skipped skipped).';
   }
 
-  /// Home/launch path: sync playlists at most once per 24h when an API key exists.
+  /// Home/launch path: sync Follow playlists in the current morning or night window.
   Future<bool> maybeRefreshDaily() async {
     final settings = await load();
     final apiKey = settings.youtubeApiKey?.trim();
     if (apiKey == null || apiKey.isEmpty) return false;
     final purged = await maybePurgeShortVideos();
     final dated = await maybeBackfillPublishDates();
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (now - settings.lastSyncMs < syncTtlMs) return purged || dated;
+    final now = DateTime.now();
+    if (!PlaylistSyncSchedule.needsSync(
+      lastWindowId: await _lastSyncWindowId(),
+      now: now,
+    )) {
+      return purged || dated;
+    }
     final summary = await refreshAllPlaylists(force: true);
     final synced = !summary.startsWith('Already synced') &&
         !summary.startsWith('Add a YouTube');

@@ -22,6 +22,8 @@ void main() {
     expect(ContentTitleFilter.isBlocked('LGBTQ Story Time'), isTrue);
     expect(ContentTitleFilter.isBlocked('Spooky Ghost Night for Kids'), isTrue);
     expect(ContentTitleFilter.isBlocked('Haunted House Song'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Zombie Dance for Kids'), isTrue);
+    expect(ContentTitleFilter.isBlocked('Horror Story Time'), isTrue);
     expect(ContentTitleFilter.isBlocked('Scary shadows! Halloween Colour Fun'), isTrue);
     expect(ContentTitleFilter.isBlocked('Presents 🎁 | NEW EPISODE | Bing Full Episodes'), isTrue);
     expect(ContentTitleFilter.isBlocked('@officialalphablocks - Boo! 👻 | New Special!'), isTrue);

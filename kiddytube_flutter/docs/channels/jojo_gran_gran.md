@@ -10,7 +10,7 @@ CBeebies preschool series: JoJo spends days out with her Caribbean grandmother �
 ## What’s in the app
 
 - Official series compilations and full episodes (farm, beach, park, school, bedtime)
-- Official uploads playlist linked with **Follow off**
+- Official uploads playlist linked with **Follow on** (twice-daily sync; family title filter skips Halloween/holiday packs)
 - **Skipped:** Halloween playlist items and Christmas / holiday-season packs
 
 ## Audience
@@ -25,4 +25,4 @@ Ages ~2–5. Calm, warm, and very family-centred.
 | Clean language | High |
 | Violence / scary | None |
 | Conservative / family fit | High |
-| Parent caveats | Official channel has a Halloween playlist — do not enable Follow. |
+| Parent caveats | Official channel has a Halloween playlist — those titles are skipped on sync. |

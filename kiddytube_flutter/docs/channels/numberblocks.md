@@ -9,7 +9,7 @@ BBC / Alphablocks Studio counting cartoon—number friends that teach early math
 
 ## What’s in the app
 
-- Season 1 full-episodes playlist with **Follow uploads on** by default (daily sync pulls new items)
+- Season 1 full-episodes playlist with **Follow uploads on** by default (morning and night sync pulls new items)
 - Seed starters cover early Series 1 counting stories plus How to Count (S1 E10)
 
 ## Audience

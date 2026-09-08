@@ -551,7 +551,7 @@ class _HomeSyncTabState extends State<_HomeSyncTab> {
                     : const Icon(Icons.cloud_sync_outlined),
                 title: const Text('Refresh playlists'),
                 subtitle: const Text(
-                  'Pull Follow-on channels (up to once forced)',
+                  'Pull Follow-on channels (morning and night; force anytime)',
                 ),
                 onTap: () {
                   if (_busy) return;
