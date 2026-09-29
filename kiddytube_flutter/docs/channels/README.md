@@ -55,6 +55,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [dancing_fruit](dancing_fruit.md) | Dancing Fruit | High | Medium–High | Black-screen sensory fruit dance |
 | [toyor_baby](toyor_baby.md) | طيور بيبي | High | High | Songs allowlist — no UU Follow |
 | [pingu](pingu.md) | Pingu | High | High | Official nonverbal episodes (Follow off; no Shorts sync) |
+| [miffy](miffy.md) | Miffy | High | High | Official Adventures Big & Small (no Halloween/Easter) |
 | [daniel_tiger](daniel_tiger.md) | Daniel Tiger | High | Medium–High | Social-emotional preschool |
 | [hey_duggee](hey_duggee.md) | Hey Duggee | High | High | Badge episodes |
 | [numberblocks](numberblocks.md) | Numberblocks | High | High | Season 1 full episodes + Follow (curated PL only) |
@@ -66,6 +67,7 @@ Each file below describes what ships in the app, audience fit (~ages 3–5 unles
 | [live_makkah](live_makkah.md) | قرآن للنوم ورقية | High | High | Sleep Quran + ruqyah in one tile (no live) |
 | [masha_ar](masha_ar.md) | ماشا والدب | High | High | Arabic Masha (`@MashaBearARAB`) curated |
 | [blippi_ar](blippi_ar.md) | بليبي وميكا | High | Medium–High | Arabic Blippi + Meeka curated (no Follow) |
+| [blippi](blippi.md) | Blippi & Meekah | High | Medium–High | English Blippi + Meekah curated (no Follow) |
 | [disney_songs](disney_songs.md) | Disney Songs | High | Medium–High | EN sing-alongs + Clubhouse (no Follow) |
 | [disney_songs_ar](disney_songs_ar.md) | أغاني ديزني | — | — | **Retired v24** |
 | [fulla](fulla.md) | Fulla / فلة | — | — | **Retired in v15** |

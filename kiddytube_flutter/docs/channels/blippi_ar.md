@@ -19,4 +19,4 @@ Ages ~2–5.
 | Clean language | High |
 | Violence / scary | None–Low |
 | Conservative / family fit | Medium–High |
-| Parent caveats | Keep Follow off; English Blippi/Meekah channels are not linked. |
+| Parent caveats | Keep Follow off. English Blippi & Meekah is a separate tile (`blippi`). |

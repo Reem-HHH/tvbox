@@ -44,6 +44,7 @@ Islamic / Arabic-first shows, preschool series, plus recent adds:
 | قرآن للنوم ورقية | Sleep Quran + ruqyah VODs only (no live streams) |
 | ماشا والدب | Arabic Masha |
 | بليبي وميكا | Arabic Blippi + Meeka |
+| Blippi & Meekah | English Blippi + Meekah (curated, no Follow) |
 | Sofia the First | Disney Jr season 1 + Royal Magic (no Follow) |
 | Rob the Robot | Official preschool space adventures (no Follow) |
 | افتح يا سمسم | Arabic Sesame Street (official Ahlan Simsim YT) |
