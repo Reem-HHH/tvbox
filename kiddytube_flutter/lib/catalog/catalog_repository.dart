@@ -1,13 +1,44 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../cloud/cloud_client.dart';
+import '../cloud/cloud_defaults.dart';
 import '../parent/parent_pin.dart';
+import '../parent/release_pin_policy.dart';
+import 'catalog_sanitize.dart';
+import 'media_ids.dart';
 import 'models.dart';
+import 'playlist_sync_schedule.dart';
 import 'recent_watch.dart';
 import 'seed.dart';
+import 'youtube_api_defaults.dart';
 import 'youtube_sync.dart';
+
+
+class CloudLinkStatus {
+  const CloudLinkStatus({
+    this.baseUrl = '',
+    this.paired = false,
+    this.tokenPrefix = '',
+    this.deviceName = '',
+    this.lastCloudSyncMs = 0,
+    this.lastRevision,
+    this.autoEnrollConfigured = false,
+  });
+
+  final String baseUrl;
+  final bool paired;
+  final String tokenPrefix;
+  final String deviceName;
+  final int lastCloudSyncMs;
+  final int? lastRevision;
+  /// True when this build has CLOUD_AUTO_ENROLL + URL + enroll secret.
+  final bool autoEnrollConfigured;
+}
 
 class CatalogSettings {
   CatalogSettings({
@@ -17,8 +48,12 @@ class CatalogSettings {
     this.youtubeApiKey,
     this.pinSalt,
     this.pinHash,
+    this.pinChangedFromDefault = false,
+    this.releaseReady = false,
+    this.biometricUnlock = false,
     this.failCount = 0,
     this.lockedUntilMs = 0,
+    this.lastSyncMs = 0,
   }) : channels = channels ?? DefaultChannels.seed();
 
   final List<ContentChannel> channels;
@@ -27,8 +62,13 @@ class CatalogSettings {
   final String? youtubeApiKey;
   final String? pinSalt;
   final String? pinHash;
+  final bool pinChangedFromDefault;
+  final bool releaseReady;
+  /// Opt-in Face ID / fingerprint unlock (off by default — shared devices).
+  final bool biometricUnlock;
   final int failCount;
   final int lockedUntilMs;
+  final int lastSyncMs;
 
   CatalogSettings copyWith({
     List<ContentChannel>? channels,
@@ -38,8 +78,12 @@ class CatalogSettings {
     bool clearApiKey = false,
     String? pinSalt,
     String? pinHash,
+    bool? pinChangedFromDefault,
+    bool? releaseReady,
+    bool? biometricUnlock,
     int? failCount,
     int? lockedUntilMs,
+    int? lastSyncMs,
   }) {
     return CatalogSettings(
       channels: channels ?? this.channels,
@@ -48,8 +92,13 @@ class CatalogSettings {
       youtubeApiKey: clearApiKey ? null : (youtubeApiKey ?? this.youtubeApiKey),
       pinSalt: pinSalt ?? this.pinSalt,
       pinHash: pinHash ?? this.pinHash,
+      pinChangedFromDefault:
+          pinChangedFromDefault ?? this.pinChangedFromDefault,
+      releaseReady: releaseReady ?? this.releaseReady,
+      biometricUnlock: biometricUnlock ?? this.biometricUnlock,
       failCount: failCount ?? this.failCount,
       lockedUntilMs: lockedUntilMs ?? this.lockedUntilMs,
+      lastSyncMs: lastSyncMs ?? this.lastSyncMs,
     );
   }
 }
@@ -60,6 +109,8 @@ abstract class SecretsStore {
   Future<String?> readPinSalt();
   Future<String?> readPinHash();
   Future<void> writePin(String? salt, String? hash);
+  Future<String?> readCloudDeviceToken();
+  Future<void> writeCloudDeviceToken(String? token);
 }
 
 class SecureSecretsStore implements SecretsStore {
@@ -70,6 +121,7 @@ class SecureSecretsStore implements SecretsStore {
   static const _apiKeySecure = 'youtube_api_key';
   static const _pinSalt = 'parent_pin_salt';
   static const _pinHash = 'parent_pin_hash';
+  static const _cloudToken = 'cloud_device_token';
 
   @override
   Future<String?> readApiKey() => _storage.read(key: _apiKeySecure);
@@ -99,12 +151,25 @@ class SecureSecretsStore implements SecretsStore {
       await _storage.write(key: _pinHash, value: hash);
     }
   }
+
+  @override
+  Future<String?> readCloudDeviceToken() => _storage.read(key: _cloudToken);
+
+  @override
+  Future<void> writeCloudDeviceToken(String? token) async {
+    if (token == null || token.isEmpty) {
+      await _storage.delete(key: _cloudToken);
+    } else {
+      await _storage.write(key: _cloudToken, value: token);
+    }
+  }
 }
 
 class MemorySecretsStore implements SecretsStore {
   String? _apiKey;
   String? _pinSalt;
   String? _pinHash;
+  String? _cloudToken;
 
   @override
   Future<String?> readApiKey() async => _apiKey;
@@ -125,6 +190,14 @@ class MemorySecretsStore implements SecretsStore {
     _pinSalt = salt;
     _pinHash = hash;
   }
+
+  @override
+  Future<String?> readCloudDeviceToken() async => _cloudToken;
+
+  @override
+  Future<void> writeCloudDeviceToken(String? token) async {
+    _cloudToken = (token == null || token.isEmpty) ? null : token;
+  }
 }
 
 class CatalogRepository {
@@ -133,28 +206,47 @@ class CatalogRepository {
     SecretsStore? secrets,
     RecentWatchStore? recentWatch,
     YoutubeCatalogSource? youtube,
+    CloudClient? cloud,
   })  : _prefs = prefs,
         _secrets = secrets ?? SecureSecretsStore(),
         recentWatch = recentWatch ?? RecentWatchStore(prefs),
-        _youtube = youtube ?? YoutubeCatalogSource();
+        _youtube = youtube ?? YoutubeCatalogSource(),
+        _cloud = cloud ?? CloudClient();
 
   SharedPreferences? _prefs;
   final SecretsStore _secrets;
   final RecentWatchStore recentWatch;
   final YoutubeCatalogSource _youtube;
+  final CloudClient _cloud;
 
   CatalogSettings? _cached;
+  Future<void>? _updateChain;
 
-  /// Stable for the process lifetime (mirrors Kotlin home shuffle seeds).
-  final int channelShuffleSeed = DateTime.now().microsecondsSinceEpoch;
-  final int videoShuffleSeed =
-      DateTime.now().microsecondsSinceEpoch ^ 0x5f3759df;
+  /// Changes which latest-episode thumb each show tile uses (pull-to-refresh).
+  int channelThumbSeed = DateTime.now().microsecondsSinceEpoch;
+
+  void reshuffleHome() {
+    channelThumbSeed = DateTime.now().microsecondsSinceEpoch;
+  }
 
   static const _modeKey = 'home_library_mode';
   static const _seedKey = 'seed_version';
   static const _catalogKey = 'catalog_channels_v1';
   static const _failCountKey = 'pin_fail_count';
   static const _lockedUntilKey = 'pin_locked_until_ms';
+  static const _pinChangedKey = 'pin_changed_from_default';
+  static const _releaseReadyKey = 'release_ready';
+  static const _biometricUnlockKey = 'parent_biometric_unlock';
+  static const _lastSyncKey = 'last_sync_ms';
+  static const _cloudBaseUrlKey = 'cloud_base_url';
+  static const _cloudDeviceNameKey = 'cloud_device_name';
+  static const _lastCloudSyncKey = 'last_cloud_sync_ms';
+  static const _lastCloudRevisionKey = 'last_cloud_revision';
+  static const _cloudAutoEnrollOptOutKey = 'cloud_auto_enroll_opt_out';
+  static const _shortsPurgedKey = 'catalog_shorts_purged_v4';
+  static const _datesBackfilledKey = 'catalog_dates_backfilled_v1';
+  static const _lastSyncWindowKey = 'last_playlist_sync_window';
+  static const syncTtlMs = 24 * 60 * 60 * 1000;
 
   Future<void> _ensurePrefs() async {
     _prefs ??= await SharedPreferences.getInstance();
@@ -167,11 +259,13 @@ class CatalogRepository {
         seedVersion: DefaultChannels.seedVersion,
       );
 
-  Future<CatalogSettings> load() async {
+  Future<CatalogSettings> load({bool force = false}) async {
+    if (!force && _cached != null) return _cached!;
+
     await _ensurePrefs();
     final mode = HomeLibraryMode.fromStored(_prefs!.getString(_modeKey));
     final storedSeed = _prefs!.getInt(_seedKey) ?? 0;
-    final apiKey = await _secrets.readApiKey();
+    final apiKey = YoutubeApiDefaults.effective(await _secrets.readApiKey());
     var pinSalt = await _secrets.readPinSalt();
     var pinHash = await _secrets.readPinHash();
 
@@ -180,7 +274,7 @@ class CatalogRepository {
         pinHash == null ||
         pinHash.isEmpty) {
       pinSalt = ParentPinManager.newSaltHex();
-      pinHash = ParentPinManager.hashPin(
+      pinHash = await ParentPinManager.hashPinAsync(
             ParentPinManager.defaultDevPin,
             pinSalt,
           ) ??
@@ -195,6 +289,46 @@ class CatalogRepository {
       await _prefs!.setInt(_seedKey, DefaultChannels.seedVersion);
     }
 
+    final cleaned = DefaultChannels.dropRetiredMedia(
+      CatalogSanitize.channels(channels),
+    );
+    var nextChannels = [
+      for (final ch in cleaned)
+        ch.copyWith(
+          videos: newestVideosFirst(ch.videos),
+          youtubeChannelId: (ch.youtubeChannelId != null &&
+                  ch.youtubeChannelId!.trim().isNotEmpty)
+              ? ch.youtubeChannelId
+              : MediaIds.channelIdFromUploadsPlaylist(ch.youtubePlaylistId),
+        ),
+    ];
+    if (!_sameChannelVideoIds(channels, nextChannels) ||
+        !_sameChannelMeta(channels, nextChannels)) {
+      channels = nextChannels;
+      await _persistChannels(channels);
+    } else {
+      channels = nextChannels;
+    }
+
+    final sanitized = await ReleasePinPolicy.sanitizePinFlagsAsync(
+      pinSalt: pinSalt,
+      pinHash: pinHash,
+      pinChangedFromDefault: _prefs!.getBool(_pinChangedKey) ?? false,
+      releaseReady: _prefs!.getBool(_releaseReadyKey) ?? false,
+    );
+    var biometricUnlock = _prefs!.getBool(_biometricUnlockKey) ?? false;
+    if (!sanitized.pinChangedFromDefault) {
+      biometricUnlock = false;
+    }
+    if (sanitized.pinChangedFromDefault !=
+            (_prefs!.getBool(_pinChangedKey) ?? false) ||
+        sanitized.releaseReady != (_prefs!.getBool(_releaseReadyKey) ?? false) ||
+        biometricUnlock != (_prefs!.getBool(_biometricUnlockKey) ?? false)) {
+      await _prefs!.setBool(_pinChangedKey, sanitized.pinChangedFromDefault);
+      await _prefs!.setBool(_releaseReadyKey, sanitized.releaseReady);
+      await _prefs!.setBool(_biometricUnlockKey, biometricUnlock);
+    }
+
     final settings = CatalogSettings(
       channels: channels,
       homeLibraryMode: mode,
@@ -202,8 +336,12 @@ class CatalogRepository {
       youtubeApiKey: apiKey,
       pinSalt: pinSalt,
       pinHash: pinHash,
+      pinChangedFromDefault: sanitized.pinChangedFromDefault,
+      releaseReady: sanitized.releaseReady,
+      biometricUnlock: biometricUnlock,
       failCount: _prefs!.getInt(_failCountKey) ?? 0,
       lockedUntilMs: _prefs!.getInt(_lockedUntilKey) ?? 0,
+      lastSyncMs: _prefs!.getInt(_lastSyncKey) ?? 0,
     );
     _cached = settings;
     return settings;
@@ -224,6 +362,33 @@ class CatalogRepository {
     }
   }
 
+  static bool _sameChannelVideoIds(
+    List<ContentChannel> a,
+    List<ContentChannel> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+      if (a[i].videos.length != b[i].videos.length) return false;
+      for (var j = 0; j < a[i].videos.length; j++) {
+        if (a[i].videos[j].id != b[i].videos[j].id) return false;
+      }
+    }
+    return true;
+  }
+
+  static bool _sameChannelMeta(
+    List<ContentChannel> a,
+    List<ContentChannel> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].id != b[i].id) return false;
+      if (a[i].youtubeChannelId != b[i].youtubeChannelId) return false;
+    }
+    return true;
+  }
+
   Future<void> _persistChannels(List<ContentChannel> channels) async {
     await _ensurePrefs();
     await _prefs!.setString(
@@ -241,21 +406,66 @@ class CatalogRepository {
   Future<CatalogSettings> update(
     CatalogSettings Function(CatalogSettings) transform,
   ) async {
-    final current = _cached ?? await load();
-    final next = transform(current);
-    await _persistChannels(next.channels);
-    await _ensurePrefs();
-    await _prefs!.setString(_modeKey, next.homeLibraryMode.storageName);
-    await _prefs!.setInt(_seedKey, next.seedVersion);
-    await _persistLockout(next.failCount, next.lockedUntilMs);
-    if (next.youtubeApiKey != current.youtubeApiKey) {
-      await _secrets.writeApiKey(next.youtubeApiKey);
+    final previous = _updateChain;
+    final done = Completer<void>();
+    _updateChain = done.future;
+    try {
+      if (previous != null) await previous;
+      final current = _cached ?? await load();
+      var next = transform(current);
+      final sanitized = await ReleasePinPolicy.sanitizePinFlagsAsync(
+        pinSalt: next.pinSalt,
+        pinHash: next.pinHash,
+        pinChangedFromDefault: next.pinChangedFromDefault,
+        releaseReady: next.releaseReady,
+      );
+      next = next.copyWith(
+        pinChangedFromDefault: sanitized.pinChangedFromDefault,
+        releaseReady: sanitized.releaseReady,
+        biometricUnlock:
+            sanitized.pinChangedFromDefault ? next.biometricUnlock : false,
+      );
+      // Channel JSON is large — skip rewrite for PIN/mode/meta-only updates.
+      if (!identical(current.channels, next.channels)) {
+        await _persistChannels(next.channels);
+      }
+      await _ensurePrefs();
+      if (next.homeLibraryMode != current.homeLibraryMode) {
+        await _prefs!.setString(_modeKey, next.homeLibraryMode.storageName);
+      }
+      if (next.seedVersion != current.seedVersion) {
+        await _prefs!.setInt(_seedKey, next.seedVersion);
+      }
+      if (next.failCount != current.failCount ||
+          next.lockedUntilMs != current.lockedUntilMs) {
+        await _persistLockout(next.failCount, next.lockedUntilMs);
+      }
+      if (next.pinChangedFromDefault != current.pinChangedFromDefault) {
+        await _prefs!.setBool(_pinChangedKey, next.pinChangedFromDefault);
+      }
+      if (next.releaseReady != current.releaseReady) {
+        await _prefs!.setBool(_releaseReadyKey, next.releaseReady);
+      }
+      if (next.biometricUnlock != current.biometricUnlock) {
+        await _prefs!.setBool(_biometricUnlockKey, next.biometricUnlock);
+      }
+      if (next.lastSyncMs != current.lastSyncMs) {
+        await _prefs!.setInt(_lastSyncKey, next.lastSyncMs);
+      }
+      if (next.youtubeApiKey != current.youtubeApiKey) {
+        await _secrets.writeApiKey(next.youtubeApiKey);
+      }
+      if (next.pinSalt != current.pinSalt || next.pinHash != current.pinHash) {
+        await _secrets.writePin(next.pinSalt, next.pinHash);
+      }
+      _cached = next;
+      return next;
+    } finally {
+      done.complete();
+      if (identical(_updateChain, done.future)) {
+        _updateChain = null;
+      }
     }
-    if (next.pinSalt != current.pinSalt || next.pinHash != current.pinHash) {
-      await _secrets.writePin(next.pinSalt, next.pinHash);
-    }
-    _cached = next;
-    return next;
   }
 
   Future<void> setHomeLibraryMode(HomeLibraryMode mode) async {
@@ -280,6 +490,201 @@ class CatalogRepository {
     });
   }
 
+  Future<void> setChannelAllowSeek(String channelId, bool allowSeek) async {
+    await update((s) {
+      final channels = s.channels.map((c) {
+        if (c.id != channelId) return c;
+        return c.copyWith(
+          defaultAllowSeek: allowSeek,
+          videos: [
+            for (final v in c.videos) v.copyWith(allowSeek: allowSeek),
+          ],
+        );
+      }).toList();
+      return s.copyWith(channels: channels);
+    });
+  }
+
+  Future<void> setFollowUploads(String channelId, bool follow) async {
+    await update((s) {
+      final channels = s.channels.map((c) {
+        if (c.id != channelId) return c;
+        return c.copyWith(
+          followUploads: follow,
+          playlistManagedByParent: true,
+        );
+      }).toList();
+      return s.copyWith(channels: channels);
+    });
+  }
+
+  /// Set or clear the YouTube playlist id (parent-managed).
+  Future<void> setPlaylistId(String channelId, String? raw) async {
+    final trimmed = raw?.trim();
+    if (trimmed == null || trimmed.isEmpty) {
+      await _updateChannel(channelId, (ch) {
+        return ch.copyWith(
+          clearPlaylist: true,
+          sourceType: SourceType.youtubeVideoList,
+          playlistManagedByParent: true,
+          followUploads: false,
+        );
+      });
+      return;
+    }
+    final playlistId = MediaIds.extractPlaylistId(trimmed);
+    if (playlistId == null) {
+      throw ArgumentError('Invalid playlist ID or URL');
+    }
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        youtubePlaylistId: playlistId,
+        sourceType: SourceType.youtubePlaylist,
+        playlistManagedByParent: true,
+      );
+    });
+  }
+
+  Future<void> setVideoAllowSeek(
+    String channelId,
+    String videoId,
+    bool allowSeek,
+  ) async {
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        videos: [
+          for (final v in ch.videos)
+            if (v.id == videoId) v.copyWith(allowSeek: allowSeek) else v,
+        ],
+      );
+    });
+  }
+
+  Future<void> _updateChannel(
+    String channelId,
+    ContentChannel Function(ContentChannel) transform,
+  ) async {
+    await update((s) {
+      final channels = [
+        for (final c in s.channels)
+          if (c.id == channelId) transform(c) else c,
+      ];
+      return s.copyWith(channels: channels);
+    });
+  }
+
+  /// Append YouTube videos from bare ids / URLs (CSV). Marks them manual.
+  Future<int> addManualVideoIds(String channelId, String csvOrUrls) async {
+    final ids = MediaIds.parseVideoIdsCsv(csvOrUrls);
+    if (ids.isEmpty) return 0;
+    final settings = await load();
+    final channel = settings.channels.firstWhere(
+      (c) => c.id == channelId,
+      orElse: () => throw ArgumentError('Unknown channel'),
+    );
+    final existing = channel.videos.map((v) => v.id).toSet();
+    final newIds = ids.where((id) => !existing.contains(id)).toList();
+    if (newIds.isEmpty) return 0;
+
+    final tagged = [
+      for (final id in newIds)
+        VideoItem(
+          id: id,
+          title: 'Video $id',
+          youtubeVideoId: id,
+          thumbnailUrl: MediaIds.defaultThumbnail(id),
+          publishedAtMs: DateTime.now().millisecondsSinceEpoch,
+          manual: true,
+          allowSeek: channel.defaultAllowSeek,
+        ),
+    ];
+
+    await _updateChannel(channelId, (ch) {
+      final merged = newestVideosFirst([...tagged, ...ch.videos]);
+      final byId = <String, VideoItem>{};
+      for (final v in merged) {
+        byId.putIfAbsent(v.id, () => v);
+      }
+      return ch.copyWith(
+        videos: byId.values.toList(),
+        sourceType: SourceType.youtubeVideoList,
+      );
+    });
+    return newIds.length;
+  }
+
+  Future<void> addDirectVideo(
+    String channelId,
+    String title,
+    String url,
+  ) async {
+    if (!MediaIds.isDirectMediaUrl(url)) {
+      throw ArgumentError('Invalid direct media URL (HTTPS .mp4/.m3u8/.mpd)');
+    }
+    final id = 'direct_${DateTime.now().millisecondsSinceEpoch}';
+    await _updateChannel(channelId, (ch) {
+      final item = VideoItem(
+        id: id,
+        title: title.trim().isEmpty ? 'Video' : title.trim(),
+        directUrl: url.trim(),
+        publishedAtMs: DateTime.now().millisecondsSinceEpoch,
+        manual: true,
+        allowSeek: ch.defaultAllowSeek,
+      );
+      final hasYoutube = ch.videos.any((v) => v.isYoutube);
+      return ch.copyWith(
+        videos: newestVideosFirst([item, ...ch.videos]),
+        sourceType: hasYoutube ? ch.sourceType : SourceType.directUrl,
+      );
+    });
+  }
+
+  Future<void> removeVideo(String channelId, String videoId) async {
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        videos: ch.videos.where((v) => v.id != videoId).toList(),
+      );
+    });
+  }
+
+  /// Drops synced/remote items; keeps parent-added manual and direct URLs.
+  Future<void> clearSyncedVideos(String channelId) async {
+    await _updateChannel(channelId, (ch) {
+      return ch.copyWith(
+        videos: ch.videos.where((v) => v.manual || v.isDirect).toList(),
+      );
+    });
+  }
+
+  /// Playlist refresh merge: never drop existing videos; only add new ids.
+  ///
+  /// Matching ids keep parent flags (`manual`, `allowSeek`) and pick up fresher
+  /// title / thumbnail / publish time from the playlist fetch when present.
+  static List<VideoItem> mergePlaylistSync({
+    required List<VideoItem> existing,
+    required List<VideoItem> synced,
+    required bool defaultAllowSeek,
+  }) {
+    final byId = <String, VideoItem>{};
+    for (final v in existing) {
+      byId[v.id] = v;
+    }
+    for (final v in synced) {
+      final prev = byId[v.id];
+      if (prev == null) {
+        byId[v.id] = v.copyWith(allowSeek: defaultAllowSeek);
+        continue;
+      }
+      byId[v.id] = prev.copyWith(
+        title: v.title.trim().isNotEmpty ? v.title : prev.title,
+        thumbnailUrl: v.thumbnailUrl ?? prev.thumbnailUrl,
+        publishedAtMs: v.publishedAtMs ?? prev.publishedAtMs,
+        youtubeVideoId: v.youtubeVideoId ?? prev.youtubeVideoId,
+      );
+    }
+    return newestVideosFirst(byId.values.toList());
+  }
+
   Future<void> changePin(String newPin) async {
     if (!ParentPinManager.isValidPinFormat(newPin)) {
       throw ArgumentError('PIN must be 4–8 digits');
@@ -288,11 +693,38 @@ class CatalogRepository {
       throw ArgumentError('Choose a non-default PIN');
     }
     final salt = ParentPinManager.newSaltHex();
-    final hash = ParentPinManager.hashPin(newPin, salt);
+    final hash = await ParentPinManager.hashPinAsync(newPin, salt);
     if (hash == null) {
       throw StateError('Failed to hash PIN');
     }
-    await update((s) => s.copyWith(pinSalt: salt, pinHash: hash));
+    await update(
+      (s) => s.copyWith(
+        pinSalt: salt,
+        pinHash: hash,
+        pinChangedFromDefault: true,
+        // Require re-opt-in after PIN change (shared-device safety).
+        biometricUnlock: false,
+      ),
+    );
+  }
+
+  Future<void> setReleaseReady(bool ready) async {
+    await update((s) {
+      if (ready && !s.pinChangedFromDefault) {
+        throw StateError('Change the default PIN first');
+      }
+      return s.copyWith(releaseReady: ready);
+    });
+  }
+
+  /// Opt-in Face ID / fingerprint unlock. Off by default on shared devices.
+  Future<void> setBiometricUnlock(bool enabled) async {
+    await update((s) {
+      if (enabled && !s.pinChangedFromDefault) {
+        throw StateError('Change the default PIN first');
+      }
+      return s.copyWith(biometricUnlock: enabled);
+    });
   }
 
   Future<void> recordPinFailure(ParentPinManager pinManager) async {
@@ -317,12 +749,356 @@ class CatalogRepository {
     });
   }
 
-  /// Refresh all playlist-backed channels. Returns a human-readable summary.
-  Future<String> refreshAllPlaylists() async {
+
+  Future<CloudLinkStatus> cloudStatus() async {
+    await _ensurePrefs();
+    final token = await _secrets.readCloudDeviceToken();
+    final paired = token != null && token.isNotEmpty;
+    final prefix = (token != null && token.isNotEmpty)
+        ? token.substring(0, token.length.clamp(0, 8))
+        : '';
+    final storedUrl = _prefs!.getString(_cloudBaseUrlKey) ?? '';
+    final baseUrl = storedUrl.isNotEmpty
+        ? storedUrl
+        : (CloudDefaults.baseUrl ?? '');
+    return CloudLinkStatus(
+      baseUrl: baseUrl,
+      paired: paired,
+      tokenPrefix: prefix,
+      deviceName: _prefs!.getString(_cloudDeviceNameKey) ?? '',
+      lastCloudSyncMs: _prefs!.getInt(_lastCloudSyncKey) ?? 0,
+      lastRevision: _prefs!.getInt(_lastCloudRevisionKey),
+      autoEnrollConfigured: CloudDefaults.canAutoEnroll,
+    );
+  }
+
+  Future<void> setCloudBaseUrl(String? url) async {
+    await _ensurePrefs();
+    final trimmed = url?.trim() ?? '';
+    if (trimmed.isEmpty) {
+      await _prefs!.remove(_cloudBaseUrlKey);
+      return;
+    }
+    await _prefs!.setString(
+      _cloudBaseUrlKey,
+      CloudClient.normalizeBaseUrl(trimmed),
+    );
+  }
+
+  static String defaultCloudPlatform() {
+    if (Platform.isIOS) return 'ios';
+    if (Platform.isAndroid) return 'android';
+    return 'unknown';
+  }
+
+  static String defaultCloudDeviceName() {
+    if (Platform.isIOS) return 'iPad';
+    if (Platform.isAndroid) return 'Android TV';
+    return 'Flutter device';
+  }
+
+  /// If this build has cloud defaults and no token yet, register automatically.
+  /// Returns true when the device has a cloud token afterward.
+  Future<bool> ensureCloudEnrolled({String? deviceName}) async {
+    await _ensurePrefs();
+    if (_prefs!.getBool(_cloudAutoEnrollOptOutKey) == true) {
+      return false;
+    }
+    final status = await cloudStatus();
+    if (status.paired) {
+      if ((_prefs!.getString(_cloudBaseUrlKey) ?? '').isEmpty &&
+          status.baseUrl.isNotEmpty) {
+        await _prefs!.setString(
+          _cloudBaseUrlKey,
+          CloudClient.normalizeBaseUrl(status.baseUrl),
+        );
+      }
+      return true;
+    }
+    if (!CloudDefaults.canAutoEnroll) return false;
+    final url = CloudClient.normalizeBaseUrl(CloudDefaults.baseUrl!);
+    final secret = CloudDefaults.enrollSecret!;
+    final name = (deviceName?.trim().isNotEmpty ?? false)
+        ? deviceName!.trim()
+        : defaultCloudDeviceName();
+    try {
+      final result = await _cloud.enroll(
+        baseUrl: url,
+        secret: secret,
+        name: name,
+        platform: defaultCloudPlatform(),
+      );
+      await _prefs!.setString(_cloudBaseUrlKey, url);
+      await _prefs!.setString(_cloudDeviceNameKey, result.name);
+      await _secrets.writeCloudDeviceToken(result.token);
+      await _prefs!.remove(_cloudAutoEnrollOptOutKey);
+      try {
+        await syncWatchWithCloud();
+      } catch (_) {}
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Register this device with a 6-digit pairing code from the cloud admin.
+  Future<String> pairWithCloud({
+    required String code,
+    String? deviceName,
+    String? baseUrl,
+    String? platform,
+  }) async {
+    await _ensurePrefs();
+    final url = (baseUrl?.trim().isNotEmpty ?? false)
+        ? CloudClient.normalizeBaseUrl(baseUrl!)
+        : (_prefs!.getString(_cloudBaseUrlKey) ?? CloudDefaults.baseUrl ?? '');
+    if (url.isEmpty) {
+      throw CloudException('Set the cloud server URL first');
+    }
+    final name = (deviceName?.trim().isNotEmpty ?? false)
+        ? deviceName!.trim()
+        : defaultCloudDeviceName();
+    final result = await _cloud.pair(
+      baseUrl: url,
+      code: code,
+      name: name,
+      platform: platform ?? defaultCloudPlatform(),
+    );
+    await _prefs!.setString(_cloudBaseUrlKey, url);
+    await _prefs!.setString(_cloudDeviceNameKey, result.name);
+    await _secrets.writeCloudDeviceToken(result.token);
+    await _prefs!.remove(_cloudAutoEnrollOptOutKey);
+    try {
+      await syncWatchWithCloud();
+    } catch (_) {}
+    return 'Paired as ${result.name}';
+  }
+
+  Future<void> unpairCloud() async {
+    await _ensurePrefs();
+    await _secrets.writeCloudDeviceToken(null);
+    await _prefs!.remove(_cloudDeviceNameKey);
+    await _prefs!.remove(_lastCloudSyncKey);
+    await _prefs!.remove(_lastCloudRevisionKey);
+    // Stick disconnect: do not auto-enroll again until pair/enroll succeeds.
+    await _prefs!.setBool(_cloudAutoEnrollOptOutKey, true);
+  }
+
+  /// Replace local catalog from cloud/export JSON map.
+  Future<String> applyCatalogPayload(Map<String, dynamic> payload) async {
+    final rawChannels = payload['channels'];
+    if (rawChannels is! List) {
+      throw ArgumentError('Catalog JSON must include a channels array');
+    }
+    final parsed = rawChannels
+        .map(
+          (e) => ContentChannel.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
+        .toList();
+    final channels = DefaultChannels.dropRetiredMedia(
+      CatalogSanitize.channels(parsed),
+    ).map((ch) => ch.copyWith(videos: newestVideosFirst(ch.videos))).toList();
+    final mode = HomeLibraryMode.fromStored(
+      payload['homeLibraryMode'] as String?,
+    );
+    final seedVersion = (payload['seedVersion'] as num?)?.toInt();
+    final revision = (payload['revision'] as num?)?.toInt();
+    await update(
+      (s) => s.copyWith(
+        channels: channels,
+        homeLibraryMode: mode,
+        seedVersion: seedVersion ?? s.seedVersion,
+      ),
+    );
+    await _ensurePrefs();
+    await _prefs!.remove(_shortsPurgedKey);
+    await _prefs!.setInt(
+      _lastCloudSyncKey,
+      DateTime.now().millisecondsSinceEpoch,
+    );
+    if (revision != null) {
+      await _prefs!.setInt(_lastCloudRevisionKey, revision);
+    }
+    return 'Applied ${channels.length} channels'
+        '${revision != null ? ' (rev $revision)' : ''}';
+  }
+
+  Future<String> pullCloudCatalog({bool force = false}) async {
+    await _ensurePrefs();
+    await ensureCloudEnrolled();
+    final status = await cloudStatus();
+    if (!status.paired) {
+      return status.autoEnrollConfigured
+          ? 'Could not connect to cloud. Check network / Render sleep.'
+          : 'Pair this device first.';
+    }
+    if (status.baseUrl.isEmpty) {
+      return 'Set the cloud server URL first.';
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (!force && now - status.lastCloudSyncMs < syncTtlMs) {
+      return 'Cloud catalog already synced today.';
+    }
+    final token = await _secrets.readCloudDeviceToken();
+    if (token == null || token.isEmpty) {
+      return 'Pair this device first.';
+    }
+    final payload = await _cloud.fetchCatalog(
+      baseUrl: status.baseUrl,
+      token: token,
+    );
+    return applyCatalogPayload(payload);
+  }
+
+  /// Local continue-watching + optional cloud upsert (when paired).
+  Future<void> recordWatch({
+    required String channelId,
+    required VideoItem video,
+    int positionMs = 0,
+    int durationMs = 0,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await recentWatch.record(
+      channelId: channelId,
+      video: video,
+      positionMs: positionMs,
+      durationMs: durationMs,
+    );
+    try {
+      await pushWatchToCloud(
+        items: [
+          RecentWatchItem(
+            channelId: channelId,
+            videoId: video.id,
+            title: video.title,
+            youtubeVideoId: video.youtubeVideoId,
+            directUrl: video.directUrl,
+            positionMs: positionMs,
+            durationMs: durationMs,
+            updatedAtMs: now,
+          ),
+        ],
+      );
+    } catch (_) {
+      // Offline / unpaired — local store is enough.
+    }
+  }
+
+  Future<void> pushWatchToCloud({List<RecentWatchItem>? items}) async {
+    final status = await cloudStatus();
+    if (!status.paired || status.baseUrl.isEmpty) return;
+    final token = await _secrets.readCloudDeviceToken();
+    if (token == null || token.isEmpty) return;
+    final payload = items ?? await recentWatch.load();
+    if (payload.isEmpty) return;
+    await _cloud.upsertWatch(
+      baseUrl: status.baseUrl,
+      token: token,
+      items: payload.map(_watchToApi).toList(),
+    );
+  }
+
+  /// Push local history, pull remote, merge by newest timestamp.
+  Future<String> syncWatchWithCloud() async {
+    await ensureCloudEnrolled();
+    final status = await cloudStatus();
+    if (!status.paired) {
+      return status.autoEnrollConfigured
+          ? 'Could not connect to cloud. Check network / Render sleep.'
+          : 'Pair this device first.';
+    }
+    if (status.baseUrl.isEmpty) return 'Set the cloud server URL first.';
+    final token = await _secrets.readCloudDeviceToken();
+    if (token == null || token.isEmpty) return 'Pair this device first.';
+
+    final local = await recentWatch.load();
+    if (local.isNotEmpty) {
+      await _cloud.upsertWatch(
+        baseUrl: status.baseUrl,
+        token: token,
+        items: local.map(_watchToApi).toList(),
+      );
+    }
+    final remoteMaps = await _cloud.fetchWatch(
+      baseUrl: status.baseUrl,
+      token: token,
+    );
+    final remote = remoteMaps.map(_watchFromApi).toList();
+    final merged = await recentWatch.mergeFromCloud(remote);
+    return 'Synced ${merged.length} watch item(s)';
+  }
+
+  Map<String, dynamic> _watchToApi(RecentWatchItem item) => {
+        'channel_id': item.channelId,
+        'video_id': item.videoId,
+        'title': item.title,
+        if (item.youtubeVideoId != null) 'youtube_video_id': item.youtubeVideoId,
+        if (item.directUrl != null) 'direct_url': item.directUrl,
+        'position_ms': item.positionMs,
+        if (item.durationMs > 0) 'duration_ms': item.durationMs,
+        'updated_at_ms': item.updatedAtMs,
+      };
+
+  RecentWatchItem _watchFromApi(Map<String, dynamic> json) => RecentWatchItem(
+        channelId: json['channel_id'] as String? ?? '',
+        videoId: json['video_id'] as String? ?? '',
+        title: json['title'] as String? ?? 'Video',
+        youtubeVideoId: json['youtube_video_id'] as String?,
+        directUrl: json['direct_url'] as String?,
+        positionMs: (json['position_ms'] as num?)?.toInt() ?? 0,
+        durationMs: (json['duration_ms'] as num?)?.toInt() ?? 0,
+        updatedAtMs: (json['updated_at_ms'] as num?)?.toInt() ?? 0,
+      );
+
+  /// Re-hash a verified PIN with the current KDF when the stored hash is legacy.
+  Future<void> upgradePinHashIfNeeded(String pin) async {
+    final settings = _cached ?? await load();
+    if (!ParentPinManager.isLegacyHash(settings.pinHash)) return;
+    final salt = settings.pinSalt;
+    if (salt == null || salt.isEmpty) return;
+    final ok = await ParentPinManager().verifyPinAsync(
+      pin,
+      salt,
+      settings.pinHash,
+    );
+    if (!ok) return;
+    final hash = await ParentPinManager.hashPinAsync(pin, salt);
+    if (hash == null) return;
+    await update((s) => s.copyWith(pinHash: hash));
+  }
+
+  Duration nextPlaylistSyncDelay({DateTime? now}) =>
+      PlaylistSyncSchedule.untilNextWindow(now ?? DateTime.now());
+
+  Future<String?> _lastSyncWindowId() async {
+    await _ensurePrefs();
+    return _prefs!.getString(_lastSyncWindowKey);
+  }
+
+  Future<void> _storeSyncWindow(DateTime now) async {
+    await _ensurePrefs();
+    await _prefs!.setString(
+      _lastSyncWindowKey,
+      PlaylistSyncSchedule.windowId(now),
+    );
+  }
+
+  /// Refresh playlist-backed channels that have Follow uploads enabled.
+  /// Returns a human-readable summary.
+  Future<String> refreshAllPlaylists({bool force = false}) async {
     final settings = await load();
     final apiKey = settings.youtubeApiKey?.trim();
     if (apiKey == null || apiKey.isEmpty) {
       return 'Add a YouTube Data API key in Parent settings first.';
+    }
+
+    final now = DateTime.now();
+    if (!force &&
+        !PlaylistSyncSchedule.needsSync(
+          lastWindowId: await _lastSyncWindowId(),
+          now: now,
+        )) {
+      return PlaylistSyncSchedule.alreadySyncedMessage(now);
     }
 
     var updated = 0;
@@ -333,11 +1109,10 @@ class CatalogRepository {
     for (var i = 0; i < channels.length; i++) {
       final ch = channels[i];
       final playlistId = ch.youtubePlaylistId?.trim();
-      if (playlistId == null || playlistId.isEmpty) {
-        skipped++;
-        continue;
-      }
-      if (!ch.enabled && !ch.followUploads) {
+      if (!ch.enabled ||
+          playlistId == null ||
+          playlistId.isEmpty ||
+          !ch.followUploads) {
         skipped++;
         continue;
       }
@@ -350,20 +1125,179 @@ class CatalogRepository {
           skipped++;
           continue;
         }
-        // Keep manual entries, replace synced YouTube list.
-        final manuals = ch.videos.where((v) => v.manual).toList();
-        channels[i] = ch.copyWith(videos: [...videos, ...manuals]);
+        // Append-only: keep every existing video; add newly seen playlist items.
+        channels[i] = ch.copyWith(
+          videos: mergePlaylistSync(
+            existing: ch.videos,
+            synced: videos,
+            defaultAllowSeek: ch.defaultAllowSeek,
+          ),
+        );
         updated++;
       } catch (e) {
         errors.add('${ch.title}: $e');
       }
     }
 
-    await update((s) => s.copyWith(channels: channels));
+    final finishedAt = DateTime.now();
+    await update(
+      (s) => s.copyWith(
+        channels: channels,
+        lastSyncMs: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+    if (errors.isEmpty || updated > 0) {
+      await _storeSyncWindow(finishedAt);
+    }
     if (errors.isNotEmpty) {
       return 'Updated $updated playlists; ${errors.length} failed.\n'
           '${errors.take(3).join('\n')}';
     }
     return 'Updated $updated playlists ($skipped skipped).';
+  }
+
+  /// Home/launch path: sync Follow playlists in the current morning or night window.
+  Future<bool> maybeRefreshDaily() async {
+    final settings = await load();
+    final apiKey = settings.youtubeApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return false;
+    final purged = await maybePurgeShortVideos();
+    final dated = await maybeBackfillPublishDates();
+    final now = DateTime.now();
+    if (!PlaylistSyncSchedule.needsSync(
+      lastWindowId: await _lastSyncWindowId(),
+      now: now,
+    )) {
+      return purged || dated;
+    }
+    final summary = await refreshAllPlaylists(force: true);
+    final synced = !summary.startsWith('Already synced') &&
+        !summary.startsWith('Add a YouTube');
+    return purged || dated || synced;
+  }
+
+  /// Fill missing [VideoItem.publishedAtMs] so libraries can sort newest-first.
+  Future<bool> maybeBackfillPublishDates({bool force = false}) async {
+    await _ensurePrefs();
+    if (!force && (_prefs!.getBool(_datesBackfilledKey) ?? false)) {
+      return false;
+    }
+    final settings = await load();
+    final apiKey = settings.youtubeApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return false;
+
+    final missing = <String>[];
+    final seen = <String>{};
+    for (final ch in settings.channels) {
+      for (final v in ch.videos) {
+        if (v.publishedAtMs != null) continue;
+        final yt = v.youtubeVideoId?.trim();
+        if (yt == null || yt.isEmpty || !MediaIds.isValidVideoId(yt)) continue;
+        if (seen.add(yt)) missing.add(yt);
+      }
+    }
+    if (missing.isEmpty) {
+      await _prefs!.setBool(_datesBackfilledKey, true);
+      return false;
+    }
+
+    final dates = await _youtube.fetchPublishedAtById(
+      apiKey: apiKey,
+      videoIds: missing,
+    );
+    if (dates.isEmpty) {
+      await _prefs!.setBool(_datesBackfilledKey, true);
+      return false;
+    }
+
+    var changed = false;
+    final next = [
+      for (final ch in settings.channels)
+        ch.copyWith(
+          videos: newestVideosFirst([
+            for (final v in ch.videos)
+              v.copyWith(publishedAtMs: dates[v.youtubeVideoId ?? v.id] ?? v.publishedAtMs),
+          ]),
+        ),
+    ];
+    if (!_sameChannelVideoIds(settings.channels, next) ||
+        !_samePublishDates(settings.channels, next)) {
+      changed = true;
+      await update((s) => s.copyWith(channels: next));
+    }
+    await _prefs!.setBool(_datesBackfilledKey, true);
+    return changed;
+  }
+
+  static bool _samePublishDates(
+    List<ContentChannel> a,
+    List<ContentChannel> b,
+  ) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i].videos.length != b[i].videos.length) return false;
+      for (var j = 0; j < a[i].videos.length; j++) {
+        if (a[i].videos[j].publishedAtMs != b[i].videos[j].publishedAtMs) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /// One-shot: drop leftover Shorts (sub-60s, #shorts labels/tags, or
+  /// vertical 60–180s clips), live items, and videos whose titles or
+  /// YouTube tags fail the family content gate.
+  /// Keeps parent-manual rows only — curated seed shorts are not exempt.
+  Future<bool> maybePurgeShortVideos({bool force = false}) async {
+    await _ensurePrefs();
+    if (!force && (_prefs!.getBool(_shortsPurgedKey) ?? false)) {
+      return false;
+    }
+    final settings = await load();
+    final apiKey = settings.youtubeApiKey?.trim();
+    if (apiKey == null || apiKey.isEmpty) return false;
+
+    final candidates = <VideoItem>[];
+    final seen = <String>{};
+    for (final ch in settings.channels) {
+      for (final v in ch.videos) {
+        if (v.manual) continue;
+        final yt = v.youtubeVideoId?.trim();
+        if (yt == null || yt.isEmpty || !MediaIds.isValidVideoId(yt)) continue;
+        if (seen.add(yt)) candidates.add(v);
+      }
+    }
+    if (candidates.isEmpty) {
+      await _prefs!.setBool(_shortsPurgedKey, true);
+      return false;
+    }
+
+    final kept = await _youtube.keepFullOnDemandVideos(
+      apiKey: apiKey,
+      candidates: candidates,
+    );
+    final keepIds = kept.map((v) => v.id).toSet();
+    final dropIds = {
+      for (final v in candidates)
+        if (!keepIds.contains(v.id)) v.id,
+    };
+    if (dropIds.isEmpty) {
+      await _prefs!.setBool(_shortsPurgedKey, true);
+      return false;
+    }
+
+    final next = [
+      for (final ch in settings.channels)
+        ch.copyWith(
+          videos: [
+            for (final v in ch.videos)
+              if (v.manual || !dropIds.contains(v.id)) v,
+          ],
+        ),
+    ];
+    await update((s) => s.copyWith(channels: next));
+    await _prefs!.setBool(_shortsPurgedKey, true);
+    return true;
   }
 }

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Login · KiddyTube Admin{% endblock %}
+{% block content %}
+<div class="login-shell">
+  <section class="card login-card">
+    <div class="login-brand">
+      <span class="brand-mark" aria-hidden="true">KT</span>
+      <div>
+        <h1>Parent admin</h1>
+        <p class="sub">Manage catalog &amp; household devices</p>
+      </div>
+    </div>
+    {% if error %}<div class="banner error" role="alert">{{ error }}</div>{% endif %}
+    <form method="post" action="/admin/login" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+      <label>Email
+        <input type="email" name="email" required autocomplete="username" autofocus />
+      </label>
+      <label>Password
+        <input type="password" name="password" required autocomplete="current-password" />
+      </label>
+      <button type="submit">Sign in</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

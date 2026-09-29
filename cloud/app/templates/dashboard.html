@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · KiddyTube Admin{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="lede">Signed in as {{ admin.email }}. Edit the shared catalog or pair a new TV / phone / iPad.</p>
+  </div>
+</header>
+
+<div class="grid">
+  <a class="card stat-card" href="/admin/catalog">
+    <p class="stat-label">Catalog</p>
+    <p class="stat-value">{{ channel_count }}</p>
+    <p class="stat-meta">{{ video_count }} video{{ "" if video_count == 1 else "s" }} across channels</p>
+    <p class="stat-go">Manage catalog →</p>
+  </a>
+  <a class="card stat-card" href="/admin/devices">
+    <p class="stat-label">Devices</p>
+    <p class="stat-value">{{ device_count }}</p>
+    <p class="stat-meta">Active paired device{{ "" if device_count == 1 else "s" }}</p>
+    <p class="stat-go">Pair or revoke →</p>
+  </a>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Quick actions</h2>
+  </div>
+  <div class="btn-row">
+    <a class="btn sky" href="/admin/devices">Generate pairing code</a>
+    <a class="btn secondary" href="/admin/catalog">Add channel or video</a>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>API base</h2>
+  </div>
+  <p class="muted small">Devices call this host after pairing. Copy it if you need to set <code>CLOUD_BASE_URL</code> on a build.</p>
+  <div class="api-box">
+    <code id="api-base">{{ public_base_url }}</code>
+    <button type="button" class="secondary copy-btn" onclick="copyText(document.getElementById('api-base').textContent, this)">Copy</button>
+  </div>
+  <p class="muted small" style="margin-top:12px">After pairing, devices use <code>GET /v1/catalog</code> with their Bearer token.</p>
+</section>
+{% endblock %}

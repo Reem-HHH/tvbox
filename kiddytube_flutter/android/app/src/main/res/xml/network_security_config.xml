@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cleartext is required for household LAN cloud (http://192.168.x.x) in release.
+     Dart CloudClient still rejects public http:// hosts before any request is sent. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

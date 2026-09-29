@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Kiddytube</string>
+	<string>KiddyTube</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -66,12 +66,19 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSFaceIDUsageDescription</key>
+	<string>KiddyTube uses Face ID so parents can unlock settings without typing the PIN.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<!-- HTTPS media / YouTube iframe playback (webview + video_player). -->
+	<!-- NSAllowsLocalNetworking: LAN cloud admin (http://192.168.x.x:8787). -->
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<false/>
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
 	<key>io.flutter.embedded_views_preview</key>
