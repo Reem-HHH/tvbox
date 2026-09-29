@@ -8,6 +8,14 @@ Cross-platform kids browser for:
 
 **Apple TV (tvOS)** is intentionally out of scope. This Flutter app is the day-to-day product for phone, iPad, and Google TV. The old native Kotlin Android TV app is archived outside this repo (see sibling folder `KiddyTube-kotlin-archive/`).
 
+## Install on a phone
+
+Ready-to-sideload release APK (catalog seed 55, Android 7.0+):
+
+**[KiddyTube-flutter-0.1.0.apk](../dist/KiddyTube-flutter-0.1.0.apk)** — see [dist/README.md](../dist/README.md).
+
+Factory parent PIN is `2580`. This release build blocks kid playback until that PIN is changed.
+
 ## Features (current)
 
 - Curated catalog seed **v50** (allowlisted channels / videos)
